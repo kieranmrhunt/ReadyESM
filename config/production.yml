@@ -1,0 +1,50 @@
+name: production
+device: gpu
+truncation: 31
+nlayers: 27
+duration_days: 730
+analysis_start_day: 365
+start_date: "1993-01-01T00:00:00"
+atmosphere_timestep_at_t31_minutes: 15
+atmosphere_hyperdiffusion_hours: 4
+atmosphere_divergence_hyperdiffusion_hours: 1
+atmosphere_vertical_diffusion: speedyweather_0_21_1_zero_operator_control
+atmosphere_large_scale_precipitation: upstream_observed
+atmosphere_convection: betts_miller_constant_rh
+atmosphere_speed_limit_ms: 60
+atmosphere_speed_limit_drag_per_m: 2.0e-6
+atmosphere_surface_speed_limit_ms: 40
+atmosphere_surface_speed_limit_drag_per_m: 2.0e-5
+atmosphere_initial_conditions: era5_instantaneous
+era5_pressure_levels_path: data/era5_initial_state/era5_pressure_levels_stratosphere_19930101T0000Z.nc
+era5_single_levels_path: data/era5_initial_state/era5_single_levels_19930101T0000Z.nc
+era5_land_state_path: data/era5_initial_state/era5_land_state_19930101T0000Z.nc
+era5_month: 1
+ocean_model: oceananigans
+ocean_grid: tripolar_1degree
+ocean_dynamics: true
+sea_ice_dynamics: true
+ocean_nlongitude: 360
+ocean_nlatitude: 180
+ocean_nlayers: 60
+ocean_depth_m: 6000
+ocean_bathymetry_correction: none
+ocean_shortwave_scheme: depth_aware_coastal
+ocean_initial_conditions: ecco_1993_full_state
+land_model: terrarium
+terrarium_initial_conditions: era5_instantaneous
+terrarium_evapotranspiration: era5_prescribed_vegetation
+terrarium_soil_layers: 16
+terrarium_max_layer_thickness_m: 5
+terrarium_timestep_seconds: 60
+output_dir: artifacts/production
+
+forcing:
+  radiation: rrtmgp_all_sky
+  radiation_every_n_steps: 4
+  co2_ppm: 420.0
+  cloud_scheme: diagnostic
+  cloud_liquid_water_path_gm2: 60.0
+  cloud_ice_water_path_gm2: 25.0
+  aerosol_species: sulfate
+  aerosol_optical_depth_550nm: 0.0

@@ -1,0 +1,136 @@
+"""
+    $TYPEDEF
+
+Coupled process type that encapsulates the coupling of soil energy, water, and carbon dynamics.
+The stratigraphy parameterization determines how the vertical layering of the soil is parameterized.
+"""
+struct SoilEnergyWaterCarbon{
+        NF,
+        Stratigraphy <: AbstractStratigraphy{NF},
+        Energy <: AbstractSoilThermodynamics{NF},
+        Hydrology <: AbstractSoilHydrology{NF},
+        Biogeochemistry <: AbstractSoilBiogeochemistry{NF},
+    } <: AbstractSoil{NF}
+    "Soil stratigraphy parameterization"
+    strat::Stratigraphy
+
+    "Soil energy balance process"
+    energy::Energy
+
+    "Soil hydrology (water balance) process"
+    hydrology::Hydrology
+
+    "Soil biogeochemistry process"
+    biogeochem::Biogeochemistry
+end
+
+function SoilEnergyWaterCarbon(
+        ::Type{NF};
+        strat = HomogeneousSoilStratigraphy(NF),
+        energy = SoilThermodynamics(NF),
+        hydrology = SoilHydrology(NF),
+        biogeochem = ConstantSoilCarbonDensity(NF)
+    ) where {NF}
+    return SoilEnergyWaterCarbon(strat, energy, hydrology, biogeochem)
+end
+
+# Process interface methods
+
+"""
+    $TYPEDSIGNATURES
+
+Initialize the soil energy, water, and carbon state variables on `grid` given
+the parameter values in `constants`.
+"""
+function initialize!(
+        state, grid,
+        soil::SoilEnergyWaterCarbon,
+        constants::PhysicalConstants
+    )
+    # Hydraulic conductivity depends on both composition and unfrozen water.
+    # Diagnose those inputs before hydrology rather than leaving conductivity
+    # at its allocation value until the first auxiliary update.
+    initialize!(state, grid, soil.biogeochem, soil, constants)
+    initialize!(state, grid, soil.energy, soil, constants)
+    initialize!(state, grid, soil.hydrology, soil, constants)
+    return nothing
+end
+
+"""
+    $TYPEDSIGNATURES
+
+Compute auxiliary variables for soil energy, water, and carbon state variables
+on `grid` based on the given values in `constants`.
+"""
+function compute_auxiliary!(
+        state, grid,
+        soil::SoilEnergyWaterCarbon,
+        constants::PhysicalConstants
+    )
+    # TODO: consider implementing fused kernel here?
+    compute_auxiliary!(state, grid, soil.hydrology, soil, constants)
+    compute_auxiliary!(state, grid, soil.biogeochem, soil, constants)
+    compute_auxiliary!(state, grid, soil.energy, soil, constants)
+    return nothing
+end
+
+"""
+    $TYPEDSIGNATURES
+
+Compute boundary conditions (and halo regions) for soil energy and hydrology.
+"""
+function compute_boundary_conditions!(state, grid, soil::SoilEnergyWaterCarbon)
+    compute_boundary_conditions!(state, grid, soil.hydrology)
+    compute_boundary_conditions!(state, grid, soil.energy)
+    return nothing
+end
+
+"""
+    $TYPEDSIGNATURES
+
+Compute tendencies for soil energy, water, and carbon state variables on `grid`
+based on the given values in `constants`.
+"""
+function compute_tendencies!(
+        state, grid,
+        soil::SoilEnergyWaterCarbon,
+        constants::PhysicalConstants
+    )
+    # TODO: consider implementing fused kernel here?
+    compute_tendencies!(state, grid, soil.hydrology, soil, constants)
+    compute_tendencies!(state, grid, soil.biogeochem, soil, constants)
+    compute_tendencies!(state, grid, soil.energy, soil, constants)
+    return nothing
+end
+
+# Closures
+
+"""
+    $TYPEDSIGNATURES
+
+Compute the forward closure mapping for soil hydrology and energy, in that order.
+"""
+function closure!(
+        state, grid,
+        soil::SoilEnergyWaterCarbon,
+        constants::PhysicalConstants
+    )
+    closure!(state, grid, get_closure(soil.hydrology), soil.hydrology, soil)
+    closure!(state, grid, get_closure(soil.energy), soil.energy, soil, constants)
+    return nothing
+end
+
+"""
+    $TYPEDSIGNATURES
+
+Compute the inverse closure mapping for soil hydrology and energy, in that order.
+"""
+function invclosure!(
+        state, grid,
+        soil::SoilEnergyWaterCarbon,
+        constants::PhysicalConstants
+    )
+    invclosure!(state, grid, get_closure(soil.hydrology), soil.hydrology, soil)
+    invclosure!(state, grid, get_closure(soil.energy), soil.energy, soil, constants)
+    return nothing
+end

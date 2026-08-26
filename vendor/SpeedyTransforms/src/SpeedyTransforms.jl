@@ -1,0 +1,78 @@
+module SpeedyTransforms
+
+using DocStringExtensions
+using StyledStrings
+using Printf
+import ProgressMeter
+
+# NUMERICS
+import AssociatedLegendrePolynomials as Legendre
+import AbstractFFTs
+import FFTW
+import GenericFFT
+import LinearAlgebra
+import Primes
+
+# GPU
+import GPUArrays: GPUArrays, AbstractGPUArray
+import Adapt: Adapt, adapt, adapt_structure
+import KernelAbstractions: @kernel, @index, synchronize
+import Atomix
+
+# SPEEDYWEATHER MODULES
+using SpeedyWeatherInternals.Architectures
+using SpeedyWeatherInternals.KernelLaunching
+import SpeedyWeatherInternals.Utils: Utils, @maybe_jit
+using RingGrids
+using LowerTriangularArrays
+
+# TRANSFORM
+export SpectralTransform,
+    transform!,
+    transform
+
+export MatrixSpectralTransform
+
+# ALIASING
+export get_nlat_half
+
+# GRADIENTS
+export curl,
+    divergence,
+    curl!,
+    divergence!,
+    UV_from_vor!,
+    UV_from_vordiv!,
+    ∇²!, ∇⁻²!, ∇!,
+    ∇², ∇⁻², ∇,
+    laplace, inverse_laplace,
+    laplace!, inverse_laplace!,
+    gradient, gradient!
+
+# TRUNCATION
+export spectral_truncation,
+    spectral_truncation!,
+    spectral_interpolation
+
+# ANALYSIS
+export power_spectrum
+
+# UTILS
+export wrapped_view
+
+include("aliasing.jl")
+include("legendre_shortcuts.jl")
+include("scratch_memory.jl")
+include("gradient_arrays.jl")
+include("array_utils.jl")
+include("spectral_transform.jl")
+include("matrix_transform.jl")
+include("fourier.jl")
+include("legendre.jl")
+include("legendre_ka.jl")
+include("spectral_gradients.jl")
+include("spectral_truncation.jl")
+include("power_spectrum.jl")
+include("show.jl")
+
+end

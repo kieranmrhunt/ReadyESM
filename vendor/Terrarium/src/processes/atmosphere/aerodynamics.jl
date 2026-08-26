@@ -1,0 +1,18 @@
+"""
+    $TYPEDEF
+
+Dummy implementation of aerodynamics that simply returns constant values for all drag coefficients.
+"""
+@parameterized @kwdef struct ConstantAerodynamics{NF} <: AbstractAerodynamics{NF}
+    "Drag coefficient for heat transfer"
+    @param Cₕ::NF = 1.2e-3 (bounds = Positive,)
+end
+
+ConstantAerodynamics(::Type{NF}; kwargs...) where {NF} = ConstantAerodynamics{NF}(; kwargs...)
+
+"""
+    drag_coefficient(i, j, grid, fields, aero::AbstractAerodynamics)
+
+Compute the bulk drag coefficient for heat and moisture transfer at grid cell `i, j`.
+"""
+@inline drag_coefficient(i, j, grid, fields, aero::ConstantAerodynamics) = aero.Cₕ

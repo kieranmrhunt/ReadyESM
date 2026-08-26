@@ -1,0 +1,9 @@
+/artifacts
+/data
+/logs
+/.julia
+/LocalPreferences.toml
+*.jld2
+*.nc
+*.tmp
+core
