@@ -89,6 +89,48 @@ function _atmosphere_radiative_surface_temperature(vars, model)
     ]
 end
 
+"""Return the surface albedo retained by the active shortwave solver."""
+function _atmosphere_radiative_surface_albedo(vars, model)
+    radiation = model.longwave_radiation
+    if radiation isa RRTMGPRadiation
+        direct = Float64.(Array(
+            RRTMGP.direct_sw_surface_albedo(radiation.solver),
+        ))
+        diffuse = Float64.(Array(
+            RRTMGP.diffuse_sw_surface_albedo(radiation.solver),
+        ))
+        size(direct) == size(diffuse) && ndims(direct) == 2 &&
+            size(direct, 1) > 0 &&
+            size(direct, 2) == model.geometry.npoints ||
+            throw(DimensionMismatch(
+                "RRTMGP direct/diffuse surface-albedo shapes " *
+                "$(size(direct))/$(size(diffuse)) do not match " *
+                "$(model.geometry.npoints) atmospheric columns",
+            ))
+        maximum(abs, direct .- diffuse) <= 8eps(Float32) || error(
+            "RRTMGP direct and diffuse surface albedos differ",
+        )
+        albedo = vec(direct[1, :])
+        maximum(abs, direct .- reshape(albedo, 1, :)) <= 8eps(Float32) ||
+            error("RRTMGP surface albedo is not band invariant")
+        all((0 .<= albedo) .& (albedo .<= 1)) || error(
+            "RRTMGP surface albedo is outside [0, 1]",
+        )
+        return albedo
+    end
+
+    values = Float64.(Array(vars.parameterizations.albedo.data))
+    length(values) == model.geometry.npoints || throw(DimensionMismatch(
+        "SpeedyWeather surface-albedo length $(length(values)) does not " *
+        "match $(model.geometry.npoints) atmospheric columns",
+    ))
+    albedo = vec(values)
+    all(isfinite, albedo) && all((0 .<= albedo) .& (albedo .<= 1)) || error(
+        "SpeedyWeather surface albedo is non-finite or outside [0, 1]",
+    )
+    return albedo
+end
+
 """Machine-readable provenance for the radiative forcing actually in use."""
 function _forcing_provenance(radiation, config::ExperimentConfig)
     rrtmgp_active = radiation isa RRTMGPRadiation

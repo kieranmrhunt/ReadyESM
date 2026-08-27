@@ -20,6 +20,24 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.forcing.co2_ppm == 420
 @test config.forcing.aerosol_optical_depth_550nm == 0
 
+diagnostic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "diagnostics.jl"), String)
+dynamic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "dynamic_ocean.jl"), String)
+for contract in (
+    "RRTMGP.direct_sw_surface_albedo",
+    "RRTMGP.diffuse_sw_surface_albedo",
+    "RRTMGP direct and diffuse surface albedos differ",
+    "RRTMGP surface albedo is not band invariant",
+)
+    @test occursin(contract, diagnostic_source)
+end
+for contract in (
+    "atmosphere_radiative_surface_albedo",
+    "retained_rrtmgp_direct_diffuse_band_invariant_solver_state",
+    "radiative surface albedo is outside [0, 1]",
+)
+    @test occursin(contract, dynamic_source)
+end
+
 et = ReadyESM.ERA5PrescribedVegetationEvapotranspiration(Float32)
 land_dispatch = which(
     ReadyESM.Terrarium.compute_auxiliary!,

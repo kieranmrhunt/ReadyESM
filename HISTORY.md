@@ -6,6 +6,15 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### 0.1.2 — 2026-08-27
+
+- Retained the exact live shortwave surface albedo used by RRTMGP in coupled
+  NetCDF output, with explicit solver-state provenance and fail-closed checks
+  for direct/diffuse agreement, spectral-band invariance and physical bounds.
+- Passed the complete development regression and a real coupled
+  RRTMGP-to-NetCDF smoke test. This is an observability update; it does not
+  change model physics or claim to repair the outstanding TOA imbalance.
+
 ### 0.1.1 — 2026-08-27
 
 - Fixed an ambiguous Terrarium 0.1.6 land-process dispatch in the exact T31/L27

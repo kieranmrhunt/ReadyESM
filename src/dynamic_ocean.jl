@@ -2753,6 +2753,11 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             atmosphere.variables,
             atmosphere.model,
         )
+    atmosphere_radiative_surface_albedo =
+        _atmosphere_radiative_surface_albedo(
+            atmosphere.variables,
+            atmosphere.model,
+        )
     ao_fluxes = earth.interfaces.atmosphere_ocean_interface.fluxes
     ai_fluxes = earth.interfaces.atmosphere_sea_ice_interface.fluxes
     ocean_radiation = earth.radiation.interface_fluxes.ocean
@@ -3072,6 +3077,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             Array(atmosphere.variables.parameterizations.surface_air_temperature.data),
         ),
         atmosphere_radiative_surface_temperature,
+        atmosphere_radiative_surface_albedo,
         atmosphere_sigma,
         atmosphere_sigma_layer_thickness = atmosphere_layer_thickness,
         atmosphere_temperature,
@@ -3464,6 +3470,10 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 atmosphere.model.longwave_radiation isa RRTMGPRadiation ?
                 "retained_rrtmgp_solver_state" :
                 "diagnosed_fourth_power_surface_mixture",
+            atmosphere_radiative_surface_albedo_source =
+                atmosphere.model.longwave_radiation isa RRTMGPRadiation ?
+                "retained_rrtmgp_direct_diffuse_band_invariant_solver_state" :
+                "retained_speedyweather_surface_parameterization",
             co2_ppm = config.forcing.co2_ppm,
             cloud_scheme = String(config.forcing.cloud_scheme),
             _forcing_provenance(atmosphere.model.longwave_radiation, config)...,
@@ -3689,6 +3699,7 @@ function validate_dynamic_diagnostics(diagnostics)
         :ocean_absorbed_shortwave,
         :atmosphere_surface_temperature,
         :atmosphere_radiative_surface_temperature,
+        :atmosphere_radiative_surface_albedo,
         :atmosphere_temperature,
         :atmosphere_specific_humidity,
         :atmosphere_convective_humidity_tendency,
@@ -3738,6 +3749,8 @@ function validate_dynamic_diagnostics(diagnostics)
 
     all(0 .<= diagnostics.sea_ice_concentration .<= 1) ||
         error("sea-ice concentration is outside [0, 1]")
+    all(0 .<= diagnostics.atmosphere_radiative_surface_albedo .<= 1) ||
+        error("radiative surface albedo is outside [0, 1]")
     all(diagnostics.sea_ice_thickness .>= 0) ||
         error("sea-ice thickness is negative")
     all(value -> value == 0 || value == 1, diagnostics.ocean_surface_active_mask) ||
@@ -4832,6 +4845,11 @@ function _write_dynamic_netcdf(path, diagnostics)
                 "atmosphere_radiative_surface_temperature",
                 diagnostics.atmosphere_radiative_surface_temperature,
                 "K",
+            ),
+            (
+                "atmosphere_radiative_surface_albedo",
+                diagnostics.atmosphere_radiative_surface_albedo,
+                "1",
             ),
             ("atmosphere_surface_pressure", diagnostics.atmosphere_surface_pressure, "Pa"),
             ("atmosphere_surface_specific_humidity", diagnostics.atmosphere_surface_specific_humidity, "kg/kg"),
