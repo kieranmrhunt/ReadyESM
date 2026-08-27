@@ -6,19 +6,31 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+In plain terms, `v0.1.1` fixed a land-coupling dispatch error. `v0.1.2` uses
+the same model equations, configuration and parameters as `v0.1.1`; it only
+makes the shortwave surface albedo actually used by RRTMGP visible in the
+saved diagnostics. A run started from the same state should therefore follow
+the same model trajectory in both versions, while `v0.1.2` writes one extra
+field and its provenance.
+
 ### 0.1.2 — 2026-08-27
 
-- Retained the exact live shortwave surface albedo used by RRTMGP in coupled
-  NetCDF output, with explicit solver-state provenance and fail-closed checks
-  for direct/diffuse agreement, spectral-band invariance and physical bounds.
+- Added `atmosphere_radiative_surface_albedo` to coupled NetCDF output. This is
+  read from the live RRTMGP solver state rather than reconstructed later.
+- Added solver-state provenance and fail-closed checks for direct/diffuse
+  agreement, spectral-band invariance and physical bounds.
 - Passed the complete development regression and a real coupled
-  RRTMGP-to-NetCDF smoke test. This is an observability update; it does not
-  change model physics or claim to repair the outstanding TOA imbalance.
+  RRTMGP-to-NetCDF smoke test.
+- No model physics, configuration or parameter changed from `v0.1.1`. This is
+  an observability release and does not repair the outstanding TOA imbalance.
 
 ### 0.1.1 — 2026-08-27
 
 - Fixed an ambiguous Terrarium 0.1.6 land-process dispatch in the exact T31/L27
   production path with prescribed ERA5 vegetation.
+- The ambiguity could select Terrarium's vegetation-free forwarding method in
+  place of ReadyESM's prescribed-vegetation evapotranspiration method. The fix
+  makes the intended production method unambiguous.
 - Added a regression that requires the production call to resolve to
   ReadyESM's evapotranspiration method.
 - Added a release-matched 30-day output overview to the README.
