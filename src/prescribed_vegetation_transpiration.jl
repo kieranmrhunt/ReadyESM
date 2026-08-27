@@ -425,6 +425,33 @@ function Terrarium.compute_auxiliary!(
     return nothing
 end
 
+# Terrarium's vegetation-free forwarding method and ReadyESM's prescribed-
+# vegetation method are otherwise ambiguous when vegetation and snow are absent.
+function Terrarium.compute_auxiliary!(
+    state,
+    grid,
+    evapotranspiration::ERA5PrescribedVegetationEvapotranspiration,
+    interception::Terrarium.NoCanopyInterception,
+    constants::Terrarium.PhysicalConstants,
+    atmosphere::Terrarium.AbstractAtmosphere,
+    soil::Terrarium.AbstractSoil,
+    ::Nothing,
+    snow::Terrarium.Optional{Terrarium.AbstractSnow},
+    args...,
+)
+    return Terrarium.compute_auxiliary!(
+        state,
+        grid,
+        evapotranspiration,
+        interception,
+        constants,
+        atmosphere,
+        soil,
+        snow,
+        args...,
+    )
+end
+
 Base.@propagate_inbounds function Terrarium.forcing(
     i,
     j,

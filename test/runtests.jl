@@ -19,3 +19,20 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.forcing.radiation == :rrtmgp_all_sky
 @test config.forcing.co2_ppm == 420
 @test config.forcing.aerosol_optical_depth_550nm == 0
+
+et = ReadyESM.ERA5PrescribedVegetationEvapotranspiration(Float32)
+land_dispatch = which(
+    ReadyESM.Terrarium.compute_auxiliary!,
+    Tuple{
+        Any,
+        Any,
+        typeof(et),
+        typeof(ReadyESM.Terrarium.NoCanopyInterception(Float32)),
+        ReadyESM.Terrarium.PhysicalConstants{Float32},
+        ReadyESM.Terrarium.AbstractAtmosphere,
+        ReadyESM.Terrarium.AbstractSoil,
+        Nothing,
+        Nothing,
+    },
+)
+@test land_dispatch.module === ReadyESM

@@ -1,6 +1,6 @@
 name = "ReadyESM"
 uuid = "c4a7aed0-5f3e-4a53-ba63-386ba9f93654"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["ReadyESM contributors"]
 
 [deps]

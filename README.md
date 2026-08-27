@@ -7,6 +7,10 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
+![ReadyESM v0.1.1 coupled 30-day control](docs/readiesm-v0.1.1-30day.png)
+
+*A 30-day initialised v0.1.1 run.*
+
 ## Run
 
 ReadyESM requires Julia 1.12 and an NVIDIA GPU with working CUDA drivers.
