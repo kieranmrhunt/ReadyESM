@@ -6,17 +6,26 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
-In plain terms, `v0.1.1` fixed a land-coupling dispatch error. `v0.1.2` uses
-the same model equations, configuration and parameters as `v0.1.1`; it only
-makes the shortwave surface albedo actually used by RRTMGP visible in the
-saved diagnostics. A run started from the same state should therefore follow
-the same model trajectory in both versions, while `v0.1.2` writes one extra
-field and its provenance.
+### 0.1.1 to 0.1.2 at a glance
+
+| | 0.1.1 | 0.1.2 |
+|---|---|---|
+| Model physics and parameters | Accepted 0.1.1 model | Unchanged |
+| Land coupling | Correct Terrarium evapotranspiration method | Unchanged |
+| Saved shortwave surface albedo | Not available | Exact albedo used by RRTMGP |
+| Additional checks | — | Albedo provenance, consistency and bounds |
+| Expected model trajectory from the same state | Baseline | Same as 0.1.1 |
+
+In other words, `v0.1.1` was a model fix, whereas `v0.1.2` is an output and
+verification release. The extra albedo field was added to diagnose the
+outstanding top-of-atmosphere radiation imbalance; it does not fix that
+imbalance itself.
 
 ### 0.1.2 — 2026-08-27
 
-- Added `atmosphere_radiative_surface_albedo` to coupled NetCDF output. This is
-  read from the live RRTMGP solver state rather than reconstructed later.
+- Added `atmosphere_radiative_surface_albedo` to coupled NetCDF output. It is
+  copied from the live RRTMGP solver state, so it records the value used by the
+  radiation calculation rather than a later reconstruction.
 - Added solver-state provenance and fail-closed checks for direct/diffuse
   agreement, spectral-band invariance and physical bounds.
 - Passed the complete development regression and a real coupled
