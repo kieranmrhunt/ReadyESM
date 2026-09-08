@@ -54,3 +54,5 @@ land_dispatch = which(
     },
 )
 @test land_dispatch.module === ReadyESM
+
+include("darcy_boundary.jl")

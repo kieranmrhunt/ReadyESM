@@ -601,40 +601,6 @@ function Terrarium.compute_tendencies!(
     )
 end
 
-# In LandModel, infiltration is applied explicitly through the top flux
-# boundary condition of `saturation_water_ice`. Terrarium's Richards divergence
-# nevertheless evaluates an additional Darcy flux at the top face from the
-# auxiliary pressure-head halo. That halo is not part of the closure and
-# defaults to zero, producing a large artificial influx into an otherwise
-# constant-head column. Suppress only this duplicate top-face flux on the
-# bounded vertical column grid; all interior and lower faces retain the package
-# implementation.
-Base.@propagate_inbounds function Terrarium.darcy_flux(
-    i,
-    j,
-    k,
-    grid::Oceananigans.Grids.RectilinearGrid{
-        FT,
-        TX,
-        TY,
-        Oceananigans.Grids.Bounded,
-    },
-    pressure_head,
-    hydraulic_conductivity,
-) where {FT, TX, TY}
-    k > grid.Nz && return zero(FT)
-    return invoke(
-        Terrarium.darcy_flux,
-        Tuple{Any, Any, Any, Any, Any, Any},
-        i,
-        j,
-        k,
-        grid,
-        pressure_head,
-        hydraulic_conductivity,
-    )
-end
-
 # Terrarium's LandModel tendency driver calls the coupled soil tendency without
 # forwarding the surface hydrology's evapotranspiration or runoff processes.
 # The Richards implementation therefore receives `nothing` for both optional

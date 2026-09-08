@@ -6,6 +6,14 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### Unreleased
+
+- Remove the redundant Darcy top-face override reported in [#1](https://github.com/kieranmrhunt/ReadyESM/issues/1).
+  Terrarium already fills a zero-gradient pressure-head halo for flux boundary
+  conditions. Prescribed pressure gradients are no longer forced to zero.
+- Retain the separate porosity, evaporation and runoff-conservation fixes.
+  Production physics settings are unchanged; this is not a climate-bias fix.
+
 ### 0.1.1 to 0.1.2 at a glance
 
 | | 0.1.1 | 0.1.2 |
