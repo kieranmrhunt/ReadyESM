@@ -18,6 +18,12 @@ and licences are included under `vendor/`.
 
 ## Main known limitations
 
+- Recent production-path tests reproduced an illegal GPU memory access during
+  the first sea-ice momentum step. A synchronization-only candidate did not
+  resolve it. This remains under investigation; v0.1.3 does not fix it.
+- Initial ice-surface/radiation reconciliation can give excessively cold
+  surface temperatures. A checked startup solver is being tested separately
+  and is not included in this maintenance release.
 - The late model energy balance is still too positive (about +20 W m-2 all-sky
   and +45 W m-2 clear-sky in the completed control). The model is not spun up
   or calibrated for projections.
