@@ -6,6 +6,14 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### Unreleased
+
+- Save only recorded temperature and radiation samples after an interrupted
+  run; unused capacity can no longer appear as spurious zero-kelvin output.
+- Preserve genuinely non-finite samples and clarify that the legacy
+  `global_surface_temperature` field is lowest-layer air temperature.
+- Diagnostic-only change; model physics and production settings are unchanged.
+
 ### 0.1.3 — 2026-09-08
 
 - Remove the redundant Darcy top-face override reported in [#1](https://github.com/kieranmrhunt/ReadyESM/issues/1).

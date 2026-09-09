@@ -2771,8 +2771,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
     else
         zeros(size(ocean_temperature, 1), size(ocean_temperature, 2))
     end
-    callback_temperature = atmosphere.model.callbacks[:global_surface_temperature].temperature
-    radiation_budget = atmosphere.model.callbacks[:global_radiation_budget]
+    global_history = _sampled_global_callback_diagnostics(atmosphere.model)
     atmosphere_budget = atmosphere.model.callbacks[:global_atmosphere_diagnostics]
     cloud_condensate_summary = _prognostic_cloud_condensate_summary(
         atmosphere.model.longwave_radiation,
@@ -2945,7 +2944,6 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
     # tracer-budget test, which checks |Δ∫S dV| / ∫S₀ dV.
     ocean_salt_closure_relative = abs.(ocean_salt_closure_residual) ./
         max(abs(first(ocean_salt_content)), 1.0)
-    timestep_days = Float64(atmosphere.model.time_stepping.Δt_sec) / 86_400
     atmosphere_temperature = Float64.(
         Array(atmosphere.variables.grid.temperature_prev.data),
     )
@@ -3117,19 +3115,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             Array(atmosphere.variables.parameterizations.outgoing_longwave.data),
         ),
         column_cloud_fraction = cloud_diagnostics.column_fraction,
-        time_days = collect((0:(length(callback_temperature) - 1)) .* timestep_days),
-        global_surface_temperature = Float64.(callback_temperature),
-        toa_incoming_shortwave = Float64.(radiation_budget.incoming_shortwave),
-        toa_outgoing_shortwave = Float64.(radiation_budget.outgoing_shortwave),
-        toa_outgoing_longwave = Float64.(radiation_budget.outgoing_longwave),
-        toa_clear_outgoing_shortwave = Float64.(
-            radiation_budget.clear_outgoing_shortwave,
-        ),
-        toa_clear_outgoing_longwave = Float64.(
-            radiation_budget.clear_outgoing_longwave,
-        ),
-        toa_net_downward = Float64.(radiation_budget.net_downward),
-        toa_clear_net_downward = Float64.(radiation_budget.clear_net_downward),
+        global_history...,
         atmosphere_diagnostic_time_days = Float64.(atmosphere_budget.time_days),
         atmosphere_process_profiles...,
         global_rainfall_flux = Float64.(atmosphere_budget.rainfall_flux),
@@ -5125,6 +5111,8 @@ function _write_dynamic_netcdf(path, diagnostics)
         end
         global_temperature = defVar(dataset, "global_surface_temperature", Float64, ("time",))
         global_temperature.attrib["units"] = "K"
+        global_temperature.attrib["long_name"] = _GLOBAL_AIR_TEMPERATURE_LONG_NAME
+        global_temperature.attrib["comment"] = "Legacy variable name; not SST or land-skin temperature."
         global_temperature[:] = diagnostics.global_surface_temperature
         budget_variables = (
             ("toa_incoming_shortwave", diagnostics.toa_incoming_shortwave),

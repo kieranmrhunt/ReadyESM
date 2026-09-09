@@ -177,7 +177,40 @@ function _forcing_provenance(radiation, config::ExperimentConfig)
     )
 end
 
-"""Extract compact, architecture-independent diagnostics from a completed run."""
+const _GLOBAL_AIR_TEMPERATURE_LONG_NAME = "global mean lowest-layer air temperature"
+
+"""Extract recorded callback prefixes, preserving sampled NaNs but not unused capacity."""
+function _sampled_global_callback_diagnostics(model)
+    temperature = _surface_temperature_callback_state(
+        model.callbacks[:global_surface_temperature],
+    )
+    radiation_callback = get(model.callbacks, :global_radiation_budget, nothing)
+    radiation = isnothing(radiation_callback) ? nothing :
+        _radiation_budget_callback_state(radiation_callback)
+    count = temperature.timestep_counter
+    if !isnothing(radiation) && radiation.timestep_counter != count
+        error("temperature and radiation diagnostic sample counts differ: " *
+              "$count versus $(radiation.timestep_counter)")
+    end
+    # Same cadence-based axis as complete historical output. Exact intra-step
+    # phase times require a phase observer; array capacity is not elapsed time.
+    timestep_days = Float64(model.time_stepping.Δt_sec) / 86_400
+    history(name) = isnothing(radiation) ? Float64[] :
+        Float64.(getproperty(radiation.histories, name))
+    return (;
+        time_days = collect((0:(count - 1)) .* timestep_days),
+        global_surface_temperature = Float64.(temperature.temperature),
+        toa_incoming_shortwave = history(:incoming_shortwave),
+        toa_outgoing_shortwave = history(:outgoing_shortwave),
+        toa_outgoing_longwave = history(:outgoing_longwave),
+        toa_clear_outgoing_shortwave = history(:clear_outgoing_shortwave),
+        toa_clear_outgoing_longwave = history(:clear_outgoing_longwave),
+        toa_net_downward = history(:net_downward),
+        toa_clear_net_downward = history(:clear_net_downward),
+    )
+end
+
+"""Extract compact diagnostics from the recorded portion of a run."""
 function collect_diagnostics(simulation, config::ExperimentConfig)
     vars = simulation.variables
     model = simulation.model
@@ -185,30 +218,12 @@ function collect_diagnostics(simulation, config::ExperimentConfig)
     longitude, latitude = RG.get_londlatds(grid)
     land_fraction = Float64.(_host_array(model.land_sea_mask.mask))
 
-    surface_temperature = model.callbacks[:global_surface_temperature].temperature
-    radiation_budget = get(model.callbacks, :global_radiation_budget, nothing)
-    timestep_days = Float64(model.time_stepping.Δt_sec) / 86_400
-    time_days = collect((0:(length(surface_temperature) - 1)) .* timestep_days)
+    global_history = _sampled_global_callback_diagnostics(model)
 
     return (
         longitude = Float64.(longitude),
         latitude = Float64.(latitude),
-        time_days,
-        global_surface_temperature = Float64.(surface_temperature),
-        toa_incoming_shortwave = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.incoming_shortwave),
-        toa_outgoing_shortwave = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.outgoing_shortwave),
-        toa_outgoing_longwave = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.outgoing_longwave),
-        toa_clear_outgoing_shortwave = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.clear_outgoing_shortwave),
-        toa_clear_outgoing_longwave = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.clear_outgoing_longwave),
-        toa_net_downward = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.net_downward),
-        toa_clear_net_downward = isnothing(radiation_budget) ? Float64[] :
-            Float64.(radiation_budget.clear_net_downward),
+        global_history...,
         surface_air_temperature = Float64.(
             _host_array(vars.parameterizations.surface_air_temperature),
         ),
@@ -310,6 +325,10 @@ function _write_netcdf(path::AbstractString, diagnostics)
         for (name, values, dimensions, units) in variables
             variable = defVar(dataset, name, Float64, dimensions)
             variable.attrib["units"] = units
+            if name == "global_surface_temperature"
+                variable.attrib["long_name"] = _GLOBAL_AIR_TEMPERATURE_LONG_NAME
+                variable.attrib["comment"] = "Legacy variable name; not SST or land-skin temperature."
+            end
             variable[:] = values
         end
 

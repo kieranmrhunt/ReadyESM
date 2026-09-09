@@ -56,3 +56,5 @@ land_dispatch = which(
 @test land_dispatch.module === ReadyESM
 
 include("darcy_boundary.jl")
+include("sampled_global_diagnostics.jl")
+include("sampled_history_output.jl")

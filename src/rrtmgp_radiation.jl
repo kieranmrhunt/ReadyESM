@@ -983,7 +983,9 @@ function SpeedyWeather.initialize!(
     vars::SpeedyWeather.Variables,
     model::SpeedyWeather.PrimitiveEquation,
 ) where {NF}
-    callback.temperature = Vector{NF}(undef, vars.prognostic.clock.n_timesteps + 1)
+    # Unwritten diagnostic capacity must never resemble a physical sample,
+    # including if an integration fails before its requested endpoint.
+    callback.temperature = fill(NF(NaN), vars.prognostic.clock.n_timesteps + 1)
     callback.temperature[1] = _lowest_layer_global_temperature(vars, model)
     callback.timestep_counter = 1
     return nothing
