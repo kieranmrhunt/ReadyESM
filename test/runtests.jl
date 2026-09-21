@@ -1,7 +1,8 @@
 using ReadyESM
 using Test
 
-config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml"))
+config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
+    check_input_files = false)
 
 @test config.device == :gpu
 @test (config.truncation, config.nlayers) == (31, 27)
@@ -55,6 +56,11 @@ land_dispatch = which(
 )
 @test land_dispatch.module === ReadyESM
 
+include("config_input_files.jl")
 include("darcy_boundary.jl")
 include("sampled_global_diagnostics.jl")
 include("sampled_history_output.jl")
+include("native_runoff.jl")
+include("tripolar_runoff_delivery.jl")
+include("precipitation_diagnostics.jl")
+include("precipitation_pressure.jl")

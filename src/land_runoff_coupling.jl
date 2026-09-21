@@ -2,15 +2,16 @@
 NumericalEarth land adapter that routes the runoff already evolved by
 SpeedyWeather's embedded Terrarium model into the dynamic ocean.
 
-The adapter owns no second land state and takes no timestep. Each Terrarium
-column's depth-rate runoff is multiplied by its fractional Gaussian-cell area
+The adapter owns no second land model. It consumes the runoff amount produced
+by every native land step and holds its mean rate for the next ocean interval.
+Each Terrarium column's depth-rate runoff is multiplied by its fractional Gaussian-cell area
 to form discharge and spread across the nearest wet ocean cells. The selected
 routing weighting controls whether those receivers get equal areal mass flux
 (the legacy behavior) or equal fractional column-volume input. Both choices
 retain exact global discharge without injecting a whole T31 land column (or a
 cluster of inland columns) into one 1-degree ocean cell.
 """
-struct TerrariumRunoffLand{R, I, W, M}
+struct TerrariumRunoffLand{R, I, W, M, E}
     surface_runoff::R
     contribution_column::I
     contribution_weight::W
@@ -23,7 +24,18 @@ struct TerrariumRunoffLand{R, I, W, M}
     routing_weighting::Symbol
     represented_land_area::Float64
     river_mouth_mixing::M
+    runoff_exchange::E
 end
+
+# Prescribed-rate callers retain the stateless constructor.
+TerrariumRunoffLand(surface_runoff, contribution_column, contribution_weight,
+    target_i, target_j, offsets, source_columns, target_cells,
+    receivers_per_source, routing_weighting, represented_land_area,
+    river_mouth_mixing) = TerrariumRunoffLand(
+        surface_runoff, contribution_column, contribution_weight,
+        target_i, target_j, offsets, source_columns, target_cells,
+        receivers_per_source, routing_weighting, represented_land_area,
+        river_mouth_mixing, nothing)
 
 const DYNAMIC_RIVER_MOUTH_UPDATE_COMPLETION_PROVENANCE =
     "device_completion_after_runoff_scatter_and_coefficient_halo_fill_v1"
@@ -62,10 +74,39 @@ Base.summary(land::TerrariumRunoffLand) =
     "$(land.receivers_per_source) receivers -> $(land.target_cells) ocean cells, " *
     "$(land.routing_weighting))"
 
-Oceananigans.TimeSteppers.time_step!(::TerrariumRunoffLand, Δt) = nothing
-Oceananigans.Simulations.reset_clock!(::TerrariumRunoffLand) = nothing
-Oceananigans.prognostic_state(::TerrariumRunoffLand) = nothing
-Oceananigans.restore_prognostic_state!(land::TerrariumRunoffLand, ::Nothing) = land
+function Oceananigans.TimeSteppers.time_step!(land::TerrariumRunoffLand, Δt)
+    isnothing(land.runoff_exchange) || _consume_native_runoff!(
+        land.surface_runoff, land.runoff_exchange.pending_depth, Δt)
+    return nothing
+end
+
+function Oceananigans.Simulations.reset_clock!(land::TerrariumRunoffLand)
+    if !isnothing(land.runoff_exchange)
+        fill!(land.runoff_exchange.pending_depth, 0)
+        fill!(land.surface_runoff, 0)
+    end
+    return nothing
+end
+
+function Oceananigans.prognostic_state(land::TerrariumRunoffLand)
+    isnothing(land.runoff_exchange) && return nothing
+    return (; schema="readiesm_native_runoff_exchange_v1",
+        runoff_exchange=_native_runoff_exchange_state(land))
+end
+
+function Oceananigans.restore_prognostic_state!(land::TerrariumRunoffLand, ::Nothing)
+    isnothing(land.runoff_exchange) || error(
+        "checkpoint predates owned native runoff; initialize a new run")
+    return land
+end
+
+function Oceananigans.restore_prognostic_state!(land::TerrariumRunoffLand, state::NamedTuple)
+    !isnothing(land.runoff_exchange) || error("checkpoint runoff has no matching exchange")
+    hasproperty(state, :schema) && state.schema == "readiesm_native_runoff_exchange_v1" ||
+        error("unsupported native-runoff checkpoint schema")
+    _restore_native_runoff_exchange!(land, state.runoff_exchange)
+    return land
+end
 NumericalEarth.EarthSystemModels.adopt_clock(land::TerrariumRunoffLand, clock) = land
 NumericalEarth.EarthSystemModels.update_net_fluxes!(coupled_model, ::TerrariumRunoffLand) =
     nothing
@@ -101,6 +142,8 @@ end
 function _wet_ocean_cells(grid; compute_volume = true)
     cpu_grid = Oceananigans.on_architecture(Oceananigans.CPU(), grid)
     Nx, Ny, Nz = size(cpu_grid)
+    center_folded = Oceananigans.topology(cpu_grid, 2) ==
+        Oceananigans.RightCenterFolded
     λc = Float64.(collect(Oceananigans.Grids.λnodes(
         cpu_grid,
         Oceananigans.Center(),
@@ -118,6 +161,9 @@ function _wet_ocean_cells(grid; compute_volume = true)
     wet_area = Float64[]
     wet_volume = Float64[]
     for j in 1:Ny, i in 1:Nx
+        # The eastern half of this fold is duplicate storage, excluded from
+        # physical integrals and overwritten during native halo filling.
+        center_folded && j == Ny && i > Nx ÷ 2 && continue
         inactive = Oceananigans.Grids.inactive_node(
             i,
             j,
@@ -293,14 +339,18 @@ function _build_terrarium_runoff_land(
     river_mouth_mixing = nothing,
 )
     terrarium_state = atmosphere.variables.prognostic.land.terrarium
-    surface_runoff = terrarium_state.surface_runoff
+    hasproperty(terrarium_state, :runoff_pending_depth) || error(
+        "Terrarium runoff requires native-step amount storage")
+    pending_depth = Oceananigans.interior(terrarium_state.runoff_pending_depth)
+    surface_runoff = similar(pending_depth)
+    fill!(surface_runoff, 0)
     spectral_grid = atmosphere.model.spectral_grid
     longitude, latitude = RG.get_londlatds(spectral_grid.grid)
     longitude = Float64.(Array(longitude))
     latitude = Float64.(Array(latitude))
     land_fraction = Float64.(Array(atmosphere.model.land_sea_mask.mask.data))
     land_points = findall(land_fraction .> 0)
-    size(Oceananigans.interior(surface_runoff), 1) == length(land_points) ||
+    size(surface_runoff, 1) == length(land_points) ||
         error("Terrarium runoff columns do not match the SpeedyWeather land mask")
 
     point_weights = Float64.(Array(_global_point_weights(spectral_grid)))
@@ -328,6 +378,7 @@ function _build_terrarium_runoff_land(
         routing.routing_weighting,
         sum(source_area),
         river_mouth_mixing,
+        (; pending_depth),
     )
 end
 
@@ -485,6 +536,8 @@ function _scatter_terrarium_runoff_state!(freshwater_flux, land::TerrariumRunoff
             ndrange = land.target_cells,
         )
     end
+    Oceananigans.fill_halo_regions!(freshwater_flux)
+    Oceananigans.Architectures.synchronize(Oceananigans.architecture(freshwater_flux.grid))
     return nothing
 end
 
@@ -496,4 +549,14 @@ function NumericalEarth.EarthSystemModels.interpolate_state!(
 )
     freshwater_flux = exchanger.state.freshwater_flux
     return _scatter_terrarium_runoff_state!(freshwater_flux, land)
+end
+
+"""Report unique runoff receivers without changing live folded storage."""
+function _runoff_surface_grid_matrix(field)
+    values = _surface_grid_matrix(field)
+    if Oceananigans.topology(field.grid, 2) == Oceananigans.RightCenterFolded
+        Nx, Ny = size(values)
+        values[Nx ÷ 2 + 1:Nx, Ny] .= 0
+    end
+    return values
 end

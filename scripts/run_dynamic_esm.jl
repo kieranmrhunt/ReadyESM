@@ -1,12 +1,12 @@
 #!/usr/bin/env julia
 
+length(ARGS) == 1 || error("usage: run_dynamic_esm.jl CONFIG.yml")
+
 using ReadyESM
 
 import CUDA
 
-config_path = isempty(ARGS) ?
-    joinpath(ReadyESM.PROJECT_ROOT, "config", "dynamic_esm_smoke.yml") : ARGS[1]
-config = load_config(config_path)
+config = load_config(only(ARGS))
 
 if config.device == :gpu
     CUDA.functional() || error("device=gpu was requested but CUDA is not functional")

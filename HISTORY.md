@@ -6,13 +6,28 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
-### Unreleased
+### 0.1.4 — release candidate
 
 - Save only recorded temperature and radiation samples after an interrupted
   run; unused capacity can no longer appear as spurious zero-kelvin output.
 - Preserve genuinely non-finite samples and clarify that the legacy
   `global_surface_temperature` field is lowest-layer air temperature.
-- Diagnostic-only change; model physics and production settings are unchanged.
+- Those output changes leave model physics and production settings unchanged.
+- Integrate runoff at each native Terrarium step before passing it to the
+  ocean. The previous endpoint-rate approximation could lose runoff water.
+- Route only to unique ocean cells at the tripolar join, and fill the copied
+  boundary cells from their physical partners before applying the flux.
+- Checkpoints now retain pending runoff and held discharge; older checkpoints
+  cannot silently restore into this updated exchange.
+- Check rainfall-component sums at native Float32 precision; exporting rates
+  as Float64 does not remove their original rounding error.
+- Retain the pressure used by convection and condensation when checking
+  precipitation against humidity tendencies, rather than using later pressure.
+- Allow configuration inspection before input downloads. Model construction
+  still requires the input files. CPU regression tests can run without ERA5
+  credentials, and GitHub Actions runs them from the pinned environment.
+- Full coupled GPU smoke and fresh-process restart qualification are pending.
+  This candidate has not been tagged as a release.
 
 ### 0.1.3 — 2026-09-08
 

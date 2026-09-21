@@ -321,6 +321,12 @@ SpeedyWeather.variables(convection::NetColumnBettsMillerConvection) = (
         units = "K/s",
     ),
     SpeedyWeather.ParameterizationVariable(
+        :convective_precipitation_surface_pressure,
+        SpeedyWeather.Grid2D();
+        desc = "Surface pressure used to diagnose convective precipitation",
+        units = "Pa",
+    ),
+    SpeedyWeather.ParameterizationVariable(
         :convective_precipitation_mass_correction,
         SpeedyWeather.Grid2D();
         desc = "Net-column minus upstream convective precipitation rate",
@@ -345,6 +351,8 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
         vars.parameterizations.convective_humidity_tendency
     convective_temperature_tendency =
         vars.parameterizations.convective_temperature_tendency
+    vars.parameterizations.convective_precipitation_surface_pressure[ij] =
+        vars.grid.pressure_prev[ij]
     layer_thickness = model.geometry.σ_levels_thick
     column_tendency_before = zero(eltype(humidity_tendency))
     for k in 1:length(layer_thickness)
@@ -626,6 +634,12 @@ SpeedyWeather.variables(condensation::ObservedImplicitCondensation) = (
         units = "K/s",
     ),
     SpeedyWeather.ParameterizationVariable(
+        :large_scale_precipitation_surface_pressure,
+        SpeedyWeather.Grid2D();
+        desc = "Surface pressure used to diagnose large-scale precipitation",
+        units = "Pa",
+    ),
+    SpeedyWeather.ParameterizationVariable(
         :large_scale_precipitation_mass_correction,
         SpeedyWeather.Grid2D();
         desc = "Applied correction to upstream large-scale precipitation rate",
@@ -650,6 +664,8 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
         vars.parameterizations.large_scale_condensation_humidity_tendency
     process_temperature_tendency =
         vars.parameterizations.large_scale_condensation_temperature_tendency
+    vars.parameterizations.large_scale_precipitation_surface_pressure[ij] =
+        vars.grid.pressure_prev[ij]
     nlayers = length(model.geometry.σ_levels_thick)
 
     for k in 1:nlayers
@@ -734,6 +750,12 @@ SpeedyWeather.variables(condensation::NetColumnImplicitCondensation) = (
         units = "K/s",
     ),
     SpeedyWeather.ParameterizationVariable(
+        :large_scale_precipitation_surface_pressure,
+        SpeedyWeather.Grid2D();
+        desc = "Surface pressure used to diagnose large-scale precipitation",
+        units = "Pa",
+    ),
+    SpeedyWeather.ParameterizationVariable(
         :large_scale_precipitation_mass_correction,
         SpeedyWeather.Grid2D();
         desc = "Net-column minus upstream large-scale precipitation rate",
@@ -758,6 +780,8 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
         vars.parameterizations.large_scale_condensation_humidity_tendency
     process_temperature_tendency =
         vars.parameterizations.large_scale_condensation_temperature_tendency
+    vars.parameterizations.large_scale_precipitation_surface_pressure[ij] =
+        vars.grid.pressure_prev[ij]
     layer_thickness = model.geometry.σ_levels_thick
     nlayers = length(layer_thickness)
     column_tendency_before = zero(eltype(humidity_tendency))

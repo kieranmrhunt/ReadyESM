@@ -410,6 +410,8 @@ function Terrarium.StateVariables(
         Terrarium.variables(model)...,
         interface_variables...,
         input_variables...,
+        Terrarium.auxiliary(:runoff_pending_depth, Terrarium.XY();
+            desc = "Native runoff depth awaiting land-to-ocean exchange (m)"),
     )
     ground_heat_flux = Terrarium.initialize(
         variables.ground_heat_flux,
@@ -1680,7 +1682,8 @@ function _run_terrarium_land!(
     trace = _trace_terrarium_substeps(integrator.state)
     schedule = _terrarium_substep_schedule(period, land_timestep)
     timestepper = Terrarium.get_timestepper(integrator.model)
-    if !trace && isnothing(diagnostics) && iszero(schedule.remainder)
+    owns_runoff = hasproperty(integrator.state, :runoff_pending_depth)
+    if !trace && isnothing(diagnostics) && !owns_runoff && iszero(schedule.remainder)
         Terrarium.run!(integrator; period, Δt = land_timestep)
         return nothing
     end
@@ -1705,6 +1708,7 @@ function _run_terrarium_land!(
         else
             Terrarium.timestep!(integrator, land_timestep; finalize = false)
         end
+        _accumulate_native_runoff!(integrator.state, land_timestep)
         isnothing(diagnostics) || _accumulate_terrarium_land_water_budget!(
             diagnostics,
             integrator.state,
@@ -1738,6 +1742,7 @@ function _run_terrarium_land!(
                 finalize = false,
             )
         end
+        _accumulate_native_runoff!(integrator.state, schedule.remainder)
         isnothing(diagnostics) || _accumulate_terrarium_land_water_budget!(
             diagnostics,
             integrator.state,

@@ -7,6 +7,10 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
+The `v0.1.4` candidate repairs native runoff integration, tripolar runoff
+delivery and precipitation diagnostics. Its validation status is recorded in
+[`HISTORY.md`](HISTORY.md).
+
 ![ReadyESM v0.1.1 coupled 30-day control](docs/readiesm-v0.1.1-30day.png)
 
 *A 30-day initialised v0.1.1 run.*
@@ -17,6 +21,7 @@ ReadyESM requires Julia 1.12 and an NVIDIA GPU with working CUDA drivers.
 
 ```bash
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
+python -m pip install -r scripts/requirements.txt
 python scripts/download_era5_initial_state.py --include-stratosphere
 julia --project=. scripts/run_dynamic_esm.jl config/production.yml
 ```
@@ -39,3 +44,32 @@ emissions-driven CO2 or aerosol chemistry yet.
 
 See [`NOTES.md`](NOTES.md) for the present scientific limitations and
 [`HISTORY.md`](HISTORY.md) for the short model history.
+
+## Test
+
+The CPU regression suite uses synthetic initial conditions and requires no
+ERA5 credentials or GPU. After instantiating the pinned environment, run:
+
+```bash
+julia --project=. --startup-file=no test/runtests.jl
+```
+
+On a CUDA machine with the production inputs, the short coupled and restart
+checks run in separate Julia processes:
+
+```bash
+julia --project=. scripts/validate_coupled_smoke.jl artifacts/release-smoke
+julia --project=. scripts/validate_coupled_restart.jl \
+    artifacts/release-smoke/hour1_restart.jld2 artifacts/release-restart
+julia --project=. scripts/compare_dynamic_restart_boundaries.jl \
+    artifacts/release-restart artifacts/release-smoke/hour1_restart.jld2 \
+    artifacts/release-restart/restored_boundary.jld2
+```
+
+These checks exercise one simulated hour followed by an independently restored
+hour at production resolution. They verify exact checkpoint restoration and
+finite continuation; they do not establish a stationary climate or exact
+equality between continuous and restarted trajectories.
+
+Checkpoints made before the native-runoff repair lack pending exchange water.
+Start a new run with this version; those checkpoints are rejected explicitly.

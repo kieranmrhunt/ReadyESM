@@ -2289,7 +2289,7 @@ version = "0.1.21"
 deps = ["Adapt", "CUDA", "CairoMakie", "ClimaComms", "ClimaOcean", "ClimaSeaIce", "ConservativeRegridding", "Dates", "JLD2", "KernelAbstractions", "NCDatasets", "NumericalEarth", "Oceananigans", "RRTMGP", "SHA", "SpeedyTransforms", "SpeedyWeather", "Statistics", "Terrarium", "YAML"]
 path = "."
 uuid = "c4a7aed0-5f3e-4a53-ba63-386ba9f93654"
-version = "0.1.0"
+version = "0.1.4"
 
 [[deps.RealDot]]
 deps = ["LinearAlgebra"]

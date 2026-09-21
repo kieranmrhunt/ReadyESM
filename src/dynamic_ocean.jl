@@ -2145,16 +2145,14 @@ function _sample_coupled_budget_state!(callback, simulation)
         push!(callback.ocean_river_mouth_active_mixing_cells, 0)
         push!(callback.ocean_river_mouth_active_mixing_area_m2, 0.0)
     else
-        active_mixing_mask = Float64.(Array(Oceananigans.interior(
-            active_mixing_field,
-        )))[:, :, 1]
+        active_mixing_mask = _runoff_surface_grid_matrix(active_mixing_field)
         all(value -> value == 0 || value == 1, active_mixing_mask) || error(
             "river-mouth active mixing mask is not binary",
         )
         if diagnostic.ocean_river_mouth_dynamically_gated
-            routed_runoff = Float64.(Array(Oceananigans.interior(
+            routed_runoff = _runoff_surface_grid_matrix(
                 diagnostic.ocean_routed_land_runoff,
-            )))[:, :, 1]
+            )
             all(routed_runoff .>= 0) || error(
                 "routed land runoff contains a negative freshwater flux",
             )
@@ -2609,7 +2607,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         isnothing(mixing) && error(
             "localized active-mixing diagnostics lack closure fields",
         )
-        active = _surface_grid_matrix(mixing.active_receiver_mask)
+        active = _runoff_surface_grid_matrix(mixing.active_receiver_mask)
         size(active) == size(river_mouth_footprint.receiver_mask) || throw(
             DimensionMismatch(
                 "active river-mouth mask does not match the receiver grid",
@@ -2626,7 +2624,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         zeros(Float64, size(ocean_surface_active_mask))
     end
     ocean_routed_land_runoff_flux = if earth.land isa TerrariumRunoffLand
-        _surface_grid_matrix(
+        _runoff_surface_grid_matrix(
             earth.interfaces.exchanger.land.state.freshwater_flux,
         )
     else
@@ -2989,6 +2987,9 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         _FRESHWATER_DENSITY_KG_M3 .* Float64.(Array(
             atmosphere.variables.parameterizations.convective_precipitation_mass_correction.data,
         ))
+    atmosphere_convective_precipitation_surface_pressure = Float64.(Array(
+        atmosphere.variables.parameterizations.convective_precipitation_surface_pressure.data,
+    ))
     atmosphere_large_scale_rainfall_flux =
         _FRESHWATER_DENSITY_KG_M3 .* Float64.(Array(
             atmosphere.variables.parameterizations.rain_rate_large_scale.data,
@@ -3001,6 +3002,9 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         _FRESHWATER_DENSITY_KG_M3 .* Float64.(Array(
             atmosphere.variables.parameterizations.large_scale_precipitation_mass_correction.data,
         ))
+    atmosphere_large_scale_precipitation_surface_pressure = Float64.(Array(
+        atmosphere.variables.parameterizations.large_scale_precipitation_surface_pressure.data,
+    ))
     atmosphere_snowfall_flux = _FRESHWATER_DENSITY_KG_M3 .* Float64.(
         Array(atmosphere.variables.parameterizations.snow_rate.data),
     )
@@ -3099,9 +3103,11 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         atmosphere_rainfall_flux,
         atmosphere_convective_rainfall_flux,
         atmosphere_convective_precipitation_mass_correction_flux,
+        atmosphere_convective_precipitation_surface_pressure,
         atmosphere_large_scale_rainfall_flux,
         atmosphere_large_scale_snowfall_flux,
         atmosphere_large_scale_precipitation_mass_correction_flux,
+        atmosphere_large_scale_precipitation_surface_pressure,
         atmosphere_snowfall_flux,
         atmosphere_precipitation_cloud_top_layer,
         atmosphere_vertical_diffusion_cfl_scale,
@@ -3411,6 +3417,8 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 "implicit condensation net column humidity drying",
             atmosphere_layer_process_diagnostics =
                 "signed_incremental_parameterization_tendencies_v1",
+            atmosphere_process_surface_pressure_diagnostics =
+                "parameterization_time_pressure_prev_v1",
             atmosphere_cumulative_process_profile_diagnostics =
                 "Gaussian-area-weighted applied-process integral v1",
             atmosphere_process_profile_start_day =
@@ -3492,6 +3500,11 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             _land_initial_condition_provenance(config)...,
             land_runoff_routing = earth.land isa TerrariumRunoffLand ?
                 "16-nearest-wet-cell conservative spreading" : "none",
+            land_runoff_time_integration = earth.land isa TerrariumRunoffLand &&
+                !isnothing(earth.land.runoff_exchange) ?
+                TERRARIUM_RUNOFF_TIME_INTEGRATION_PROVENANCE : "none",
+            land_runoff_surface_storage =
+                "unique_physical_cells_duplicate_center_fold_storage_zero_v1",
             land_runoff_routing_weighting = earth.land isa TerrariumRunoffLand ?
                 String(earth.land.routing_weighting) : "none",
             routed_land_columns = earth.land isa TerrariumRunoffLand ?
@@ -3706,9 +3719,11 @@ function validate_dynamic_diagnostics(diagnostics)
         :atmosphere_rainfall_flux,
         :atmosphere_convective_rainfall_flux,
         :atmosphere_convective_precipitation_mass_correction_flux,
+        :atmosphere_convective_precipitation_surface_pressure,
         :atmosphere_large_scale_rainfall_flux,
         :atmosphere_large_scale_snowfall_flux,
         :atmosphere_large_scale_precipitation_mass_correction_flux,
+        :atmosphere_large_scale_precipitation_surface_pressure,
         :atmosphere_snowfall_flux,
         :atmosphere_precipitation_cloud_top_layer,
         :atmosphere_vertical_diffusion_cfl_scale,
@@ -3787,6 +3802,20 @@ function validate_dynamic_diagnostics(diagnostics)
         for name in layer_process_fields
     ) || error(
         "layer-resolved moist-process fields do not match the atmosphere grid",
+    )
+    process_pressure_fields = (
+        :atmosphere_convective_precipitation_surface_pressure,
+        :atmosphere_large_scale_precipitation_surface_pressure,
+    )
+    all(
+        length(getproperty(diagnostics, name)) ==
+            length(diagnostics.atmosphere_surface_pressure) &&
+        all(>(0), getproperty(diagnostics, name))
+        for name in process_pressure_fields
+    ) || error("moist-process surface-pressure diagnostics are invalid")
+    diagnostics.metadata.atmosphere_process_surface_pressure_diagnostics ==
+        "parameterization_time_pressure_prev_v1" || error(
+        "moist-process surface-pressure diagnostics lack exact provenance",
     )
     diagnostics.metadata.atmosphere_layer_process_diagnostics ==
         "signed_incremental_parameterization_tendencies_v1" || error(
@@ -4030,18 +4059,17 @@ function validate_dynamic_diagnostics(diagnostics)
         error("large-scale snowfall flux is negative")
     all(diagnostics.atmosphere_snowfall_flux .>= 0) ||
         error("snowfall flux is negative")
-    precipitation_component_tolerance = 1e-10
-    all(abs.(
-        diagnostics.atmosphere_rainfall_flux .-
-        diagnostics.atmosphere_convective_rainfall_flux .-
-        diagnostics.atmosphere_large_scale_rainfall_flux
-    ) .<= precipitation_component_tolerance) || error(
+    _precipitation_components_close(
+        diagnostics.atmosphere_rainfall_flux,
+        diagnostics.atmosphere_convective_rainfall_flux .+
+        diagnostics.atmosphere_large_scale_rainfall_flux,
+    ) || error(
         "rainfall flux does not equal convective plus large-scale components",
     )
-    all(abs.(
-        diagnostics.atmosphere_snowfall_flux .-
-        diagnostics.atmosphere_large_scale_snowfall_flux
-    ) .<= precipitation_component_tolerance) || error(
+    _precipitation_components_close(
+        diagnostics.atmosphere_snowfall_flux,
+        diagnostics.atmosphere_large_scale_snowfall_flux,
+    ) || error(
         "snowfall flux does not equal its large-scale component",
     )
     layer_thickness = reshape(
@@ -4053,10 +4081,14 @@ function validate_dynamic_diagnostics(diagnostics)
         diagnostics.metadata.atmosphere_gravity_ms2 > 0 || error(
         "atmosphere gravitational acceleration is invalid",
     )
-    surface_column_mass = diagnostics.atmosphere_surface_pressure ./
+    convective_surface_column_mass =
+        diagnostics.atmosphere_convective_precipitation_surface_pressure ./
+        diagnostics.metadata.atmosphere_gravity_ms2
+    large_scale_surface_column_mass =
+        diagnostics.atmosphere_large_scale_precipitation_surface_pressure ./
         diagnostics.metadata.atmosphere_gravity_ms2
     convective_precipitation_from_tendency = max.(
-        -surface_column_mass .* vec(sum(
+        -convective_surface_column_mass .* vec(sum(
             diagnostics.atmosphere_convective_humidity_tendency .*
             layer_thickness;
             dims = 2,
@@ -4064,7 +4096,7 @@ function validate_dynamic_diagnostics(diagnostics)
         0,
     )
     large_scale_precipitation_from_tendency = max.(
-        -surface_column_mass .* vec(sum(
+        -large_scale_surface_column_mass .* vec(sum(
             diagnostics.atmosphere_large_scale_condensation_humidity_tendency .*
             layer_thickness;
             dims = 2,
@@ -4163,17 +4195,17 @@ function validate_dynamic_diagnostics(diagnostics)
     all(isnan(values[1]) && all(isfinite, values[2:end])
         for values in precipitation_series) ||
         error("precipitation series must be NaN initially and finite afterwards")
-    all(abs.(
-        diagnostics.global_rainfall_flux[2:end] .-
-        diagnostics.global_convective_rainfall_flux[2:end] .-
-        diagnostics.global_large_scale_rainfall_flux[2:end]
-    ) .<= precipitation_component_tolerance) || error(
+    _precipitation_components_close(
+        diagnostics.global_rainfall_flux[2:end],
+        diagnostics.global_convective_rainfall_flux[2:end] .+
+        diagnostics.global_large_scale_rainfall_flux[2:end],
+    ) || error(
         "global rainfall series does not close across process components",
     )
-    all(abs.(
-        diagnostics.global_snowfall_flux[2:end] .-
-        diagnostics.global_large_scale_snowfall_flux[2:end]
-    ) .<= precipitation_component_tolerance) || error(
+    _precipitation_components_close(
+        diagnostics.global_snowfall_flux[2:end],
+        diagnostics.global_large_scale_snowfall_flux[2:end],
+    ) || error(
         "global snowfall series does not close across process components",
     )
     isnan(diagnostics.global_surface_air_temperature[1]) &&
@@ -4442,6 +4474,14 @@ function validate_dynamic_diagnostics(diagnostics)
     ) || error("runoff-receiver salinity series and time dimensions differ")
     has_runoff_router = diagnostics.metadata.land == "Terrarium"
     if has_runoff_router
+        hasproperty(diagnostics.metadata, :land_runoff_time_integration) &&
+            diagnostics.metadata.land_runoff_time_integration ==
+            TERRARIUM_RUNOFF_TIME_INTEGRATION_PROVENANCE || error(
+                "land runoff does not record native-step amount integration")
+        hasproperty(diagnostics.metadata, :land_runoff_surface_storage) &&
+            diagnostics.metadata.land_runoff_surface_storage ==
+            "unique_physical_cells_duplicate_center_fold_storage_zero_v1" || error(
+                "land runoff does not record unique physical receiver storage")
         all(isfinite, diagnostics.ocean_runoff_receiver_surface_salinity_minimum_series) &&
             all(isfinite, diagnostics.ocean_runoff_receiver_surface_salinity_minimum_longitude) &&
             all(isfinite, diagnostics.ocean_runoff_receiver_surface_salinity_minimum_latitude) ||
@@ -4838,6 +4878,10 @@ function _write_dynamic_netcdf(path, diagnostics)
                 "1",
             ),
             ("atmosphere_surface_pressure", diagnostics.atmosphere_surface_pressure, "Pa"),
+            ("atmosphere_convective_precipitation_surface_pressure",
+                diagnostics.atmosphere_convective_precipitation_surface_pressure, "Pa"),
+            ("atmosphere_large_scale_precipitation_surface_pressure",
+                diagnostics.atmosphere_large_scale_precipitation_surface_pressure, "Pa"),
             ("atmosphere_surface_specific_humidity", diagnostics.atmosphere_surface_specific_humidity, "kg/kg"),
             ("atmosphere_surface_zonal_wind", diagnostics.atmosphere_surface_zonal_wind, "m/s"),
             ("atmosphere_surface_meridional_wind", diagnostics.atmosphere_surface_meridional_wind, "m/s"),

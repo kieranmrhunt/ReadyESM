@@ -11,7 +11,9 @@
 - Terrarium 0.1.6 `LandModel` with 16 soil layers and prescribed vegetation.
   Its new snow component is disabled for the current compatibility baseline,
   so snowfall follows the previously qualified liquid-input treatment.
-- Terrarium runoff is transferred conservatively to nearby ocean cells.
+- Terrarium runoff is accumulated at every native land step and transferred
+  to unique physical ocean cells. Pending water and the held discharge are
+  included in checkpoints.
 
 ReadyESM carries small patches to Terrarium and SpeedyTransforms. Their source
 and licences are included under `vendor/`.
@@ -20,10 +22,11 @@ and licences are included under `vendor/`.
 
 - Recent production-path tests reproduced an illegal GPU memory access during
   the first sea-ice momentum step. A synchronization-only candidate did not
-  resolve it. This remains under investigation; v0.1.3 does not fix it.
+  resolve it. This remains under investigation.
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
-  and is not included in this maintenance release.
+  and is not included in the runoff release candidate. Its later ice-interface
+  non-convergence also remains under investigation.
 - The late model energy balance is still too positive (about +20 W m-2 all-sky
   and +45 W m-2 clear-sky in the completed control). The model is not spun up
   or calibrated for projections.
@@ -36,7 +39,8 @@ and licences are included under `vendor/`.
   mixing was too intrusive; a narrowly loading-scaled closure is still being
   tested and is not selected in `production.yml`.
 - Terrarium 0.1.6 has passed CPU and GPU water-conservation gates plus a coupled
-  RRTMGP/Terrarium GPU step. Restart and long-run qualification remain.
+  RRTMGP/Terrarium GPU step. Native-runoff component restart checks pass;
+  full coupled restart and long-run qualification remain separate gates.
 - Forcing is concentration/AOD driven. Carbon-cycle, SO2 and aerosol-emissions
   modules are not present.
 

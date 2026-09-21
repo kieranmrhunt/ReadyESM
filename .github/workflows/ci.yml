@@ -1,0 +1,34 @@
+name: CPU regression
+
+on:
+  push:
+    branches: [main, 'release/**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cpu-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      JULIA_NUM_THREADS: '2'
+      JULIA_NUM_PRECOMPILE_TASKS: '2'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1.12.5'
+      - uses: julia-actions/cache@v2
+      - name: Instantiate pinned dependencies
+        run: julia --project=. --startup-file=no -e 'using Pkg; Pkg.instantiate()'
+      - name: Run CPU tests without private forcing files
+        run: julia --project=. --startup-file=no test/runtests.jl

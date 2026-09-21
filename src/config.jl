@@ -171,8 +171,14 @@ function _parse_start_date(value)
     end
 end
 
-"""Load an experiment configuration from YAML."""
-function load_config(path::AbstractString)
+"""
+    load_config(path; check_input_files=true)
+
+Load and validate an experiment. Set `check_input_files=false` to inspect its
+settings before downloading ERA5/ECCO inputs. Model builders always validate
+input availability before construction.
+"""
+function load_config(path::AbstractString; check_input_files::Bool = true)
     raw = YAML.load_file(path)
     _validate_mapping_keys(
         raw,
@@ -483,11 +489,11 @@ function load_config(path::AbstractString)
         output_dir = output_dir,
         forcing = forcing,
     )
-    validate(config)
+    validate(config; check_input_files)
     return config
 end
 
-function validate(config::ExperimentConfig)
+function validate(config::ExperimentConfig; check_input_files::Bool = true)
     _validate_finite_float_fields(config, "experiment configuration")
     _validate_finite_float_fields(config.forcing, "forcing configuration")
     config.device in (:cpu, :gpu) || throw(ArgumentError("device must be cpu or gpu"))
@@ -732,7 +738,7 @@ function validate(config::ExperimentConfig)
             )
         end
 
-        if !isempty(config.ecco_initial_conditions_directory)
+        if check_input_files && !isempty(config.ecco_initial_conditions_directory)
             isdir(config.ecco_initial_conditions_directory) || throw(ArgumentError(
                 "ECCO initial-condition directory not found: " *
                 config.ecco_initial_conditions_directory,
@@ -784,10 +790,10 @@ function validate(config::ExperimentConfig)
         isempty(config.era5_single_levels_path) && throw(
             ArgumentError("ERA5 initialization requires era5_single_levels_path"),
         )
-        isfile(config.era5_pressure_levels_path) || throw(
+        !check_input_files || isfile(config.era5_pressure_levels_path) || throw(
             ArgumentError("ERA5 pressure-level file not found: $(config.era5_pressure_levels_path)"),
         )
-        isfile(config.era5_single_levels_path) || throw(
+        !check_input_files || isfile(config.era5_single_levels_path) || throw(
             ArgumentError("ERA5 single-level file not found: $(config.era5_single_levels_path)"),
         )
     end
@@ -813,7 +819,7 @@ function validate(config::ExperimentConfig)
         isempty(config.era5_land_state_path) && throw(ArgumentError(
             "ERA5 Terrarium initialization requires era5_land_state_path",
         ))
-        isfile(config.era5_land_state_path) || throw(ArgumentError(
+        !check_input_files || isfile(config.era5_land_state_path) || throw(ArgumentError(
             "ERA5 land-state file not found: $(config.era5_land_state_path)",
         ))
     end
