@@ -49,6 +49,13 @@ R.save_dynamic_restart_state(simulation, restored_path)
 println("PUBLIC_RUNOFF_FULL_RESTART_OWNED_STATE_PASS boundary=$restored_path")
 flush(stdout)
 
+# The saved boundary retains the original one-hour sampling horizon. Extend
+# that control metadata only after saving the exact restored model state, so
+# the atmosphere also records the endpoint of this additional hour.
+atmosphere = simulation.model.atmosphere
+atmosphere.variables.prognostic.clock.n_timesteps = 8
+atmosphere.model.callbacks[:global_atmosphere_diagnostics].final_timestep = 8
+
 # The restore helper has already reconciled and initialized the checkpoint.
 # Native run! resets initialized=false, which would do that work a second
 # time. Follow the existing initialized-restart verifier's stepping path.
@@ -68,6 +75,8 @@ end
 @test pointer(land.runoff_exchange.pending_depth) ==
     pointer(O.interior(state.runoff_pending_depth))
 diagnostics = R.collect_dynamic_diagnostics(simulation, config)
+@test length(diagnostics.atmosphere_diagnostic_time_days) == 3
+@test diagnostics.atmosphere_diagnostic_time_days[end] ≈ 1 / 12 rtol=eps(Float32)
 paths = R.save_dynamic_diagnostics(diagnostics, config; render_figure=false)
 R.save_dynamic_restart_state(simulation, joinpath(output, "hour2_restart.jld2"))
 println("SIMULATION_COMPLETION_PASS iteration=8 diagnostics=$(paths.netcdf_path)")
