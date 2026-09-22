@@ -17,7 +17,8 @@ delivery and precipitation diagnostics. Its validation status is recorded in
 
 ## Run
 
-ReadyESM requires Julia 1.12 and an NVIDIA GPU with working CUDA drivers.
+The production configuration requires Julia 1.12 and an NVIDIA GPU with
+working CUDA drivers.
 
 ```bash
 julia --project=. -e 'using Pkg; Pkg.instantiate()'
@@ -69,8 +70,8 @@ julia --project=. scripts/compare_dynamic_restart_boundaries.jl \
 These checks exercise one simulated hour followed by an independently restored
 hour at production resolution. They verify exact restoration of checkpointed
 model state and finite continuation. They do not establish a stationary climate
-or exact equality between continuous and restarted trajectories. Initial model
-construction and GPU compilation can take hours despite the short simulated
+or exact equality between continuous and restarted trajectories. Model
+construction and the first GPU step can take hours despite the short simulated
 duration.
 
 Checkpoints made before the native-runoff repair lack pending exchange water.

@@ -35,6 +35,10 @@ and licences are included under `vendor/`.
 - Arctic ice can still converge into coastal cells. Direct volume transport
   fixes a real conservation error, but the remaining hotspot needs a coupled
   qualification and probably better coastal/ice-thickness physics.
+- The pinned NumericalEarth air–ice flux kernel uses zero surface ice velocity
+  when calculating relative wind, despite the evolving ice dynamics. This
+  approximation needs review, including consistent vector mapping on the
+  tripolar grid. Its role in weak-wind solver failures is not established.
 - One-degree river mouths can retain very fresh surface lenses. Broad enhanced
   mixing was too intrusive; a narrowly loading-scaled closure is still being
   tested and is not selected in `production.yml`.

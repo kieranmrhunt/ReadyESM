@@ -1,4 +1,4 @@
-using ReadyESM, Test
+using ReadyESM, Test, Dates
 const R = ReadyESM
 const O = R.Oceananigans
 length(ARGS) == 2 || error("usage: validate_coupled_restart.jl CHECKPOINT NEW_OUTPUT")
@@ -17,11 +17,11 @@ R.CUDA.functional() || error("full coupled restart requires CUDA")
 R.CUDA.allowscalar(false)
 @test (config.truncation, config.nlayers) == (31, 27)
 @test (config.ocean_nlongitude, config.ocean_nlatitude, config.ocean_nlayers) == (360, 180, 60)
-println("PUBLIC_RUNOFF_FULL_RESTART_BUILD_BEGIN steps=8 restore_iteration=4")
+println("PUBLIC_RUNOFF_FULL_RESTART_BUILD_BEGIN steps=8 restore_iteration=4 timestamp=$(now(UTC))")
 flush(stdout)
 simulation = R.build_dynamic_esm(config; steps=8)
 @test Float64(simulation.Δt) == 900
-println("PUBLIC_RUNOFF_FULL_RESTART_BUILD_PASS")
+println("PUBLIC_RUNOFF_FULL_RESTART_BUILD_PASS timestamp=$(now(UTC))")
 flush(stdout)
 
 saved = O.OutputWriters.load_checkpoint_state(checkpoint; base_path="simulation")
@@ -36,6 +36,8 @@ state = simulation.model.atmosphere.variables.prognostic.land.terrarium
 fill!(land.runoff_exchange.pending_depth, NaN)
 fill!(land.surface_runoff, NaN)
 R.restore_dynamic_restart_state!(simulation, checkpoint)
+println("PUBLIC_RUNOFF_FULL_RESTART_RESTORE_RETURNED timestamp=$(now(UTC))")
+flush(stdout)
 @test simulation.initialized
 @test simulation.model.clock.iteration == 4
 @test simulation.model.clock.time == 3600
@@ -46,7 +48,7 @@ R.restore_dynamic_restart_state!(simulation, checkpoint)
 @test strides(land.runoff_exchange.pending_depth) == strides(O.interior(state.runoff_pending_depth))
 restored_path = joinpath(output, "restored_boundary.jld2")
 R.save_dynamic_restart_state(simulation, restored_path)
-println("PUBLIC_RUNOFF_FULL_RESTART_OWNED_STATE_PASS boundary=$restored_path")
+println("PUBLIC_RUNOFF_FULL_RESTART_OWNED_STATE_PASS boundary=$restored_path timestamp=$(now(UTC))")
 flush(stdout)
 
 # The saved boundary retains the original one-hour sampling horizon. Extend
@@ -62,7 +64,15 @@ atmosphere.model.callbacks[:global_atmosphere_diagnostics].final_timestep = 8
 simulation.stop_iteration = 8
 simulation.running = true
 while simulation.running
+    previous_iteration = simulation.model.clock.iteration
+    previous_time = simulation.model.clock.time
+    println("PUBLIC_RUNOFF_FULL_RESTART_STEP_BEGIN iteration=$(previous_iteration + 1) timestamp=$(now(UTC))")
+    flush(stdout)
     O.time_step!(simulation)
+    @test simulation.model.clock.iteration == previous_iteration + 1
+    @test simulation.model.clock.time == previous_time + 900
+    println("PUBLIC_RUNOFF_FULL_RESTART_STEP_PASS iteration=$(simulation.model.clock.iteration) timestamp=$(now(UTC))")
+    flush(stdout)
 end
 for callback in values(simulation.callbacks)
     O.Simulations.finalize!(callback, simulation)
