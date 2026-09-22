@@ -3436,7 +3436,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             cloud_condensate_summary...,
             speedy_cuda_graphs = Int(atmosphere.model.spectral_transform.cuda_graphs),
             speedy_cuda_graph_cache_key = atmosphere.model.spectral_transform.cuda_graphs ?
-                "device_pointer_upstream_54d500f" : "disabled",
+                "field_and_scratch_pointer_layout_owned_v2" : "disabled",
             coupled_gpu_component_handoff = config.device == :gpu &&
                 config.land_model == :terrarium ?
                 COUPLED_GPU_COMPONENT_HANDOFF_PROVENANCE : "not_applicable",

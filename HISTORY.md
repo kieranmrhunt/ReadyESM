@@ -23,11 +23,19 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   as Float64 does not remove their original rounding error.
 - Retain the pressure used by convection and condensation when checking
   precipitation against humidity tendencies, rather than using later pressure.
+- Include both scratch buffers and array layouts in the Fourier GPU graph
+  cache key, and retain the captured arrays until the cache is cleared. A
+  focused GPU test reproduced incorrect forward and inverse results with
+  changed scratch storage; the repaired cache passes 32 regression checks.
 - Allow configuration inspection before input downloads. Model construction
   still requires the input files. CPU regression tests can run without ERA5
   credentials, and GitHub Actions runs them from the pinned environment.
-- Full coupled GPU smoke and fresh-process restart qualification are pending.
-  This candidate has not been tagged as a release.
+- Before the graph cache repair, production GPU and CPU one-hour checks
+  passed the full diagnostic validator. CPU continuation and fresh GPU
+  restoration passed their checks. Resumed GPU evolution encountered illegal
+  memory access and blocked release. Fresh coupled checks of the graph repair
+  are pending; its connection to that failure has not been established. See the
+  [validation record](docs/validation-v0.1.4.md). This candidate is not tagged.
 
 ### 0.1.3 — 2026-09-08
 

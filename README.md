@@ -8,7 +8,8 @@ This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
 The `v0.1.4` candidate repairs native runoff integration, tripolar runoff
-delivery and precipitation diagnostics. Its validation status is recorded in
+delivery, precipitation diagnostics and Fourier GPU graph buffer selection.
+Its validation status is recorded in
 [`HISTORY.md`](HISTORY.md).
 
 ![ReadyESM v0.1.1 coupled 30-day control](docs/readiesm-v0.1.1-30day.png)
@@ -27,9 +28,13 @@ python scripts/download_era5_initial_state.py --include-stratosphere
 julia --project=. scripts/run_dynamic_esm.jl config/production.yml
 ```
 
-The ERA5 download requires CDS credentials. ECCO V4r4 data are loaded through
-the ClimaOcean/NumericalEarth data path. `scripts/prepare_ecco_monthly_bundle.jl`
-can verify and arrange a local monthly ECCO bundle.
+The ERA5 download requires CDS credentials. The January 1993 ECCO V4r4 files
+download through ClimaOcean/NumericalEarth, with a public
+[NumericalEarthArtifacts mirror](https://github.com/NumericalEarth/NumericalEarthArtifacts/releases/tag/data-v1)
+when the primary ECCO download fails. Initial downloads require network access;
+later runs reuse the cached inputs. `scripts/prepare_ecco_monthly_bundle.jl`
+can verify and arrange a local monthly bundle for an explicit
+`ecco_initial_conditions_directory`.
 
 The runner validates its diagnostics and writes results under
 `artifacts/production`. To make a final-day atlas:
@@ -53,6 +58,12 @@ ERA5 credentials or GPU. After instantiating the pinned environment, run:
 
 ```bash
 julia --project=. --startup-file=no test/runtests.jl
+```
+
+The Fourier graph cache regression needs a CUDA GPU but no input downloads:
+
+```bash
+julia --project=. --startup-file=no test/cuda_graph_cache.jl
 ```
 
 On a CUDA machine with the production inputs, the short coupled and restart
