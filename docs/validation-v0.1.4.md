@@ -26,9 +26,11 @@ although a captured graph also contains the two scratch-buffer pointers. A
 GPU test that changes scratch storage reproduced silent incorrect forward
 and inverse results. The fix keys every captured buffer and its layout,
 retains its Julia array owner, and waits for graph work before clearing those
-owners. Job `54302667` passed all 32 checks at T7/L2 and T31/L27, including
+owners. Initial job `54302667` passed 32 checks at T7/L2 and T31/L27, including
 scratch switching, repeated view wrappers, changing values and garbage
-collection. This identifies a real transform defect; it does not establish
+collection. Follow-up `54308967` passed all 35 checks, including work queued
+on another CUDA stream. Its control version correctly failed the new
+stream-completion assertion. This identifies real transform defects; it does not establish
 the cause of the separate coupled restart error.
 
 ## Qualification record
@@ -60,6 +62,16 @@ its output provenance and GPU regression. Its source-manifest SHA-256 is
 `484306fcb2d09ce466f2ff7c1e757cab7ca91507f91a2e947724be13ffaef6f1`.
 Dependency versions and physical settings remain unchanged. Earlier coupled
 passes are not counted as qualification of this changed GPU code.
+
+The final cache-cleanup correction is frozen in `qualification_graph_v6`, with
+source-manifest SHA-256
+`a24c6bd74a5fc545275154b84df080a0d480fa282f156765ac7617b44d0042fc`.
+Its only runtime difference from v5 is `clear_fourier_graph_cache!`, which
+production construction and stepping do not call. All transform execution,
+cache keys and buffer retention match v5 byte for byte. The separate stream
+regression checks this utility change; the ongoing ordinary coupled gates
+use v5. CPU [workflow 35714709883](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35714709883)
+passed on `7e6a1d9`, before the cleanup follow-up.
 
 ## Scope and reproduction
 

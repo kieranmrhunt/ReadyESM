@@ -77,6 +77,34 @@ let SW = ReadyESM.SpeedyWeather, C = ReadyESM.CUDA
         return (WeakRef(field.data), WeakRef(north), WeakRef(south))
     end
 
+    function delay_device_cycles(cycles::UInt64)
+        started = ReadyESM.CUDA.clock(UInt64)
+        while ReadyESM.CUDA.clock(UInt64) - started < cycles
+        end
+        return nothing
+    end
+
+    @testset "Cache clearing completes graphs on another stream" begin
+        sg = SW.SpectralGrid(; trunc=7, nlayers=2, NF=Float32, architecture=SW.GPU())
+        transform = ST.SpectralTransform(sg; cuda_graphs=true)
+        field = zeros(Float32, sg.grid, sg.nlayers)
+        north, south = transform.scratch_memory.north, transform.scratch_memory.south
+        ST._fourier_batched!(north, south, field, transform)
+        C.synchronize()
+        ReadyESM.CUDA.@cuda threads=1 delay_device_cycles(UInt64(0))
+        C.synchronize()
+        other_stream = C.CuStream()
+        @test C.isdone(other_stream)
+        C.stream!(other_stream) do
+            ReadyESM.CUDA.@cuda threads=1 delay_device_cycles(UInt64(2_000_000_000))
+            ST._fourier_batched!(north, south, field, transform)
+        end
+        @test !C.isdone(other_stream)
+        ext.clear_fourier_graph_cache!()
+        @test C.isdone(other_stream)
+        C.synchronize(other_stream)
+    end
+
     @testset "Fourier graphs own captured buffers until cache clearing" begin
         sg = SW.SpectralGrid(; trunc=7, nlayers=2, NF=Float32, architecture=SW.GPU())
         transform = ST.SpectralTransform(sg; cuda_graphs=true)

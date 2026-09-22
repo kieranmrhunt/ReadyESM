@@ -211,7 +211,7 @@ Mainly useful for tests/benchmarks."""
 function clear_fourier_graph_cache!()
     # A graph launch is asynchronous. Its array owners must remain alive until
     # it completes, including when caches belong to more than one CUDA context.
-    contexts = Set{typeof(CUDA.context())}()
+    contexts = Set{CUDA.CuContext}()
     for cache in values(GRAPH_CACHES), execs in (cache.forward_execs, cache.inverse_execs)
         for entry in values(execs)
             entry === nothing && continue
@@ -219,9 +219,7 @@ function clear_fourier_graph_cache!()
         end
     end
     for context in contexts
-        CUDA.context!(context) do
-            CUDA.synchronize()
-        end
+        CUDA.synchronize(context)
     end
     empty!(GRAPH_CACHES)
     return nothing

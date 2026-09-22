@@ -26,7 +26,8 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 - Include both scratch buffers and array layouts in the Fourier GPU graph
   cache key, and retain the captured arrays until the cache is cleared. A
   focused GPU test reproduced incorrect forward and inverse results with
-  changed scratch storage; the repaired cache passes 32 regression checks.
+  changed scratch storage; the repaired cache passes 35 regression checks,
+  including cleanup while another CUDA stream still has work queued.
 - Allow configuration inspection before input downloads. Model construction
   still requires the input files. CPU regression tests can run without ERA5
   credentials, and GitHub Actions runs them from the pinned environment.

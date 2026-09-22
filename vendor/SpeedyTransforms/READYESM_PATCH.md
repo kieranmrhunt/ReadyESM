@@ -10,7 +10,8 @@ storage. Replaying a graph captured for other scratch buffers otherwise writes
 to or reads from those previous buffers, silently returning the wrong result.
 The executable now retains its input/output arrays, preventing allocation
 reuse while a cached graph still contains their pointers. Cache clearing waits
-for graph execution to complete before releasing those owners.
+for graph execution in every recorded CUDA context to complete before
+releasing those owners.
 
 The forward and inverse scratch-switch regression fails on the previous
 field-pointer-only implementation. See `test/cuda_graph_cache.jl` for the GPU
