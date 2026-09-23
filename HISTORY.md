@@ -31,11 +31,11 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 - Allow configuration inspection before input downloads. Model construction
   still requires the input files. CPU regression tests can run without ERA5
   credentials, and GitHub Actions runs them from the pinned environment.
-- Before the graph cache repair, production GPU and CPU one-hour checks
-  passed the full diagnostic validator. CPU continuation and fresh GPU
-  restoration passed their checks. Resumed GPU evolution encountered illegal
-  memory access and blocked release. Fresh coupled checks of the graph repair
-  are pending; its connection to that failure has not been established. See the
+- The repaired code passes CPU CI, 35 focused GPU assertions, a production
+  one-hour GPU smoke and an earlier fresh-process restart. The final restart
+  from the repaired smoke's checkpoint failed with CUDA illegal memory access
+  during its first resumed step, after owned-state restoration checks passed.
+  The cause remains under investigation. See the
   [validation record](docs/validation-v0.1.4.md). This candidate is not tagged.
 
 ### 0.1.3 — 2026-09-08

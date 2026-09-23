@@ -20,9 +20,10 @@ and licences are included under `vendor/`.
 
 ## Main known limitations
 
-- Recent production-path tests reproduced an illegal GPU memory access during
-  the first sea-ice momentum step. A synchronization-only candidate did not
-  resolve it. This remains under investigation.
+- Production GPU restart intermittently fails with illegal memory access
+  during its first sea-ice momentum step. The final v0.1.4 candidate check
+  reproduced this on the repaired Fourier cache, despite earlier successful
+  smoke and restart runs. This blocks release and remains under investigation.
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
   and is not included in the runoff release candidate. Its later ice-interface
