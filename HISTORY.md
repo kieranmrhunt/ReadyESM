@@ -31,11 +31,20 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 - Allow configuration inspection before input downloads. Model construction
   still requires the input files. CPU regression tests can run without ERA5
   credentials, and GitHub Actions runs them from the pinned environment.
-- The repaired code passes CPU CI, 35 focused GPU assertions, a production
+- Replace GPU sparse exchange multiplication with a fixed-order kernel that
+  assigns each destination row to one work item. The production grid weights
+  reproduce shared-memory sanitizer reports in cuSPARSE 12.7.10; the replacement
+  passes the same CPU-reference and repeatability checks with zero reports.
+  A standalone regression passes 176 assertions under both initcheck and
+  memcheck with zero errors, covering both directions and Float32/Float64
+  edge cases.
+- Before the sparse exchange change, the graph repair passed CPU CI, 35
+  focused GPU assertions, a production
   one-hour GPU smoke and an earlier fresh-process restart. The final restart
   from the repaired smoke's checkpoint failed with CUDA illegal memory access
   during its first resumed step, after owned-state restoration checks passed.
-  The cause remains under investigation. See the
+  The cause remains under investigation; coupled qualification of the new
+  sparse kernel is pending. See the
   [validation record](docs/validation-v0.1.4.md). This candidate is not tagged.
 
 ### 0.1.3 — 2026-09-08

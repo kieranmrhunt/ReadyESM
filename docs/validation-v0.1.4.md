@@ -1,9 +1,10 @@
 # v0.1.4 validation
 
-Status on 23 September 2026: candidate; the final GPU restart failed with
-CUDA illegal memory access on the repaired source. CPU CI, the focused GPU
-regression, a production smoke and an earlier fresh-process restart pass.
-The final failure blocks v0.1.4 tagging while its cause is investigated.
+Status on 23 September 2026: candidate. The final ordinary GPU restart failed
+with CUDA illegal memory access after the Fourier graph repair. A separate
+sparse-exchange sanitizer finding now has a focused, tested replacement;
+coupled qualification of that change is pending. The initiating cause of the
+ordinary failure remains unidentified, so v0.1.4 is not tagged.
 
 ## Changes checked
 
@@ -35,8 +36,10 @@ the cause of the separate coupled restart error.
 
 ## Qualification record
 
-Current model code is commit `49d32fb`. Results are distinguished by the
-source and checkpoint each run used.
+The following completed coupled checks use the Fourier graph candidate
+`49d32fb`, before the sparse exchange change. Documentation-only commit
+`7b050ed` also passes [CPU workflow 35843941778](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35843941778).
+Results are distinguished by the source and checkpoint each run used.
 
 | Check | Result |
 | --- | --- |
@@ -79,6 +82,38 @@ Its only runtime difference is `clear_fourier_graph_cache!`, which production
 construction and stepping do not call. Transform execution, cache keys and
 buffer retention match v5 byte for byte. Dependency versions and physical
 settings are unchanged.
+
+## Sparse exchange follow-up
+
+Independent CPU comparison `54754887` confirms exact equality of checkpointed
+model state at the restored boundary of failed ordinary restart `54683480`.
+The failure occurs during subsequent evolution.
+
+Full restart initcheck `54722750` completes all four resumed steps and the
+full diagnostic validator, but fails the sanitizer gate with 432 reports.
+The first 100 printed reports are uninitialized shared-memory reads in
+`cusparse::csrmv_v3_kernel`; the remaining 332 were not printed and are not
+classified from that log. This is not a clean sanitizer result.
+
+The exact production horizontal geometry provides a small independent
+reproduction: a 64800 × 4608 intersection matrix with 106158 nonzeros and
+its reverse operator. With initialized synthetic vectors, cuSPARSE CSR_ALG2
+passes the numerical/reference checks but reports 160 shared-memory reads
+under initcheck (`54766994`). Generic sparse matrices with the same dimensions
+do not reproduce the reports (`54763192`, 236 assertions and zero reports).
+
+The candidate now computes each CSR destination row in fixed storage order,
+with one work item owning its accumulation and output. The isolated
+production-geometry test passes its CPU-reference, repeatability and dimension
+checks with zero initcheck reports (`54769921`). The public standalone test is
+`test/csr_regridding_gpu.jl`; its additional Float32/Float64 edge cases include
+empty rows, signed weights, cancellation and invalid vector dimensions.
+The frozen integrated source has manifest SHA-256
+`0f76e3eec61a85f83709225404eea279e5b98b8e24e911e68d06ed3b32a9bb7d`.
+Integrated GPU regression `54775695` passes all 176 assertions separately
+under initcheck (global and shared memory) and memcheck, both with zero
+reported errors. Coupled checks of this source are pending. This evidence
+does not establish that sparse exchange caused the ordinary CUDA700 failure.
 
 ## Scope and reproduction
 

@@ -158,32 +158,48 @@ function _explicit_row_regridder(architecture, regridder)
     )
 end
 
-"""
-Apply a non-transposed CUDA CSR operator with cuSPARSE's bitwise-deterministic
-SpMV algorithm.
+KernelAbstractions.@kernel function _csr_row_product_kernel!(
+    destination, rowptr, columns, weights, source,
+)
+    row = @index(Global)
+    total = zero(eltype(destination))
+    @inbounds for entry in rowptr[row]:(rowptr[row + 1] - 1)
+        total += weights[entry] * source[columns[entry]]
+    end
+    @inbounds destination[row] = total
+end
 
-`LinearAlgebra.mul!` selects `CUSPARSE_SPMV_ALG_DEFAULT`, which maps CSR to
-`CUSPARSE_SPMV_CSR_ALG1`; NVIDIA documents that algorithm as potentially
-different between identical runs.  Algorithm 2 is deterministic for a
-non-transposed CSR operator.  Clear the destination first and call SpMV with
-`beta = 1`: this is algebraically `A * source + 0`, and avoids cuSPARSE's
-documented Compute Sanitizer false-race optimization for `beta = 0`.
+"""
+Apply a non-transposed CUDA CSR operator in a fixed storage order.
+
+Each work item owns one destination row, including empty rows, and accumulates
+its entries without atomics or shared scratch storage. Production intersection
+weights trigger shared-memory initcheck reports inside cuSPARSE 12.7.10's
+CSR_ALG2 even with initialized inputs and beta=1. This kernel passes the same
+geometry probe and preserves deterministic GPU regridding. CPU regridding
+continues to use ConservativeRegridding's native implementation.
 """
 function _deterministic_csr_spmv!(
     destination::CUDA.CuVector{T},
     intersections::CUDA.CUSPARSE.CuSparseMatrixCSR,
     source::CUDA.CuVector{T},
 ) where {T}
-    fill!(destination, zero(T))
-    CUDA.CUSPARSE.mv!(
-        'N',
-        one(T),
-        intersections,
-        source,
-        one(T),
+    rows, columns = size(intersections)
+    length(destination) == rows || throw(DimensionMismatch(
+        "destination length must equal CSR row count",
+    ))
+    length(source) == columns || throw(DimensionMismatch(
+        "source length must equal CSR column count",
+    ))
+    rows == 0 && return destination
+    backend = KernelAbstractions.get_backend(destination)
+    _csr_row_product_kernel!(backend)(
         destination,
-        'O',
-        CUDA.CUSPARSE.CUSPARSE_SPMV_CSR_ALG2,
+        intersections.rowPtr,
+        intersections.colVal,
+        intersections.nzVal,
+        source;
+        ndrange = rows,
     )
     return destination
 end

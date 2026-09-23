@@ -24,6 +24,8 @@ and licences are included under `vendor/`.
   during its first sea-ice momentum step. The final v0.1.4 candidate check
   reproduced this on the repaired Fourier cache, despite earlier successful
   smoke and restart runs. This blocks release and remains under investigation.
+  A separate sparse exchange change removes reproducible cuSPARSE sanitizer
+  reports in focused tests; its coupled qualification is pending.
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
   and is not included in the runoff release candidate. Its later ice-interface

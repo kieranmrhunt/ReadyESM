@@ -60,10 +60,12 @@ ERA5 credentials or GPU. After instantiating the pinned environment, run:
 julia --project=. --startup-file=no test/runtests.jl
 ```
 
-The Fourier graph cache regression needs a CUDA GPU but no input downloads:
+The Fourier graph cache and conservative regridding regressions need a CUDA
+GPU but no input downloads:
 
 ```bash
 julia --project=. --startup-file=no test/cuda_graph_cache.jl
+julia --project=. --startup-file=no test/csr_regridding_gpu.jl
 ```
 
 On a CUDA machine with the production inputs, the short coupled and restart
