@@ -20,12 +20,12 @@ and licences are included under `vendor/`.
 
 ## Main known limitations
 
-- Production GPU restart intermittently fails with illegal memory access
-  during its first sea-ice momentum step. The final v0.1.4 candidate check
-  reproduced this on the repaired Fourier cache, despite earlier successful
-  smoke and restart runs. This blocks release and remains under investigation.
-  A separate sparse exchange change removes reproducible cuSPARSE sanitizer
-  reports in focused tests; its coupled qualification is pending.
+- Earlier production GPU restarts intermittently encountered illegal memory
+  access during their first sea-ice momentum step, including after the Fourier
+  cache repair. The current sparse row-kernel candidate passes an ordinary
+  restart and full coupled initcheck with zero errors. Fresh smoke and final
+  restart checks are pending; the earlier failure's cause remains under
+  investigation. See the [validation record](docs/validation-v0.1.4.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
   and is not included in the runoff release candidate. Its later ice-interface

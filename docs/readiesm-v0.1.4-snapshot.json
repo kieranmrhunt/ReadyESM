@@ -1,0 +1,55 @@
+{
+  "version": "0.1.4 candidate",
+  "runtime_commit": "9843415401123b77e9d839ede3335e417576f4f9",
+  "runtime_source": "https://github.com/kieranmrhunt/ReadyESM/tree/9843415401123b77e9d839ede3335e417576f4f9",
+  "model_source_manifest_sha256": "0f76e3eec61a85f83709225404eea279e5b98b8e24e911e68d06ed3b32a9bb7d",
+  "source_job": 54780489,
+  "source_job_result": "COMPLETED / 0:0; four resumed steps, full diagnostic validation and exact restored checkpoint state",
+  "checkpoint_parent_job": 54303131,
+  "model_time_hours": 2,
+  "current_runtime_evolution_hours": 1,
+  "trajectory": "Restarted the one-hour checkpoint from the earlier Fourier-repair candidate; continued four 900-second steps with the current sparse row kernel.",
+  "diagnostics_sha256": "52441994b18452200519680281e61ff71c7c591dc2593ba171ea385af5c7fc52",
+  "image_sha256": "ad1ed82b3c0ddac27304d9220a7dab2bc8d89cf68d42089bba0bffdcb665d453",
+  "renderer_job": 54788920,
+  "renderer_sha256": "2a619e348fd0270f6416198f8778999481249b53f4922fd3784043091a446210",
+  "renderer_environment_manifest_sha256": "9e4994df00c2f138136db5f521731f6a5fdaec3fdd3171597d0e14900c486fd6",
+  "rendered_at": "2026-09-23T12:26:12+01:00",
+  "display": "Equirectangular maps. Each display pixel takes the nearest saved native point on the sphere; no field values are averaged. Inactive cells remain grey.",
+  "units": "Ocean temperature is saved in degrees Celsius; surface-air temperature converts K to degrees Celsius. Ice fraction and soil saturation are multiplied by 100. Precipitation combines rain and snow water-equivalent flux and multiplies kg/m2/s by 86400 to display mm/day.",
+  "precipitation_scale": "Logarithmic; values below 0.01 mm/day share the lowest colour. This is an instantaneous rate, not daily accumulated precipitation.",
+  "fields": {
+    "ocean_temperature_C": {
+      "native_points": 40573,
+      "minimum": -1.891715168952942,
+      "maximum": 31.176429748535156
+    },
+    "ocean_salinity_psu": {
+      "native_points": 40573,
+      "minimum": 23.711374282836914,
+      "maximum": 40.206817626953125
+    },
+    "sea_ice_percent": {
+      "native_points": 40573,
+      "minimum": 0.0,
+      "maximum": 97.32247591018677
+    },
+    "surface_air_C": {
+      "native_points": 4608,
+      "minimum": -33.559652709960915,
+      "maximum": 36.4467712402344
+    },
+    "precipitation_mm_day": {
+      "native_points": 4608,
+      "minimum": 0.0,
+      "maximum": 105.98389089864213
+    },
+    "soil_saturation_percent": {
+      "native_points": 2123,
+      "minimum": 0.9999999776482582,
+      "maximum": 100.0
+    }
+  },
+  "scope": "Short engineering validation snapshot. No 30-day integration, stationary climate or uninterrupted/restarted trajectory equivalence is claimed.",
+  "visual_review": "Exported PNG inspected for complete maps, accurate hour/version labels, readable units and no clipping."
+}

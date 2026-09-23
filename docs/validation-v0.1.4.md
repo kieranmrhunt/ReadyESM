@@ -1,10 +1,11 @@
 # v0.1.4 validation
 
-Status on 23 September 2026: candidate. The final ordinary GPU restart failed
-with CUDA illegal memory access after the Fourier graph repair. A separate
-sparse-exchange sanitizer finding now has a focused, tested replacement;
-coupled qualification of that change is pending. The initiating cause of the
-ordinary failure remains unidentified, so v0.1.4 is not tagged.
+Status on 23 September 2026: candidate. Current runtime `9843415` passes CPU
+CI, focused GPU regressions, full coupled initcheck with zero errors and an
+ordinary four-step restart with exact restored checkpoint state. A fresh
+production smoke and restart from its own checkpoint are queued/running.
+The earlier intermittent CUDA failure remains under investigation; v0.1.4
+is not tagged.
 
 ## Changes checked
 
@@ -112,8 +113,25 @@ The frozen integrated source has manifest SHA-256
 `0f76e3eec61a85f83709225404eea279e5b98b8e24e911e68d06ed3b32a9bb7d`.
 Integrated GPU regression `54775695` passes all 176 assertions separately
 under initcheck (global and shared memory) and memcheck, both with zero
-reported errors. Coupled checks of this source are pending. This evidence
-does not establish that sparse exchange caused the ordinary CUDA700 failure.
+reported errors. Full coupled checks of this source now also pass:
+
+| Current runtime check | Result |
+| --- | --- |
+| CPU suite | [Workflow 35849068979](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35849068979) passed on exact code commit `9843415`. |
+| Full coupled initcheck | `54777253` completed in 57:00, with four resumed steps, full diagnostics, exact restored boundary and zero reported errors. |
+| Ordinary GPU restart | `54780489` completed in 54:09, with four resumed steps, full diagnostics and exact restored boundary. |
+| Fresh smoke and restart of its checkpoint | `54787075` and `54787077` remain required before final qualification. |
+
+Both completed current-source runs restore smoke `54303131`'s one-hour
+checkpoint and advance through model hour two. The earlier exception-capture
+run `54741841`, using unchanged v6 source, also completed without reproducing
+the fault or creating a GPU dump. These passes do not establish that sparse
+exchange caused the earlier ordinary CUDA700 failure.
+
+The README now shows the actual hour-two surface fields from ordinary restart
+`54780489`. Its [figure provenance](readiesm-v0.1.4-snapshot.json) records the
+source commit, NetCDF and PNG hashes, units and plotting method. The image is
+a short validation snapshot; it replaces the older v0.1.1 illustration.
 
 ## Scope and reproduction
 
@@ -125,8 +143,8 @@ and the first GPU step can take hours.
 These short runs do not establish a stationary or calibrated climate, seasonal
 river-mouth behaviour, or equality between continuous and restarted
 trajectories. The separate experimental ice-startup/fallback changes are not
-included. The [known limitations](../NOTES.md#main-known-limitations) and the
-labelled v0.1.1 thirty-day figure remain applicable.
+included. The [known limitations](../NOTES.md#main-known-limitations) remain
+applicable; the README snapshot does not provide a new long integration.
 
 Checkpoints from versions before this runoff change omit pending exchange
 water and are rejected. Start a new run with v0.1.4.

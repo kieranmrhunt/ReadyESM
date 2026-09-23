@@ -38,14 +38,14 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   A standalone regression passes 176 assertions under both initcheck and
   memcheck with zero errors, covering both directions and Float32/Float64
   edge cases.
-- Before the sparse exchange change, the graph repair passed CPU CI, 35
-  focused GPU assertions, a production
-  one-hour GPU smoke and an earlier fresh-process restart. The final restart
-  from the repaired smoke's checkpoint failed with CUDA illegal memory access
-  during its first resumed step, after owned-state restoration checks passed.
-  The cause remains under investigation; coupled qualification of the new
-  sparse kernel is pending. See the
+- The current runtime passes exact-commit CPU CI, full coupled initcheck with
+  zero errors, and an ordinary four-step restart with full diagnostics and
+  exact restored checkpoint state. A fresh smoke and restart of its checkpoint
+  remain required. Earlier candidates' intermittent CUDA illegal-access failure
+  remains under investigation. See the
   [validation record](docs/validation-v0.1.4.md). This candidate is not tagged.
+- Replace the README's v0.1.1 figure with the current candidate's actual surface
+  fields at model hour two, with source hashes and an explicit short-run label.
 
 ### 0.1.3 — 2026-09-08
 

@@ -8,13 +8,15 @@ This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
 The `v0.1.4` candidate repairs native runoff integration, tripolar runoff
-delivery, precipitation diagnostics and Fourier GPU graph buffer selection.
+delivery, precipitation diagnostics, Fourier GPU graph buffer selection and
+sparse GPU exchange.
 Its validation status is recorded in
 [`HISTORY.md`](HISTORY.md).
 
-![ReadyESM v0.1.1 coupled 30-day control](docs/readiesm-v0.1.1-30day.png)
+![ReadyESM v0.1.4 candidate: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
 
-*A 30-day initialised v0.1.1 run.*
+*The v0.1.4 candidate at simulated hour 2, after a one-hour GPU restart check.
+This is a short validation snapshot. [Figure provenance](docs/readiesm-v0.1.4-snapshot.json).*
 
 ## Run
 
