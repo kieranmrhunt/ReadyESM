@@ -20,16 +20,17 @@ and licences are included under `vendor/`.
 
 ## Main known limitations
 
-- Production GPU restarts intermittently encounter illegal memory access
-  during their first sea-ice momentum step. The current sparse row-kernel
-  candidate passes an ordinary restart from an older checkpoint and full
-  coupled initcheck, but restarting its fresh smoke fails with CUDA error 700.
-  The fault remains a release blocker; its initiating operation is unknown.
-  See the [validation record](docs/validation-v0.1.4.md).
+- GPU runs retain the illegal memory access documented in
+  [v0.1.3](https://github.com/kieranmrhunt/ReadyESM/blob/v0.1.3/NOTES.md#main-known-limitations).
+  An ordinary v0.1.4 restart passes from an older checkpoint, but restarting
+  its fresh smoke fails with CUDA error 700 during the first resumed step.
+  Its initiating operation is unknown. Passing instrumented checks do not
+  qualify reliable ordinary GPU restart. See the
+  [validation record](docs/validation-v0.1.4.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
-  and is not included in the runoff release candidate. Its later ice-interface
-  non-convergence also remains under investigation.
+  and is not included in v0.1.4. Its later ice-interface non-convergence
+  also remains under investigation.
 - The late model energy balance is still too positive (about +20 W m-2 all-sky
   and +45 W m-2 clear-sky in the completed control). The model is not spun up
   or calibrated for projections.
@@ -46,8 +47,9 @@ and licences are included under `vendor/`.
   mixing was too intrusive; a narrowly loading-scaled closure is still being
   tested and is not selected in `production.yml`.
 - Terrarium 0.1.6 has passed CPU and GPU water-conservation gates plus a coupled
-  RRTMGP/Terrarium GPU step. Native-runoff component restart checks pass;
-  full coupled restart and long-run qualification remain separate gates.
+  RRTMGP/Terrarium GPU step. Native-runoff component restart checks and short
+  coupled checks pass; reliable GPU continuation and long-term qualification
+  remain unresolved.
 - Forcing is concentration/AOD driven. Carbon-cycle, SO2 and aerosol-emissions
   modules are not present.
 

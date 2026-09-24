@@ -7,15 +7,19 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-The `v0.1.4` candidate repairs native runoff integration, tripolar runoff
-delivery, precipitation diagnostics, Fourier GPU graph buffer selection and
-sparse GPU exchange.
-Its validation status is recorded in
-[`HISTORY.md`](HISTORY.md).
+Version `v0.1.4` is a maintenance release with fixes to native runoff
+integration, tripolar runoff delivery, precipitation diagnostics, Fourier GPU
+graph buffer selection and sparse GPU exchange. See the
+[release history](HISTORY.md) and [validation record](docs/validation-v0.1.4.md).
 
-![ReadyESM v0.1.4 candidate: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
+**Known GPU limitation:** runs can still fail with illegal memory access during
+the first sea-ice momentum step, including after restart. This was documented
+in v0.1.3 and remains unresolved. The short passing checks do not establish
+reliable GPU restart or long-term coupled stability.
 
-*The v0.1.4 candidate at simulated hour 2, after a one-hour GPU restart check.
+![ReadyESM v0.1.4: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
+
+*ReadyESM v0.1.4 at simulated hour 2, after a one-hour GPU restart check.
 This is a short validation snapshot. [Figure provenance](docs/readiesm-v0.1.4-snapshot.json).*
 
 ## Run

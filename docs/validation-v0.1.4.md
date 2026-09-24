@@ -1,12 +1,20 @@
 # v0.1.4 validation
 
-Status on 24 September 2026: candidate; release blocked. Current runtime
-`9843415` passes CPU CI, focused GPU regressions, full coupled initcheck,
-an ordinary restart from an older checkpoint, and a fresh production smoke.
-Restarting that new smoke fails with CUDA error 700 in the first resumed step.
-The sparse exchange repair has not eliminated the intermittent GPU fault.
-The candidate remains on `release/v0.1.4`; main is unchanged and v0.1.4 is
-not tagged.
+Version 0.1.4 is an incremental maintenance release of the research model.
+The fixes below have component checks, CPU CI and short production evidence.
+**Ordinary GPU restart reliability remains unqualified:** current-source
+restart `54787077` fails with CUDA700 in its first resumed step. The earlier
+[v0.1.3 notes](https://github.com/kieranmrhunt/ReadyESM/blob/v0.1.3/NOTES.md#main-known-limitations) already document the same
+first-sea-ice-step illegal-access symptom. Its initiating operation and any
+change in failure frequency remain unknown.
+
+This release follows the incremental scope: publish demonstrated improvements
+and retain known limitations explicitly. It does not claim all checks passed
+or that the GPU fault was repaired. The [machine-readable evidence](validation-v0.1.4.json)
+retains the failed restart alongside the passing tests. Ice and ocean
+construction, core ice code, restart machinery and production settings checked
+against v0.1.3 are unchanged; the runoff integration and GPU exchange repairs
+are described below.
 
 ## Changes checked
 
@@ -140,9 +148,27 @@ with no GPU dump. The timeout supplies no continuation pass or identified
 fault. Independent comparison `55269611` passed exact equality of all
 checkpointed model state between smoke `54787075` and failed restart
 `54787077`'s saved restored boundary, excluding wall-clock bookkeeping. A full
-memcheck of that actual failed checkpoint is queued as `55269692`, with a GPU
-dump requested on the first detected error. It retains the frozen model and
-physical configuration; a diagnostic pass would not qualify ordinary execution.
+memcheck of that actual failed checkpoint (`55270909`) completes all four
+resumed steps, full diagnostics and exact restored-boundary comparison with
+zero reported errors (58:07). The preceding allocation `55269692` failed CUDA initialization before model or
+sanitizer execution. The passing memcheck retains frozen v7 source and physical
+settings; it does not erase the ordinary failure or identify its cause.
+
+An isolated CPU replay (`55282841`) restores the same checkpoint's ocean/ice
+model state and net ice fluxes exactly, then completes one native 900 s ice
+step with finite velocities and thickness, and concentration in [0, 1]. It changes
+component execution, compilation and memory layout and is a diagnostic result,
+not whole-model qualification. Its initial harness attempt (`55275430`) stopped
+at a direct payload comparison before stepping. A second harness (`55279930`)
+identified offset-array/checkpoint representation differences. The corrected
+harness round-trips the restored state through the native serializer before
+exact comparison and has positive and negative controls. Those earlier
+harness failures did not execute a model step. The GPU replay remains a
+separate investigation.
+
+[CPU workflow 35973457753](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35973457753) passes on `d2dd4a9`.
+Runtime, configuration, dependencies and tests match the frozen v7 source;
+this release finalization changes documentation only.
 
 [CPU workflow 35854890920](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35854890920)
 passed on the README figure commit `7dfc85b`. This CPU result does not qualify

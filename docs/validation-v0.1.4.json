@@ -1,0 +1,216 @@
+{
+  "version": "0.1.4",
+  "release_scope": "incremental research-model maintenance",
+  "prepared_at": "2026-09-24T10:25:46.622540+01:00",
+  "code_and_tests_commit": "9843415401123b77e9d839ede3335e417576f4f9",
+  "validated_documentation_parent": "d2dd4a9ac4158f2ebf4715d62b6ed1b49d39e853",
+  "cpu_ci": {
+    "id": 35973457753,
+    "head_sha": "d2dd4a9ac4158f2ebf4715d62b6ed1b49d39e853",
+    "status": "completed",
+    "conclusion": "success",
+    "html_url": "https://github.com/kieranmrhunt/ReadyESM/actions/runs/35973457753"
+  },
+  "all_validation_checks_passed": false,
+  "gpu_restart_reliability_qualified": false,
+  "baseline_known_gpu_limitation": {
+    "version": "0.1.3",
+    "document": "https://github.com/kieranmrhunt/ReadyESM/blob/v0.1.3/NOTES.md#main-known-limitations",
+    "same_root_cause_established": false
+  },
+  "source_comparisons_to_v0_1_3": {
+    "src/dynamic_restart.jl": {
+      "unchanged": true,
+      "baseline_sha256": "a5d47bc07f0953d4f04de23bc79b56ef9de0fd665f1068f44ffe681f753cfcb7",
+      "candidate_sha256": "a5d47bc07f0953d4f04de23bc79b56ef9de0fd665f1068f44ffe681f753cfcb7"
+    },
+    "src/conservative_sea_ice_advection.jl": {
+      "unchanged": true,
+      "baseline_sha256": "d2d59d6042aff6e52fa26f8f4d649cc3cabab533b6c2487015bd4189c18a8fa8",
+      "candidate_sha256": "d2d59d6042aff6e52fa26f8f4d649cc3cabab533b6c2487015bd4189c18a8fa8"
+    },
+    "src/climaseaice_latlon_rheology_safety.jl": {
+      "unchanged": true,
+      "baseline_sha256": "3b3dfcc95872338e619e1b1436a2fb2794aed3ca2aa70697dbcdfd5d4d7e4260",
+      "candidate_sha256": "3b3dfcc95872338e619e1b1436a2fb2794aed3ca2aa70697dbcdfd5d4d7e4260"
+    },
+    "src/sea_ice_surface_mask.jl": {
+      "unchanged": true,
+      "baseline_sha256": "fbd2a2274668654743ede11d157401979dd974f394e8e54628f05ef665dbdb2e",
+      "candidate_sha256": "fbd2a2274668654743ede11d157401979dd974f394e8e54628f05ef665dbdb2e"
+    },
+    "config/production.yml": {
+      "unchanged": true,
+      "baseline_sha256": "9828198ea42053e13094882dcdb92f43cc5b7d7a51d4ffbf78690966d442a76e",
+      "candidate_sha256": "9828198ea42053e13094882dcdb92f43cc5b7d7a51d4ffbf78690966d442a76e"
+    },
+    "dynamic_ocean_before_budget_sampling": {
+      "unchanged": true,
+      "includes": "Ocean and sea-ice constructors, grid, physical initial conditions and momentum diagnostics",
+      "baseline_sha256": "16a264c4695841d9bdbf0bab64ddf7a478431568206ea601609f892cfbb6831d",
+      "candidate_sha256": "16a264c4695841d9bdbf0bab64ddf7a478431568206ea601609f892cfbb6831d"
+    }
+  },
+  "frozen_source_manifest_sha256": "0f76e3eec61a85f83709225404eea279e5b98b8e24e911e68d06ed3b32a9bb7d",
+  "current_runtime_checks": {
+    "gpu_regression": {
+      "job_id": 54775695,
+      "state": "passed",
+      "scheduler": {
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:05:10",
+        "node": "gpuhost013"
+      },
+      "status": {
+        "mode": "csr_regression",
+        "exit_code": "0",
+        "finished": "2026-09-23T11:28:18+01:00"
+      },
+      "log_sha256": {
+        "initcheck-test.log": "be28dbf421b9866345bacd0e1d29cff31ad5c64ad606f4f4fe75d38b911d85b0",
+        "memcheck-test.log": "0f6034a22e988172225e7fdee91317cd4db25ec3da3975e0f45528b7d8be8d5a",
+        "initcheck.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425",
+        "memcheck.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+      }
+    },
+    "coupled_initcheck": {
+      "job_id": 54777253,
+      "state": "passed",
+      "scheduler": {
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:57:00",
+        "node": "gpuhost013"
+      },
+      "status": {
+        "mode": "initcheck",
+        "exit_code": "0",
+        "finished": "2026-09-23T12:25:28+01:00"
+      },
+      "log_sha256": {
+        "restart.log": "8c3c6d267209fa5e92adb380b83a89a24831fb14adaaf5088fc177c2667a6848",
+        "compare.log": "23b9dc6e80ad202eea8801538f890e9420555a727c400e626bfc0a7b56685cc6",
+        "initcheck.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+      }
+    },
+    "ordinary_restart": {
+      "job_id": 54780489,
+      "state": "passed",
+      "scheduler": {
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:54:09",
+        "node": "gpuhost003"
+      },
+      "status": {
+        "mode": "restart",
+        "exit_code": "0",
+        "finished": "2026-09-23T12:25:17+01:00"
+      },
+      "log_sha256": {
+        "restart.log": "0555cf537632d9182d28b341e3a33dee49e6ba4f713ba2d6291fe3012a4311de",
+        "compare.log": "c9651a87840c7c7a1877b3ba45d543e4e520155f12a56d12948fed19aaaf621f"
+      }
+    },
+    "coupled_smoke": {
+      "job_id": 54787075,
+      "state": "passed",
+      "scheduler": {
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:51:00",
+        "node": "gpuhost003"
+      },
+      "status": {
+        "mode": "smoke",
+        "exit_code": "0",
+        "finished": "2026-09-23T13:16:32+01:00"
+      },
+      "log_sha256": {
+        "coupled.log": "bf79ae82411d23e795585ce384345881f2bf9f2e7b429ec52225ac7f20d5a9fa"
+      }
+    },
+    "final_restart": {
+      "job_id": 54787077,
+      "state": "failed",
+      "scheduler": {
+        "state": "FAILED",
+        "exit_code": "1:0",
+        "elapsed": "02:41:14",
+        "node": "gpuhost003"
+      },
+      "status": {
+        "mode": "restart",
+        "exit_code": "1",
+        "finished": "2026-09-23T15:57:47+01:00"
+      },
+      "log_sha256": {
+        "restart.log": "5258b5ecca1804b52e9fab5a5c04aed61dc0be2c23320a51d0689b8cc42787bd",
+        "compare.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "additional_diagnostics": {
+    "55270909": {
+      "scheduler": {
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:58:07",
+        "node": "gpuhost005"
+      },
+      "status": {
+        "mode": "failed_checkpoint_memcheck",
+        "exit_code": "0",
+        "completed": "true",
+        "finished": "2026-09-24T10:13:43+01:00"
+      },
+      "log_sha256": {
+        "restart.log": "a7e81e207f0e2cefb0973ba1428bc579b0c2cb02850332a7fc66363f53de38f3",
+        "compare.log": "c9651a87840c7c7a1877b3ba45d543e4e520155f12a56d12948fed19aaaf621f",
+        "memcheck.log": "a9d061cee538182f762e132abeea7bac7bddb844338f25751bbbb043f242c425"
+      },
+      "checkpoint_parent": 54787075,
+      "checkpoint_sha256": "44046d0be2720f3c130a94f55ae4a506b319e86ca98c87bc88ff5fc7443c8cca",
+      "source_snapshot": "qualification_csr_v7",
+      "memcheck_errors": 0,
+      "resumed_steps": 4,
+      "full_diagnostics": "passed",
+      "restored_boundary": "exact",
+      "ordinary_execution": false
+    },
+    "55282841": {
+      "scheduler": {
+        "state": "COMPLETED",
+        "exit_code": "0:0",
+        "elapsed": "00:19:10",
+        "node": "host1269"
+      },
+      "status": {
+        "mode": "seaice_replay_cpu",
+        "exit_code": "0",
+        "completed": "true",
+        "finished": "2026-09-24T10:23:26+01:00"
+      },
+      "log_sha256": {
+        "replay.log": "c1cc4f2e04c9dbbce37e45dda0e7f7141578d67e9c2c6ae4ca4e3b525fcc995f"
+      },
+      "checkpoint_parent": 54787075,
+      "checkpoint_sha256": "44046d0be2720f3c130a94f55ae4a506b319e86ca98c87bc88ff5fc7443c8cca",
+      "source_snapshot": "qualification_csr_v7",
+      "device": "cpu",
+      "steps": 1,
+      "simulated_seconds": 900,
+      "restored_payloads": "exact",
+      "scope": "isolated ocean/sea-ice reconstruction and sea-ice step, not full coupled evolution"
+    }
+  },
+  "fourier_regression": {
+    "job_id": 54308967,
+    "assertions": 35,
+    "source_changes": []
+  },
+  "retained_failed_restart": 54787077,
+  "retained_failed_restart_log_sha256": "5258b5ecca1804b52e9fab5a5c04aed61dc0be2c23320a51d0689b8cc42787bd",
+  "limits": "Short production checks; no climate stationarity or continuous/split trajectory equivalence claim."
+}

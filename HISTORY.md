@@ -6,7 +6,7 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
-### 0.1.4 — release candidate
+### 0.1.4 — 2026-09-24
 
 - Save only recorded temperature and radiation samples after an interrupted
   run; unused capacity can no longer appear as spurious zero-kelvin output.
@@ -38,13 +38,13 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   A standalone regression passes 176 assertions under both initcheck and
   memcheck with zero errors, covering both directions and Float32/Float64
   edge cases.
-- The current runtime passes CPU CI, full coupled initcheck with zero errors,
-  an ordinary four-step restart from an earlier checkpoint, and a fresh
-  production smoke. Restarting that new smoke fails with CUDA error 700 in
-  the first resumed step. The sparse exchange repair has not eliminated the
-  intermittent illegal-access fault, which blocks release. See the
-  [validation record](docs/validation-v0.1.4.md). This candidate is not tagged.
-- Replace the README's v0.1.1 figure with the current candidate's actual surface
+- CPU CI, focused GPU regressions, a fresh production smoke and short coupled
+  sanitizer checks pass. This maintenance release retains the first-step GPU
+  illegal-access limitation already documented in v0.1.3. An ordinary restart
+  of its fresh smoke still fails; reliable GPU restart is not qualified.
+  The [validation record](docs/validation-v0.1.4.md) includes that failure,
+  passing checks, source hashes and the scope of this incremental release.
+- Replace the README's v0.1.1 figure with v0.1.4's actual surface
   fields at model hour two, with source hashes and an explicit short-run label.
 
 ### 0.1.3 — 2026-09-08
