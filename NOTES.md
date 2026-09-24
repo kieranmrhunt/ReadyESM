@@ -20,12 +20,12 @@ and licences are included under `vendor/`.
 
 ## Main known limitations
 
-- Earlier production GPU restarts intermittently encountered illegal memory
-  access during their first sea-ice momentum step, including after the Fourier
-  cache repair. The current sparse row-kernel candidate passes an ordinary
-  restart and full coupled initcheck with zero errors. Fresh smoke and final
-  restart checks are pending; the earlier failure's cause remains under
-  investigation. See the [validation record](docs/validation-v0.1.4.md).
+- Production GPU restarts intermittently encounter illegal memory access
+  during their first sea-ice momentum step. The current sparse row-kernel
+  candidate passes an ordinary restart from an older checkpoint and full
+  coupled initcheck, but restarting its fresh smoke fails with CUDA error 700.
+  The fault remains a release blocker; its initiating operation is unknown.
+  See the [validation record](docs/validation-v0.1.4.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
   and is not included in the runoff release candidate. Its later ice-interface

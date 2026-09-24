@@ -38,11 +38,11 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   A standalone regression passes 176 assertions under both initcheck and
   memcheck with zero errors, covering both directions and Float32/Float64
   edge cases.
-- The current runtime passes exact-commit CPU CI, full coupled initcheck with
-  zero errors, and an ordinary four-step restart with full diagnostics and
-  exact restored checkpoint state. A fresh smoke and restart of its checkpoint
-  remain required. Earlier candidates' intermittent CUDA illegal-access failure
-  remains under investigation. See the
+- The current runtime passes CPU CI, full coupled initcheck with zero errors,
+  an ordinary four-step restart from an earlier checkpoint, and a fresh
+  production smoke. Restarting that new smoke fails with CUDA error 700 in
+  the first resumed step. The sparse exchange repair has not eliminated the
+  intermittent illegal-access fault, which blocks release. See the
   [validation record](docs/validation-v0.1.4.md). This candidate is not tagged.
 - Replace the README's v0.1.1 figure with the current candidate's actual surface
   fields at model hour two, with source hashes and an explicit short-run label.

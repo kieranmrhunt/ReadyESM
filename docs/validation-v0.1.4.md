@@ -1,11 +1,12 @@
 # v0.1.4 validation
 
-Status on 23 September 2026: candidate. Current runtime `9843415` passes CPU
-CI, focused GPU regressions, full coupled initcheck with zero errors and an
-ordinary four-step restart with exact restored checkpoint state. A fresh
-production smoke and restart from its own checkpoint are queued/running.
-The earlier intermittent CUDA failure remains under investigation; v0.1.4
-is not tagged.
+Status on 24 September 2026: candidate; release blocked. Current runtime
+`9843415` passes CPU CI, focused GPU regressions, full coupled initcheck,
+an ordinary restart from an older checkpoint, and a fresh production smoke.
+Restarting that new smoke fails with CUDA error 700 in the first resumed step.
+The sparse exchange repair has not eliminated the intermittent GPU fault.
+The candidate remains on `release/v0.1.4`; main is unchanged and v0.1.4 is
+not tagged.
 
 ## Changes checked
 
@@ -113,20 +114,39 @@ The frozen integrated source has manifest SHA-256
 `0f76e3eec61a85f83709225404eea279e5b98b8e24e911e68d06ed3b32a9bb7d`.
 Integrated GPU regression `54775695` passes all 176 assertions separately
 under initcheck (global and shared memory) and memcheck, both with zero
-reported errors. Full coupled checks of this source now also pass:
+reported errors. Current coupled results are:
 
 | Current runtime check | Result |
 | --- | --- |
 | CPU suite | [Workflow 35849068979](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35849068979) passed on exact code commit `9843415`. |
 | Full coupled initcheck | `54777253` completed in 57:00, with four resumed steps, full diagnostics, exact restored boundary and zero reported errors. |
 | Ordinary GPU restart | `54780489` completed in 54:09, with four resumed steps, full diagnostics and exact restored boundary. |
-| Fresh smoke and restart of its checkpoint | `54787075` and `54787077` remain required before final qualification. |
+| Fresh production smoke | `54787075` passed in 51:00: four 900 s steps, full diagnostics, NetCDF output and a one-hour checkpoint. |
+| Restart of the new smoke | `54787077` failed in 2:41:14. Construction, checkpoint loading and owned-runoff checks passed; step 5 reported CUDA700 before the first u-momentum module loaded. No resumed step completed. |
 
-Both completed current-source runs restore smoke `54303131`'s one-hour
-checkpoint and advance through model hour two. The earlier exception-capture
-run `54741841`, using unchanged v6 source, also completed without reproducing
-the fault or creating a GPU dump. These passes do not establish that sparse
-exchange caused the earlier ordinary CUDA700 failure.
+The passing coupled initcheck and ordinary restart restore smoke `54303131`'s
+one-hour checkpoint and advance through model hour two. The failed final
+restart instead restores current-source smoke `54787075`. It used the same
+physical A100 as passing ordinary restart `54780489` and the new smoke.
+Its failure is detected during context synchronization before loading the
+first u-momentum kernel; that kernel has not launched, and the initiating
+operation is unidentified. The original log is retained with SHA-256
+`5258b5ecca1804b52e9fab5a5c04aed61dc0be2c23320a51d0689b8cc42787bd`.
+
+The earlier exception-capture run `54741841`, using unchanged v6 source,
+completed without reproducing the fault or creating a GPU dump. Its repeat
+`54789905` timed out after four hours while still in the first resumed step,
+with no GPU dump. The timeout supplies no continuation pass or identified
+fault. Independent comparison `55269611` passed exact equality of all
+checkpointed model state between smoke `54787075` and failed restart
+`54787077`'s saved restored boundary, excluding wall-clock bookkeeping. A full
+memcheck of that actual failed checkpoint is queued as `55269692`, with a GPU
+dump requested on the first detected error. It retains the frozen model and
+physical configuration; a diagnostic pass would not qualify ordinary execution.
+
+[CPU workflow 35854890920](https://github.com/kieranmrhunt/ReadyESM/actions/runs/35854890920)
+passed on the README figure commit `7dfc85b`. This CPU result does not qualify
+the failed GPU continuation.
 
 The README now shows the actual hour-two surface fields from ordinary restart
 `54780489`. Its [figure provenance](readiesm-v0.1.4-snapshot.json) records the
