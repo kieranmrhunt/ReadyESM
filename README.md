@@ -14,9 +14,9 @@ See the [release history](HISTORY.md) and
 is still v0.1.4.
 
 **GPU qualification:** two short candidate restarts pass, including normal
-package loading and exact checkpoint restoration. A 48-hour continuation is
-underway. These results do not yet establish that the intermittent illegal
-memory access seen in earlier versions is eliminated.
+package loading and exact checkpoint restoration. The subsequent 48-hour
+attempt fails with illegal memory access in its first resumed step.
+This candidate has not eliminated the GPU fault.
 
 ![ReadyESM v0.1.4: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
 

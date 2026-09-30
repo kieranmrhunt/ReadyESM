@@ -16,8 +16,9 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 - Production-state CPU comparisons are exact. Two short candidate GPU
   restarts pass, one using ordinary package loading; both pass the unchanged
   diagnostics and independent exact restored-state checks.
-- The 48-hour continuation is still running. Intermittent GPU reliability
-  and long-term climate behaviour are not yet qualified. See the
+- The 48-hour attempt fails with CUDA700 in its first resumed step, before
+  loading the ice-consolidation kernel. The initiating operation is unknown;
+  this candidate has not eliminated the GPU fault. See the
   [validation record](docs/validation-v0.1.5.md).
 - Experimental land and air–ice surface-solver changes are not included.
 

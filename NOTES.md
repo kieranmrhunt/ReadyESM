@@ -22,9 +22,10 @@ Their source and licences are included under `vendor/`.
 
 - Earlier versions have an intermittent GPU illegal-access failure during
   sea-ice stepping. The v0.1.5 candidate passes two short restart runs,
-  including normal package loading, but its longer continuation is still
-  under test. The initiating operation and change in failure frequency remain
-  unproven. See the [validation record](docs/validation-v0.1.5.md).
+  including normal package loading, but the subsequent 48-hour attempt fails
+  in its first resumed step. Exact saved-state restoration passes. The
+  initiating operation and change in failure frequency remain unproven.
+  See the [validation record](docs/validation-v0.1.5.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
   and is not included in v0.1.5. Its later ice-interface non-convergence
