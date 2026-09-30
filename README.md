@@ -7,15 +7,16 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-Version `v0.1.4` is a maintenance release with fixes to native runoff
-integration, tripolar runoff delivery, precipitation diagnostics, Fourier GPU
-graph buffer selection and sparse GPU exchange. See the
-[release history](HISTORY.md) and [validation record](docs/validation-v0.1.4.md).
+Version `v0.1.5` is a release candidate with consistent numerical types in
+the sea-ice GPU momentum and stress updates. Physics settings are unchanged.
+See the [release history](HISTORY.md) and
+[validation record](docs/validation-v0.1.5.md). The latest published version
+is still v0.1.4.
 
-**Known GPU limitation:** runs can still fail with illegal memory access during
-the first sea-ice momentum step, including after restart. This was documented
-in v0.1.3 and remains unresolved. The short passing checks do not establish
-reliable GPU restart or long-term coupled stability.
+**GPU qualification:** two short candidate restarts pass, including normal
+package loading and exact checkpoint restoration. A 48-hour continuation is
+underway. These results do not yet establish that the intermittent illegal
+memory access seen in earlier versions is eliminated.
 
 ![ReadyESM v0.1.4: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
 
@@ -93,5 +94,5 @@ or exact equality between continuous and restarted trajectories. Model
 construction and the first GPU step can take hours despite the short simulated
 duration.
 
-Checkpoints made before the native-runoff repair lack pending exchange water.
-Start a new run with this version; those checkpoints are rejected explicitly.
+Checkpoints made before v0.1.4's native-runoff repair lack pending exchange
+water and are rejected explicitly.

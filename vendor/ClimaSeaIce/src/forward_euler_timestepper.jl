@@ -1,0 +1,58 @@
+# Candidate for upstreaming to Oceananigans.
+using Oceananigans.TimeSteppers: AbstractTimeStepper
+
+mutable struct ForwardEulerTimeStepper{FT, GT, IT} <: AbstractTimeStepper
+                 Gⁿ :: GT
+    implicit_solver :: IT
+end
+
+"""
+    ForwardEulerTimeStepper(grid, prognostic_fields;
+                            implicit_solver = nothing,
+                            Gⁿ = map(similar, prognostic_fields))
+
+Return a first-order Forward-Euler timestepper (`ForwardEulerTimeStepper`)
+on `grid`, with `tracers`. The tendency fields `Gⁿ`, usually equal to
+the `prognostic_fields` passed as positional argument, can be specified via
+optional `kwargs`.
+
+The first-order Forward-Euler timestepper steps forward the state `Uⁿ` by
+`Δt` via
+
+    Uⁿ⁺¹ = Uⁿ + Δt * Gⁿ
+
+where `Uⁿ` is the state at the ``n``-th timestep and `Gⁿ` is the tendency
+at the ``n``-th timestep.
+"""
+function ForwardEulerTimeStepper(grid, prognostic_fields;
+                                 implicit_solver::IT = nothing,
+                                 Gⁿ = map(similar, prognostic_fields)) where IT
+
+    FT = eltype(grid)
+    GT = typeof(Gⁿ)
+
+    return ForwardEulerTimeStepper{FT, GT, IT}(Gⁿ, implicit_solver)
+end
+
+Oceananigans.TimeSteppers.TimeStepper(ts::Val{:ForwardEuler}, grid, prognostic_fields; kw...) =
+    ForwardEulerTimeStepper(grid, prognostic_fields; kw...)
+
+Oceananigans.TimeSteppers.TimeStepper(ts::ForwardEulerTimeStepper, grid, prognostic_fields; kw...) =
+    ForwardEulerTimeStepper(grid, prognostic_fields; kw...)
+
+Base.summary(::ForwardEulerTimeStepper) = "ForwardEulerTimeStepper"
+
+function Base.show(io::IO, ts::ForwardEulerTimeStepper)
+    print(io, "ForwardEulerTimeStepper", '\n')
+    print(io, "└── implicit_solver: ", isnothing(ts.implicit_solver) ? "nothing" : nameof(typeof(ts.implicit_solver)))
+end
+
+Oceananigans.TimeSteppers.reset!(::ForwardEulerTimeStepper) = nothing
+
+#####
+##### Checkpointing
+#####
+
+# Forward Euler is a self-starting timestepper, so no state needs to be saved
+Oceananigans.prognostic_state(::ForwardEulerTimeStepper) = nothing
+Oceananigans.restore_prognostic_state!(ts::ForwardEulerTimeStepper, ::Nothing) = ts

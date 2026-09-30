@@ -15,21 +15,19 @@
   to unique physical ocean cells. Pending water and the held discharge are
   included in checkpoints.
 
-ReadyESM carries small patches to Terrarium and SpeedyTransforms. Their source
-and licences are included under `vendor/`.
+ReadyESM carries small patches to Terrarium, SpeedyTransforms and ClimaSeaIce.
+Their source and licences are included under `vendor/`.
 
 ## Main known limitations
 
-- GPU runs retain the illegal memory access documented in
-  [v0.1.3](https://github.com/kieranmrhunt/ReadyESM/blob/v0.1.3/NOTES.md#main-known-limitations).
-  An ordinary v0.1.4 restart passes from an older checkpoint, but restarting
-  its fresh smoke fails with CUDA error 700 during the first resumed step.
-  Its initiating operation is unknown. Passing instrumented checks do not
-  qualify reliable ordinary GPU restart. See the
-  [validation record](docs/validation-v0.1.4.md).
+- Earlier versions have an intermittent GPU illegal-access failure during
+  sea-ice stepping. The v0.1.5 candidate passes two short restart runs,
+  including normal package loading, but its longer continuation is still
+  under test. The initiating operation and change in failure frequency remain
+  unproven. See the [validation record](docs/validation-v0.1.5.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
-  and is not included in v0.1.4. Its later ice-interface non-convergence
+  and is not included in v0.1.5. Its later ice-interface non-convergence
   also remains under investigation.
 - The late model energy balance is still too positive (about +20 W m-2 all-sky
   and +45 W m-2 clear-sky in the completed control). The model is not spun up

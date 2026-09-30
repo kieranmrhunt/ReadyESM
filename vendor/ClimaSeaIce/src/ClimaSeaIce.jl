@@ -1,0 +1,102 @@
+module ClimaSeaIce
+
+# Use the README as the module docs.
+@doc let
+    path = joinpath(dirname(@__DIR__), "README.md")
+    include_dependency(path)
+    read(path, String)
+end ClimaSeaIce
+
+export SeaIceModel,
+       MeltingConstrainedFluxBalance,
+       PrescribedTemperature,
+       RadiativeEmission,
+       PhaseTransitions,
+       ConductiveFlux,
+       FluxFunction,
+       SlabThermodynamics,
+       snow_slab_thermodynamics,
+       sea_ice_slab_thermodynamics,
+       SeaIceMomentumEquation,
+       ExplicitSolver,
+       SplitExplicitSolver,
+       SemiImplicitStress,
+       StressBalanceFreeDrift,
+       ViscousRheology,
+       ElastoViscoPlasticRheology
+
+
+using KernelAbstractions: @kernel, @index
+using Oceananigans: Oceananigans, AbstractModel, fields, prognostic_fields,
+                    prognostic_state, restore_prognostic_state!
+using Oceananigans.Advection: cell_advection_timescale, advective_tracer_flux_x, advective_tracer_flux_y
+using Oceananigans.Architectures: architecture
+using Oceananigans.BoundaryConditions: fill_halo_regions!, FieldBoundaryConditions
+using Oceananigans.Fields: field, set!, Center, Field, ZeroField, ConstantField
+using Oceananigans.Grids: Face, RectilinearGrid, LatitudeLongitudeGrid, OrthogonalSphericalShellGrid
+using Oceananigans.ImmersedBoundaries: ImmersedBoundaries, ImmersedBoundaryGrid
+using Oceananigans.Operators: Axᶠᶜᶜ, Ayᶜᶠᶜ, Vᶜᶜᶜ, δxᶜᵃᵃ, δyᵃᶜᵃ
+using Oceananigans.TimeSteppers: tick!, Clock, update_state!
+using Oceananigans.Utils: launch!, prettytime
+
+@inline ice_mass(i, j, k, grid, h, ℵ, ρ) = @inbounds h[i, j, k] * ρ[i, j, k] * ℵ[i, j, k]
+
+# Candidate for upstreaming to Oceananigans.
+include("forward_euler_timestepper.jl")
+
+include("SeaIceThermodynamics/SeaIceThermodynamics.jl")
+include("Rheologies/Rheologies.jl")
+include("SeaIceDynamics/SeaIceDynamics.jl")
+include("sea_ice_model.jl")
+include("sea_ice_advection.jl")
+include("tracer_tendency_kernel_functions.jl")
+include("EnthalpyMethodSeaIceModel.jl")
+
+using .SeaIceThermodynamics
+using .SeaIceDynamics
+using .Rheologies
+
+# Timestepping
+include("sea_ice_fe_step.jl")
+include("sea_ice_rk_substep.jl")
+
+# Advection timescale for a `SeaIceModel`. Sea ice dynamics are two-dimensional so
+# we reuse the `cell_advection_timescale` function defined in Oceananigans by passing
+# `w = ZeroField()`.
+function Oceananigans.Advection.cell_advection_timescale(model::SeaIceModel)
+    velocities = merge(model.velocities, (; w = ZeroField()))
+    return cell_advection_timescale(model.grid, velocities)
+end
+
+# No diffusion timescale for sea ice for now
+Oceananigans.TurbulenceClosures.cell_diffusion_timescale(::SeaIceModel) = Inf
+
+#####
+##### Default output attributes for NetCDF output
+#####
+
+default_horizontal_velocity_attributes(::RectilinearGrid) = Dict(
+    "u" => Dict("long_name" => "Velocity in the +x-direction.", "units" => "m/s"),
+    "v" => Dict("long_name" => "Velocity in the +y-direction.", "units" => "m/s"))
+
+default_horizontal_velocity_attributes(::LatitudeLongitudeGrid) = Dict(
+    "u" => Dict("long_name" => "Velocity in the zonal direction (+ = east).", "units" => "m/s"),
+    "v" => Dict("long_name" => "Velocity in the meridional direction (+ = north).", "units" => "m/s"))
+
+default_horizontal_velocity_attributes(::OrthogonalSphericalShellGrid) = Dict(
+    "u" => Dict("long_name" => "Velocity in the i-direction (+ = increasing i).", "units" => "m/s"),
+    "v" => Dict("long_name" => "Velocity in the j-direction (+ = increasing j).", "units" => "m/s"))
+
+default_horizontal_velocity_attributes(ibg::ImmersedBoundaryGrid) = default_horizontal_velocity_attributes(ibg.underlying_grid)
+
+default_sea_ice_attributes() = Dict(
+    "h" => Dict("long_name" => "Sea ice thickness.", "units" => "m"),
+    "ℵ" => Dict("long_name" => "Sea ice concentration.", "units" => "-"))
+
+function Oceananigans.OutputWriters.default_output_attributes(model::SeaIceModel)
+    velocity_attrs = default_horizontal_velocity_attributes(model.grid)
+    tracer_attrs = default_sea_ice_attributes()
+    return merge(velocity_attrs, tracer_attrs)
+end
+
+end # module

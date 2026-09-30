@@ -391,7 +391,7 @@ version = "0.10.0"
 
 [[deps.ClimaSeaIce]]
 deps = ["Adapt", "JLD2", "KernelAbstractions", "Oceananigans", "RootSolvers", "SeawaterPolynomials"]
-git-tree-sha1 = "220b3720187532df0ed33bc48fb262c342e31bb8"
+path = "vendor/ClimaSeaIce"
 uuid = "6ba0ff68-24e6-4315-936c-2e99227c95a4"
 version = "0.5.8"
 
@@ -2289,7 +2289,7 @@ version = "0.1.21"
 deps = ["Adapt", "CUDA", "CairoMakie", "ClimaComms", "ClimaOcean", "ClimaSeaIce", "ConservativeRegridding", "Dates", "JLD2", "KernelAbstractions", "NCDatasets", "NumericalEarth", "Oceananigans", "RRTMGP", "SHA", "SpeedyTransforms", "SpeedyWeather", "Statistics", "Terrarium", "YAML"]
 path = "."
 uuid = "c4a7aed0-5f3e-4a53-ba63-386ba9f93654"
-version = "0.1.4"
+version = "0.1.5"
 
 [[deps.RealDot]]
 deps = ["LinearAlgebra"]

@@ -1,0 +1,191 @@
+module SeaIceThermodynamics
+
+export SlabThermodynamics,
+       snow_slab_thermodynamics,
+       sea_ice_slab_thermodynamics,
+       PhaseTransitions,
+       MeltingConstrainedFluxBalance,
+       PrescribedTemperature,
+       RadiativeEmission,
+       ConductiveFlux,
+       IceSnowConductiveFlux,
+       FluxFunction
+
+using Adapt: Adapt
+using Oceananigans: Oceananigans, fields
+using Oceananigans.Utils: launch!
+
+#####
+##### A bit of ice_thermodynamics to start the day
+#####
+
+struct LinearLiquidus{FT}
+    freshwater_melting_temperature :: FT
+    slope :: FT
+end
+
+"""
+    LinearLiquidus(FT=Oceananigans.defaults.FloatType,
+                   slope = 0.054, # psu / ᵒC
+                   freshwater_melting_temperature = 0) # ᵒC
+
+Return a linear model for the dependence of the melting temperature of
+saltwater on salinity,
+
+```math
+Tₘ(S) = T₀ - m S ,
+```
+
+where ``Tₘ(S)`` is the melting temperature as a function of salinity ``S``,
+``T₀`` is the melting temperature of freshwater, and ``m`` is the ratio
+between the melting temperature and salinity (equivalently,
+``m ≡ (T₀ - Tₘ) / S``). The sign convention is chosen so that ``m > 0`` for
+saltwater, meaning the melting temperature decreases as salinity increases.
+
+The defaults assume that salinity is given in practical salinity units `psu` and
+temperature is in degrees Celsius.
+
+Note: the function `melting_temperature(liquidus, salinity)` returns the
+melting temperature given `salinity`.
+"""
+function LinearLiquidus(FT::DataType=Oceananigans.defaults.FloatType;
+                        slope = 0.054, # psu / ᵒC
+                        freshwater_melting_temperature = 0) # ᵒC
+
+    return LinearLiquidus(convert(FT, freshwater_melting_temperature),
+                          convert(FT, slope))
+end
+
+@inline function melting_temperature(liquidus::LinearLiquidus, salinity)
+    return liquidus.freshwater_melting_temperature - liquidus.slope * salinity
+end
+
+Base.summary(lq::LinearLiquidus) = "LinearLiquidus(freshwater_melting_temperature = $(lq.freshwater_melting_temperature), slope = $(lq.slope))"
+
+function Base.show(io::IO, lq::LinearLiquidus{FT}) where FT
+    print(io, summary(lq), "{", FT, "}", '\n')
+    print(io, "├── freshwater_melting_temperature: ", lq.freshwater_melting_temperature, '\n')
+    print(io, "└── slope: ", lq.slope)
+end
+
+struct PhaseTransitions{FT, L}
+    density :: FT
+    heat_capacity :: FT
+    liquid_density :: FT
+    liquid_heat_capacity :: FT
+    reference_latent_heat :: FT
+    reference_temperature :: FT
+    liquidus :: L
+end
+
+"""
+    PhaseTransitions(FT=Oceananigans.defaults.FloatType;
+                     density               = 917,    # kg m⁻³
+                     heat_capacity         = 2000,   # J / (kg ᵒC)
+                     liquid_density        = 999.8,  # kg m⁻³
+                     liquid_heat_capacity  = 4186,   # J / (kg ᵒC)
+                     reference_latent_heat = 334e3,  # J kg⁻³
+                     reference_temperature = 0,      # ᵒC
+                     liquidus = LinearLiquidus(FT))  # default assumes psu, ᵒC
+
+Return a representation of transitions between the solid and liquid phases
+of salty water: in other words, the freezing and melting of sea ice.
+
+`PhaseTransitions` stores the thermodynamic parameters shared by the slab sea-ice
+and snow parameterizations in `SeaIceModel`, including densities, heat
+capacities, a reference latent heat, and the liquidus relation.
+
+The latent heat of fusion ``ℒ(T)`` (more simply just "latent heat") is
+a function of temperature ``T`` via
+
+```math
+ρ ℒ(T) = ρ ℒ₀ + (ρ_ℓ c_ℓ - ρ c) (T - T₀)
+```
+
+where ``ρ`` is the solid `density`, ``ρ_ℓ`` is the liquid density,
+``c`` is the solid `heat_capacity`, ``c_ℓ`` is the liquid heat capacity,
+and ``T₀`` is a reference temperature, all of which are assumed constant.
+
+The default `liquidus` assumes that salinity has practical salinity units (psu)
+and that temperature is degrees Celsius.
+"""
+@inline function PhaseTransitions(FT=Oceananigans.defaults.FloatType;
+                                  density               = 917,    # kg m⁻³
+                                  heat_capacity         = 2000,   # J / (kg ᵒC)
+                                  liquid_density        = 999.8,  # kg m⁻³
+                                  liquid_heat_capacity  = 4186,   # J / (kg ᵒC)
+                                  reference_latent_heat = 334e3,  # J kg⁻³
+                                  reference_temperature = 0,      # ᵒC
+                                  liquidus = LinearLiquidus(FT))
+
+    return PhaseTransitions(convert(FT, density),
+                            convert(FT, heat_capacity),
+                            convert(FT, liquid_density),
+                            convert(FT, liquid_heat_capacity),
+                            convert(FT, reference_latent_heat),
+                            convert(FT, reference_temperature),
+                            liquidus)
+end
+
+function Base.show(io::IO, pt::PhaseTransitions{FT}) where FT
+    print(io, "PhaseTransitions{", FT, "}", '\n')
+    print(io, "├── density: ", pt.density, '\n')
+    print(io, "├── heat_capacity: ", pt.heat_capacity, '\n')
+    print(io, "├── liquid_density: ", pt.liquid_density, '\n')
+    print(io, "├── liquid_heat_capacity: ", pt.liquid_heat_capacity, '\n')
+    print(io, "├── reference_latent_heat: ", pt.reference_latent_heat, '\n')
+    print(io, "├── reference_temperature: ", pt.reference_temperature, '\n')
+    print(io, "└── liquidus: ", summary(pt.liquidus))
+end
+
+"""
+    latent_heat(phase_transitions::PhaseTransitions, T)
+
+Return the per-mass latent heat of fusion of pure ice at temperature `T`,
+
+```math
+ℒ(T) = ℒ₀ + \\left(\\frac{ρ_ℓ c_ℓ}{ρ} - c\\right)(T - T₀) ,
+```
+
+where ``ρ``, ``c`` are the microscopic pure-ice density and heat capacity,
+``ρ_ℓ``, ``c_ℓ`` are the liquid density and heat capacity, and ``T₀`` is the
+reference temperature at which the reference latent heat ``ℒ₀`` is defined.
+
+This is the per-mass form of the volumetric expression
+``ρ ℒ(T) = ρ ℒ₀ + (ρ_ℓ c_ℓ - ρ c)(T - T₀)`` (divided through by ``ρ``).
+
+The returned quantity is per unit mass of pure ice. To obtain energy per
+unit volume of a porous medium (snow or sea ice), multiply by the bulk
+density of that medium.
+"""
+@inline function latent_heat(phase_transitions::PhaseTransitions, T)
+    T₀ = phase_transitions.reference_temperature
+    ℒ₀ = phase_transitions.reference_latent_heat
+    ρ  = phase_transitions.density
+    ρℓ = phase_transitions.liquid_density
+    c  = phase_transitions.heat_capacity
+    cℓ = phase_transitions.liquid_heat_capacity
+
+    return ℒ₀ + (ρℓ * cℓ / ρ - c) * (T - T₀)
+end
+
+# Fallback for no ice_thermodynamics
+@inline thermodynamic_tendency(i, j, k, grid, ::Nothing, args...) = zero(grid)
+
+include("HeatBoundaryConditions/HeatBoundaryConditions.jl")
+
+using Oceananigans.Fields: field, Field, Center, ConstantField
+
+using .HeatBoundaryConditions: IceWaterThermalEquilibrium, MeltingConstrainedFluxBalance,
+                               RadiativeEmission, FluxFunction, PrescribedTemperature,
+                               getflux
+
+# Enthalpy thermodynamics is not included in this module yet.
+# include("EnthalpyMethodThermodynamics.jl")
+
+include("slab_heat_and_tracer_fluxes.jl")
+include("slab_sea_ice_thermodynamics.jl")
+include("slab_thermodynamics_tendencies.jl")
+include("thermodynamic_time_step.jl")
+
+end

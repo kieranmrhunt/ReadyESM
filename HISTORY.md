@@ -6,6 +6,21 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### 0.1.5 — unreleased
+
+- Use consistent branch types in the sea-ice momentum and EVP stress kernels.
+  The change removes five literal pointer expressions from the affected GPU
+  specializations; physical equations, parameters and stepping order are unchanged.
+- Vendor the patched ClimaSeaIce 0.5.8 runtime and add CPU tests for active,
+  marginal and absent ice with single and mixed numerical precision.
+- Production-state CPU comparisons are exact. Two short candidate GPU
+  restarts pass, one using ordinary package loading; both pass the unchanged
+  diagnostics and independent exact restored-state checks.
+- The 48-hour continuation is still running. Intermittent GPU reliability
+  and long-term climate behaviour are not yet qualified. See the
+  [validation record](docs/validation-v0.1.5.md).
+- Experimental land and air–ice surface-solver changes are not included.
+
 ### 0.1.4 — 2026-09-24
 
 - Save only recorded temperature and radiation samples after an interrupted
