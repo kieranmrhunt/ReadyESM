@@ -8,15 +8,15 @@ This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
 Version `v0.1.5` is a release candidate with consistent numerical types in
-the sea-ice GPU momentum and stress updates. Physics settings are unchanged.
+the sea-ice momentum, stress and snow updates. Physics settings are unchanged.
 See the [release history](HISTORY.md) and
 [validation record](docs/validation-v0.1.5.md). The latest published version
 is still v0.1.4.
 
-**GPU qualification:** two short candidate restarts pass, including normal
-package loading and exact checkpoint restoration. The subsequent 48-hour
-attempt fails with illegal memory access in its first resumed step.
-This candidate has not eliminated the GPU fault.
+**GPU qualification:** the earlier momentum/stress candidate passed two short
+restarts but failed its 48-hour attempt. The added snow change passes CPU
+conservation and exact-output tests; its coupled GPU test is pending.
+Reliable GPU restart is not yet established.
 
 ![ReadyESM v0.1.4: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
 

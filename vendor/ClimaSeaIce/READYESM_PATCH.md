@@ -11,6 +11,11 @@ type. This avoids mixed Float32/Float64 branch results and the literal pointer
 expressions observed in the affected GPU specializations. Computed tendencies,
 physical parameters, native launches and momentum ordering are unchanged.
 
+Layered thermodynamics uses the computed snow-rebasing type for its zero
+alternative. The ice-volume helper is deliberately unchanged: promoting its
+returns can create an ice mass flux even when the stored state is unchanged.
+The narrow snow change passes exact stored-state/flux and zero-tendency checks.
+
 The original and candidate CPU kernels agree exactly in production-state and
 small-grid comparisons. Coupled GPU reliability remains under qualification;
 this patch alone is not proof that CUDA700 is resolved.

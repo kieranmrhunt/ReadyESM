@@ -13,12 +13,20 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   specializations; physical equations, parameters and stepping order are unchanged.
 - Vendor the patched ClimaSeaIce 0.5.8 runtime and add CPU tests for active,
   marginal and absent ice with single and mixed numerical precision.
-- Production-state CPU comparisons are exact. Two short candidate GPU
+- Use the computed snow-rebasing type for its zero alternative in layered
+  thermodynamics. This removes another literal pointer from offline compiled
+  code while preserving 3,374,400 tested state/flux values exactly. Add 456
+  portable thermal checks; keep the ice-volume helper unchanged to avoid
+  artificial mass flux from broader type promotion.
+- The updated public CPU suite passes, including the existing land, runoff,
+  precipitation and output regressions. Coupled GPU testing is still pending.
+- Production-state CPU comparisons are exact. Two earlier candidate GPU
   restarts pass, one using ordinary package loading; both pass the unchanged
   diagnostics and independent exact restored-state checks.
 - The 48-hour attempt fails with CUDA700 in its first resumed step, before
   loading the ice-consolidation kernel. The initiating operation is unknown;
-  this candidate has not eliminated the GPU fault. See the
+  the momentum/stress change alone did not eliminate the GPU fault. The newer
+  snow candidate's coupled GPU test is pending. See the
   [validation record](docs/validation-v0.1.5.md).
 - Experimental land and air–ice surface-solver changes are not included.
 

@@ -271,7 +271,8 @@ end
 
     # Conserve snow volume when concentration changes: new ice has no snow,
     # so hs adjusts to keep hs * ℵ constant (analogous to how ice tracks hi * ℵ).
-    hsⁿ = ifelse(ℵⁿ⁺¹ > 0, hsⁿ * ℵⁿ / ℵⁿ⁺¹, zero(hsⁿ))
+    hs_rebased = hsⁿ * ℵⁿ / ℵⁿ⁺¹
+    hsⁿ = ifelse(ℵⁿ⁺¹ > 0, hs_rebased, zero(hs_rebased))
 
     Gs⁺ = snow_accumulation(i, j, snowfall, ρs, ℵⁿ⁺¹, clock)
     hs⁺ = hsⁿ + Δt * (Gs⁺ - Gs⁻)
