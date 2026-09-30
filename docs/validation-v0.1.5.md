@@ -1,10 +1,16 @@
-# v0.1.5 candidate validation
+# v0.1.5 validation
 
-This candidate changes numerical branch types in ClimaSeaIce, not the model
-physics or production configuration. It is not published yet. The earlier
-48-hour attempt failed; the newer snow change passes native CPU comparisons
-and an ordinary GPU continuation to hour 48. This is not climate or multi-year
-qualification.
+This release changes numerical branch types in ClimaSeaIce, not the model
+physics or production configuration. The earlier 48-hour attempt failed; the
+newer snow change passes native CPU comparisons, an ordinary GPU continuation
+to hour 48 and a fresh-process restart to hour 49. This is not climate or
+multi-year qualification.
+
+GitHub [CPU CI 36784847714](https://github.com/kieranmrhunt/ReadyESM/actions/runs/36784847714)
+passes on candidate commit `383b57d`, including dependency installation and the
+complete public test command. The job takes 16m32s; its test step takes 14m35s.
+The final release commit changes documentation only. Runtime/configuration and
+figure identities are checked again against the GPU-tested source and images.
 
 ## Change
 

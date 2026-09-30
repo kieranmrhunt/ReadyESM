@@ -6,7 +6,7 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
-### 0.1.5 — unreleased
+### 0.1.5 — 2026-09-30
 
 - Use consistent branch types in the sea-ice momentum and EVP stress kernels.
   The change removes five literal pointer expressions from the affected GPU
@@ -19,7 +19,8 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   portable thermal checks; keep the ice-volume helper unchanged to avoid
   artificial mass flux from broader type promotion.
 - The updated public CPU suite passes, including the existing land, runoff,
-  precipitation and output regressions.
+  precipitation and output regressions. GitHub CPU CI also passes on the
+  release candidate; the final release changes only documentation.
 - Production-state CPU comparisons are exact. Two earlier candidate GPU
   restarts pass, one using ordinary package loading; both pass the unchanged
   diagnostics and independent exact restored-state checks.

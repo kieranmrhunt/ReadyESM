@@ -7,13 +7,12 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-Version `v0.1.5` is a release candidate with consistent numerical types in
+Version `v0.1.5` uses consistent numerical types in
 the sea-ice momentum, stress and snow updates. Physics settings are unchanged.
 See the [release history](HISTORY.md) and
-[validation record](docs/validation-v0.1.5.md). The latest published version
-is still v0.1.4.
+[validation record](docs/validation-v0.1.5.md).
 
-**GPU qualification:** the updated candidate passes a production-resolution
+**GPU qualification:** this version passes a production-resolution
 restart from model hour 2 to hour 48 and a fresh-process restart to hour 49,
 with full diagnostics and exact restored-state comparison. Earlier attempts
 failed; the successful runs also used a newer driver. General GPU restart
