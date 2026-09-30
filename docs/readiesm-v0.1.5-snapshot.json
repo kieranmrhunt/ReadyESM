@@ -1,0 +1,65 @@
+{
+  "version": "0.1.5 candidate",
+  "runtime_commit": "09b479de12838f8243d313572fd4d934a32a6b33",
+  "runtime_source": "https://github.com/kieranmrhunt/ReadyESM/tree/09b479de12838f8243d313572fd4d934a32a6b33",
+  "model_source_manifest_sha256": "b9c8c228703f860882999583f3d2c1989768a99848f525624509c5415f3f6111",
+  "source_job": 56457732,
+  "source_job_result": "COMPLETED / 0:0; 184 resumed steps, full diagnostic validation and exact restored checkpoint state",
+  "checkpoint_parent_job": 56416366,
+  "input_checkpoint_sha256": "403bfdf8eff0fd980ce2dd11e436b17987834cd8a78521e5b4ecaf16b63e51cb",
+  "model_time_hours": 48,
+  "current_runtime_evolution_hours": 46,
+  "trajectory": "Restarted the momentum/stress candidate's hour-two checkpoint and continued 184 native 900-second steps with the added snow type change. Earlier samples are inherited from the checkpoint.",
+  "diagnostics_sha256": "37a7bf9e41ede7908a866a71863471942afe0c3e546e3ba74a25f3954c07c524",
+  "image_sha256": "7f28818ea928e642e851f413d8345571e1ae41864f31a6c6b56218d8d843de68",
+  "timeline_image_sha256": "88e4be65b92309958d18c8acb60d68c91e878a8c5bbddc382e6a839487bba0f5",
+  "renderer_job": 56469061,
+  "renderer_sha256": "5d9c71c4ba1a253df873d9f9d6fc85da717a07f7ac28afb0d7b4817fa208442a",
+  "timeline_renderer_sha256": "c6e1ad6756a3cbcfb9f016fb9bfd7e5b499014325ede6afa835ec244080b1b",
+  "renderer_environment_manifest_sha256": "9e4994df00c2f138136db5f521731f6a5fdaec3fdd3171597d0e14900c486fd6",
+  "rendered_at": "2026-09-30T21:59:43+01:00",
+  "display": "Equirectangular maps; nearest saved native point on the sphere, without averaging field values. Inactive cells are grey; exactly zero ice is white and positive ice starts blue.",
+  "units": "Ocean temperature in degrees Celsius; air temperature converted from K. Ice fraction and soil saturation multiplied by 100. Rain and snow water-equivalent rates multiplied by 86400 for mm/day.",
+  "precipitation_scale": "Logarithmic; values below 0.01 mm/day share the lowest colour. Maps show instantaneous rain plus snow, not daily accumulation.",
+  "timelines": {
+    "radiation_samples": 193,
+    "coupled_samples": 193,
+    "atmosphere_samples": 5,
+    "initial_missing": "Initial unavailable radiation/air/rain/snow samples stay NaN and are not zero-filled.",
+    "extrema": "Ocean extrema cover all wet depths. Ice maximum is area-equivalent thickness, not conditional thickness."
+  },
+  "fields": {
+    "ocean_temperature_C": {
+      "native_points": 40573,
+      "minimum": -1.8938502073287964,
+      "maximum": 30.725679397583008
+    },
+    "ocean_salinity_psu": {
+      "native_points": 40573,
+      "minimum": 23.681468963623047,
+      "maximum": 40.21727752685547
+    },
+    "sea_ice_percent": {
+      "native_points": 40573,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "surface_air_C": {
+      "native_points": 4608,
+      "minimum": -37.617941284179665,
+      "maximum": 32.47005615234377
+    },
+    "precipitation_mm_day": {
+      "native_points": 4608,
+      "minimum": 0,
+      "maximum": 36.61277678475017
+    },
+    "soil_saturation_percent": {
+      "native_points": 2123,
+      "minimum": 0.9999999776482582,
+      "maximum": 100
+    }
+  },
+  "scope": "Short engineering validation. No stationary climate, multi-year qualification or equality between continuous and restarted trajectories is claimed. GPU and driver changed between the earlier failed and this passing attempt.",
+  "visual_review": "Both exported PNGs inspected for readable units/titles/legends, complete panels, correct masking, honest missing samples and no visible clipping or overlap. No colour-vision simulation or narrow-browser check."
+}

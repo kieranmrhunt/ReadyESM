@@ -13,15 +13,16 @@ See the [release history](HISTORY.md) and
 [validation record](docs/validation-v0.1.5.md). The latest published version
 is still v0.1.4.
 
-**GPU qualification:** the earlier momentum/stress candidate passed two short
-restarts but failed its 48-hour attempt. The added snow change passes CPU
-conservation and exact-output tests; its coupled GPU test is pending.
-Reliable GPU restart is not yet established.
+**GPU qualification:** the updated candidate passes a production-resolution
+restart from model hour 2 to hour 48, full diagnostics and exact restored-state
+comparison. Earlier attempts failed; the successful run also used a newer
+driver. General GPU restart reliability is not yet established.
 
-![ReadyESM v0.1.4: ocean, sea ice, atmosphere and land at model hour 2](docs/readiesm-v0.1.4-snapshot.png)
+![ReadyESM v0.1.5: ocean, sea ice, atmosphere and land at model hour 48](docs/readiesm-v0.1.5-snapshot.png)
 
-*ReadyESM v0.1.4 at simulated hour 2, after a one-hour GPU restart check.
-This is a short validation snapshot. [Figure provenance](docs/readiesm-v0.1.4-snapshot.json).*
+*A v0.1.5 GPU restart continued to model hour 48.*
+[Timelines](docs/readiesm-v0.1.5-timelines.png) ·
+[Figure provenance](docs/readiesm-v0.1.5-snapshot.json)
 
 ## Run
 

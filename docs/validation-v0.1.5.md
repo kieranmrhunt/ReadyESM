@@ -2,8 +2,9 @@
 
 This candidate changes numerical branch types in ClimaSeaIce, not the model
 physics or production configuration. It is not published yet. The earlier
-48-hour attempt failed; a newer snow change passes native CPU comparisons
-and awaits coupled GPU testing. No new long-run figure was generated.
+48-hour attempt failed; the newer snow change passes native CPU comparisons
+and an ordinary GPU continuation to hour 48. This is not climate or multi-year
+qualification.
 
 ## Change
 
@@ -59,11 +60,44 @@ The updated 245-file source-manifest SHA-256 is
 Release staging differs only in version metadata and documentation; all 490
 staging identity checks pass. Public CPU suite 56457566 passes in 21m05s,
 including 1,126 named regression assertions and 486 package source-identity
-checks, without private forcing data. Ordinary GPU continuation 56457732 is
-waiting for resources, not yet qualified. Offline thermal argument types remain
+checks using synthetic inputs. Offline thermal argument types remain
 reconstructed, not independently matched to a live thermal GPU capture.
 
-## Remaining qualification and limits
+## Ordinary GPU continuation to hour 48
+
+Job 56457732 completes in 59m03s on 30 September. It restores the earlier
+hour-two checkpoint and advances 184 native 900-second steps to hour 48 at
+T31/L27 and 360 x 180 x 60 ocean resolution. Native package loading, unchanged
+full diagnostic validation, output/checkpoint saving and an independent exact
+restored-state comparison all pass. There is no runtime overlay or diagnostic
+observer. The saved restored checkpoint is byte-identical to its input.
+
+Model construction takes 30m39s; the first resumed step takes 13m19s and the
+remaining 183 steps take 2m17s in total. These are measured phases of this run,
+not a general runtime forecast.
+
+The successful run uses an A100 on gpuhost011 with driver 610.57.04. The failed
+earlier attempt used a different A100 on gpuhost007 with driver 610.43.02.
+The source and hardware/software environment both changed: success does not
+isolate the patch's causal effect or quantify failure frequency. Fresh-process
+restart 56463210 is testing the new hour-48 checkpoint separately.
+
+SHA-256 records:
+
+| File | SHA-256 |
+| --- | --- |
+| Input and saved restored boundary | `403bfdf8eff0fd980ce2dd11e436b17987834cd8a78521e5b4ecaf16b63e51cb` |
+| Hour-48 checkpoint | `d744ca05fb63c9d586d24a3b5161803f35c6b95074279ccff975b6d5e89da06b` |
+| Diagnostics | `37a7bf9e41ede7908a866a71863471942afe0c3e546e3ba74a25f3954c07c524` |
+| Coupled log | `ec024dc97c61635bd06afc0d0d1bc2db9a2808449bce2b070dcf0ec987f56b61` |
+| Independent comparison log | `23b9dc6e80ad202eea8801538f890e9420555a727c400e626bfc0a7b56685cc6` |
+
+Figure job 56469061 passes in 1m04s. The README maps and linked timelines use
+this actual output, with [source and rendering provenance](readiesm-v0.1.5-snapshot.json).
+Missing initial diagnostic samples remain missing, not zero. Both exported
+figures were visually checked for units, labels, masks and clipping.
+
+## Retained failures and limits
 
 Before the snow change, job 56422865 attempted to continue the native-package checkpoint from hour two
 to hour 48, using unchanged resolution, parameters and diagnostic thresholds.
@@ -74,7 +108,7 @@ dynamic and thermodynamic updates. The initiating operation is not identified.
 
 The restored checkpoint bytes exactly match the input. This verifies saved
 state, not internal work buffers or execution ordering. The dependent figure
-job cancelled without running, and the README retains its labelled v0.1.4 image.
+job cancelled without running. The README now uses the later successful run.
 The failure demonstrates that the momentum/stress type change is not sufficient
 to eliminate ordinary coupled illegal accesses.
 

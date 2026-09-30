@@ -19,15 +19,20 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   portable thermal checks; keep the ice-volume helper unchanged to avoid
   artificial mass flux from broader type promotion.
 - The updated public CPU suite passes, including the existing land, runoff,
-  precipitation and output regressions. Coupled GPU testing is still pending.
+  precipitation and output regressions.
 - Production-state CPU comparisons are exact. Two earlier candidate GPU
   restarts pass, one using ordinary package loading; both pass the unchanged
   diagnostics and independent exact restored-state checks.
-- The 48-hour attempt fails with CUDA700 in its first resumed step, before
+- The earlier 48-hour attempt fails with CUDA700 in its first resumed step, before
   loading the ice-consolidation kernel. The initiating operation is unknown;
-  the momentum/stress change alone did not eliminate the GPU fault. The newer
-  snow candidate's coupled GPU test is pending. See the
+  the momentum/stress change alone did not eliminate the GPU fault.
+- The snow-updated candidate completes 184 resumed steps from model hour 2 to
+  hour 48, with full diagnostics and exact restored-state comparison, in 59m03s.
+  It uses ordinary package loading, without a runtime patch or diagnostic
+  observer. Its A100 driver is newer than in the failed run, so this does not
+  isolate patch causality or establish general GPU reliability. See the
   [validation record](docs/validation-v0.1.5.md).
+- Replace the README snapshot with actual hour-48 maps and add timeline plots.
 - Experimental land and air–ice surface-solver changes are not included.
 
 ### 0.1.4 — 2026-09-24
