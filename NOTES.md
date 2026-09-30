@@ -28,7 +28,8 @@ Their source and licences are included under `vendor/`.
   With the added snow type change, an ordinary restart from hour 2 to hour 48
   now passes full diagnostics and exact restored-state comparison. The GPU
   and driver also changed, so patch causality and general restart reliability
-  remain unqualified. A fresh restart from the new hour-48 state is running.
+  remain unqualified. A fresh restart from the new hour-48 state also passes,
+  continuing through hour 49 with full diagnostics and exact restored state.
   See the [validation record](docs/validation-v0.1.5.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately

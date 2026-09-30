@@ -14,9 +14,10 @@ See the [release history](HISTORY.md) and
 is still v0.1.4.
 
 **GPU qualification:** the updated candidate passes a production-resolution
-restart from model hour 2 to hour 48, full diagnostics and exact restored-state
-comparison. Earlier attempts failed; the successful run also used a newer
-driver. General GPU restart reliability is not yet established.
+restart from model hour 2 to hour 48 and a fresh-process restart to hour 49,
+with full diagnostics and exact restored-state comparison. Earlier attempts
+failed; the successful runs also used a newer driver. General GPU restart
+reliability is not yet established.
 
 ![ReadyESM v0.1.5: ocean, sea ice, atmosphere and land at model hour 48](docs/readiesm-v0.1.5-snapshot.png)
 

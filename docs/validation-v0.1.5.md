@@ -79,8 +79,8 @@ not a general runtime forecast.
 The successful run uses an A100 on gpuhost011 with driver 610.57.04. The failed
 earlier attempt used a different A100 on gpuhost007 with driver 610.43.02.
 The source and hardware/software environment both changed: success does not
-isolate the patch's causal effect or quantify failure frequency. Fresh-process
-restart 56463210 is testing the new hour-48 checkpoint separately.
+isolate the patch's causal effect or quantify failure frequency. The separate
+fresh-process restart described below also passes.
 
 SHA-256 records:
 
@@ -97,7 +97,34 @@ this actual output, with [source and rendering provenance](readiesm-v0.1.5-snaps
 Missing initial diagnostic samples remain missing, not zero. Both exported
 figures were visually checked for units, labels, masks and clipping.
 
+## Fresh restart of the hour-48 checkpoint
+
+Job 56463210 completes in 56m24s on 30 September. A new native model process
+restores the hour-48 checkpoint, advances four 900-second steps to hour 49,
+passes full diagnostics and saves its output. An independent process verifies
+exact restored model-state equality; the saved restored checkpoint is also
+byte-identical to the input. The owned runoff buffers are poisoned before the
+normal restore, as in the preceding check.
+
+This uses the same A100 and driver 610.57.04 as the successful 48-hour run.
+It verifies restoration and finite continuation, not equality with an
+independent uninterrupted trajectory or general GPU failure frequency.
+
+| File | SHA-256 |
+| --- | --- |
+| Input and restored boundary | `d744ca05fb63c9d586d24a3b5161803f35c6b95074279ccff975b6d5e89da06b` |
+| Hour-49 checkpoint | `eab13cd0511ca0ac58b5f679f8f25b67756ee481753fff49991e2cb32e1a61c3` |
+| Diagnostics | `42a5848302c24d9d271cee154de0323870dd7a7c2535a98babda09845d3ccfc8` |
+| Coupled log | `7b20cbc399d13264d39ca9d3ae2dd78f009a32eb89458b0ae0033346f3e342f2` |
+| Independent comparison log | `23b9dc6e80ad202eea8801538f890e9420555a727c400e626bfc0a7b56685cc6` |
+
 ## Retained failures and limits
+
+GitHub CPU run [36777929865](https://github.com/kieranmrhunt/ReadyESM/actions/runs/36777929865)
+ended with a hosted-runner communication failure after dependency installation
+passed. GitHub retained no downloadable job log. This is not a passing CI run
+or an identified test failure; the cause of the runner loss is unknown. The
+local CPU regression passes above are separate evidence.
 
 Before the snow change, job 56422865 attempted to continue the native-package checkpoint from hour two
 to hour 48, using unchanged resolution, parameters and diagnostic thresholds.

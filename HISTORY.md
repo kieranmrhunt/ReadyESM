@@ -33,6 +33,8 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   isolate patch causality or establish general GPU reliability. See the
   [validation record](docs/validation-v0.1.5.md).
 - Replace the README snapshot with actual hour-48 maps and add timeline plots.
+- A separate process restores that hour-48 checkpoint and reaches hour 49,
+  again passing full diagnostics and exact restored-state comparison (56m24s).
 - Experimental land and air–ice surface-solver changes are not included.
 
 ### 0.1.4 — 2026-09-24
