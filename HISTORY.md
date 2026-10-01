@@ -37,6 +37,11 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 - A separate process restores that hour-48 checkpoint and reaches hour 49,
   again passing full diagnostics and exact restored-state comparison (56m24s).
 - Experimental land and air–ice surface-solver changes are not included.
+- Follow-up on 1 October: the same runtime reaches day 30 and then day 120
+  through fresh-process restarts, passing normal diagnostics and exact
+  restored-state checks. Update the README maps and timelines to day 120.
+  Ocean drift, radiative imbalance and local ice pile-up remain unresolved;
+  this is longer validation, not a new physics release.
 
 ### 0.1.4 — 2026-09-24
 

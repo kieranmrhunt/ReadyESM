@@ -98,10 +98,9 @@ SHA-256 records:
 | Coupled log | `ec024dc97c61635bd06afc0d0d1bc2db9a2808449bce2b070dcf0ec987f56b61` |
 | Independent comparison log | `23b9dc6e80ad202eea8801538f890e9420555a727c400e626bfc0a7b56685cc6` |
 
-Figure job 56469061 passes in 1m04s. The README maps and linked timelines use
-this actual output, with [source and rendering provenance](readiesm-v0.1.5-snapshot.json).
-Missing initial diagnostic samples remain missing, not zero. Both exported
-figures were visually checked for units, labels, masks and clipping.
+Figure job 56469061 passes in 1m04s and supplied the original hour-48 maps
+and timelines. The README now shows the day-120 follow-up described below.
+Missing initial diagnostic samples remain missing, not zero.
 
 ## Fresh restart of the hour-48 checkpoint
 
@@ -123,6 +122,24 @@ independent uninterrupted trajectory or general GPU failure frequency.
 | Diagnostics | `42a5848302c24d9d271cee154de0323870dd7a7c2535a98babda09845d3ccfc8` |
 | Coupled log | `7b20cbc399d13264d39ca9d3ae2dd78f009a32eb89458b0ae0033346f3e342f2` |
 | Independent comparison log | `23b9dc6e80ad202eea8801538f890e9420555a727c400e626bfc0a7b56685cc6` |
+
+## Follow-up through day 120 — 1 October
+
+The unchanged runtime completes day 2–30 in job 56478138 (1h17m16s), then
+day 30–120 in job 56483842 (2h01m33s). Both pass full native diagnostics
+and independent exact restored-state comparisons, without runtime overlays.
+The day-120 checkpoint SHA-256 is
+`807277a2503e8e5b25029954935e0e4099bf2c166fae5b39bf10f7b1c9de73e1`.
+
+Figure job 56539129 renders the actual day-120 maps and timelines. Both PNGs
+were visually reviewed; [provenance](readiesm-v0.1.5-snapshot.json) records
+their input and output hashes. The trajectories still show ocean warming,
+freshening and local ice accumulation. Passing the existing physical checks
+does not establish an equilibrated climate or solve these biases.
+
+Final release-commit CPU CI passes on main (36786679996), the release branch
+(36786680257) and the tag (36786679944). This figure update changes no runtime,
+configuration, dependency, test or threshold.
 
 ## Retained failures and limits
 

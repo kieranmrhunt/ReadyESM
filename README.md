@@ -12,15 +12,15 @@ the sea-ice momentum, stress and snow updates. Physics settings are unchanged.
 See the [release history](HISTORY.md) and
 [validation record](docs/validation-v0.1.5.md).
 
-**GPU qualification:** this version passes a production-resolution
-restart from model hour 2 to hour 48 and a fresh-process restart to hour 49,
-with full diagnostics and exact restored-state comparison. Earlier attempts
-failed; the successful runs also used a newer driver. General GPU restart
-reliability is not yet established.
+**GPU qualification:** this version has reached model day 120 through
+fresh-process restarts, with full diagnostics and exact restored-state checks.
+Earlier attempts failed; the successful runs also used a newer driver.
+General GPU reliability and a stationary climate are not yet established.
+Radiative imbalance, ocean drift and local ice pile-up remain.
 
-![ReadyESM v0.1.5: ocean, sea ice, atmosphere and land at model hour 48](docs/readiesm-v0.1.5-snapshot.png)
+![ReadyESM v0.1.5: ocean, sea ice, atmosphere and land at model day 120](docs/readiesm-v0.1.5-snapshot.png)
 
-*A v0.1.5 GPU restart continued to model hour 48.*
+*A 120-day initialised v0.1.5 run.*
 [Timelines](docs/readiesm-v0.1.5-timelines.png) ·
 [Figure provenance](docs/readiesm-v0.1.5-snapshot.json)
 
