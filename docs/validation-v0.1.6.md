@@ -22,6 +22,14 @@ All runs use T31/L27, the 360 × 180 × 60 tripolar ocean, dynamic sea ice and
 - An independent review recomputes 23 metrics from raw NetCDF, checks units,
   clocks and hashes, and confirms identical inherited day-0–2 histories.
 
+The clean release checkout also passes the full CPU suite (job 57299834,
+17m51s), with the new production defaults. Source identity and runtime hashes
+pass before and after testing. Figure rendering passes 11 sample-contract
+assertions; both images were visually checked and their hashes verified.
+GitHub's independent [CPU test run](https://github.com/kieranmrhunt/ReadyESM/actions/runs/37284855061)
+also passes on candidate `7f2c4fc`. The final release changes only documentation
+from that tested commit.
+
 The table gives time-weighted means over days 20–30, except labelled endpoints.
 Both columns use Float64 land: this isolates the cloud change, not the combined
 effect against an earlier Float32 trajectory.

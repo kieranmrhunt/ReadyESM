@@ -21,17 +21,13 @@ Their source and licences are included under `vendor/`.
 
 ## Main known limitations
 
-- Earlier versions have an intermittent GPU illegal-access failure during
-  sea-ice stepping. The first v0.1.5 candidate passes two short restart runs,
-  including normal package loading, but the subsequent 48-hour attempt fails
-  in its first resumed step. Exact saved-state restoration passes. The
-  initiating operation and change in failure frequency remain unproven.
-  With the added snow type change, an ordinary restart from hour 2 to hour 48
-  now passes full diagnostics and exact restored-state comparison. The GPU
-  and driver also changed, so patch causality and general restart reliability
-  remain unqualified. A fresh restart from the new hour-48 state also passes,
-  continuing through hour 49 with full diagnostics and exact restored state.
-  See the [validation record](docs/validation-v0.1.5.md).
+- Earlier versions intermittently failed with GPU illegal access during
+  sea-ice stepping. v0.1.5 subsequently passed through day 120, and v0.1.6's
+  changed land/cloud configuration passes through day 30 with exact restored
+  states. The GPU and driver also changed between failed and successful
+  attempts; general restart reliability and patch-only causality remain
+  unqualified. See the [v0.1.5 record](docs/validation-v0.1.5.md) and
+  [v0.1.6 record](docs/validation-v0.1.6.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
   and is not included in v0.1.6. Its later ice-interface non-convergence
