@@ -7,22 +7,22 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-Version `v0.1.5` uses consistent numerical types in
-the sea-ice momentum, stress and snow updates. Physics settings are unchanged.
+Version `v0.1.6` uses double precision for land state and water accounting,
+and increases diagnostic liquid cloud path from 60 to 75 g/m².
 See the [release history](HISTORY.md) and
-[validation record](docs/validation-v0.1.5.md).
+[validation record](docs/validation-v0.1.6.md).
 
-**GPU qualification:** this version has reached model day 120 through
-fresh-process restarts, with full diagnostics and exact restored-state checks.
-Earlier attempts failed; the successful runs also used a newer driver.
-General GPU reliability and a stationary climate are not yet established.
-Radiative imbalance, ocean drift and local ice pile-up remain.
+The tested trajectory reaches day 30 through fresh-process restarts; cloud75
+is enabled at day 2. Compared with its matched cloud60 control, late net
+top-of-atmosphere energy uptake falls by 24%, from 21.7 to 16.6 W/m².
+Land-water accounting closes to rounding precision. Atmospheric water error,
+radiative imbalance, ocean drift and local ice pile-up remain.
 
-![ReadyESM v0.1.5: ocean, sea ice, atmosphere and land at model day 120](docs/readiesm-v0.1.5-snapshot.png)
+![ReadyESM v0.1.6: ocean, sea ice, atmosphere and land at model day 30](docs/readiesm-v0.1.6-snapshot.png)
 
-*A 120-day initialised v0.1.5 run.*
-[Timelines](docs/readiesm-v0.1.5-timelines.png) ·
-[Figure provenance](docs/readiesm-v0.1.5-snapshot.json)
+*A 30-day initialised v0.1.6 run.*
+[Timelines](docs/readiesm-v0.1.6-timelines.png) ·
+[Figure provenance](docs/readiesm-v0.1.6-snapshot.json)
 
 ## Run
 
@@ -97,3 +97,7 @@ duration.
 
 Checkpoints made before v0.1.4's native-runoff repair lack pending exchange
 water and are rejected explicitly.
+The v0.1.6 production configuration uses `terrarium_precision: float64`;
+old Float32 land checkpoints cannot be converted implicitly. Start fresh or
+use a native Float64 checkpoint. To continue a compatible Float32 checkpoint,
+retain `terrarium_precision: float32` and its original forcing settings.

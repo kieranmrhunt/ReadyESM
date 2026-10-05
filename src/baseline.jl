@@ -314,7 +314,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         )
         column_grid = Terrarium.ColumnRingGrid(
             _terrarium_architecture(config),
-            Float32,
+            config.terrarium_precision == :float64 ? Float64 : Float32,
             soil_spacing,
             spectral_grid.grid,
             land_mask,

@@ -32,6 +32,7 @@ ocean_bathymetry_correction: none
 ocean_shortwave_scheme: depth_aware_coastal
 ocean_initial_conditions: ecco_1993_full_state
 land_model: terrarium
+terrarium_precision: float64
 terrarium_initial_conditions: era5_instantaneous
 terrarium_evapotranspiration: era5_prescribed_vegetation
 terrarium_soil_layers: 16
@@ -44,7 +45,7 @@ forcing:
   radiation_every_n_steps: 4
   co2_ppm: 420.0
   cloud_scheme: diagnostic
-  cloud_liquid_water_path_gm2: 60.0
+  cloud_liquid_water_path_gm2: 75.0
   cloud_ice_water_path_gm2: 25.0
   aerosol_species: sulfate
   aerosol_optical_depth_550nm: 0.0

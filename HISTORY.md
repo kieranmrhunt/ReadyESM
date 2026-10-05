@@ -6,6 +6,27 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### 0.1.6 — 2026-10-05
+
+- Use Float64 for the production Terrarium state, geometry and cumulative
+  water accounting. Atmosphere and ocean remain Float32. In the coupled
+  30-day test, maximum land-water residual is 2.8e-10 mm; native Float64
+  fresh-process restarts restore exactly. Old Float32 checkpoints are not
+  silently converted. Add 45 land-precision and restart-history checks.
+- Increase diagnostic liquid cloud path from 60 to 75 g/m²; retain ice path
+  at 25 g/m² and four-hour convection. Against a matched Float64-land control,
+  days 20–30 net TOA uptake falls from 21.70 to 16.56 W/m² (23.7%).
+- This is an incremental improvement, not an equilibrated climate. Clear-sky
+  uptake is nearly unchanged, atmospheric water residual worsens, and the
+  late mean of worst-cell ice thickness increases despite a slightly lower
+  final value. Ocean drift and coastal pile-up remain.
+- Replace the README maps and timelines with the tested 30-day trajectory:
+  fresh Float64 land, cloud75 enabled at day 2, another restart at day 10.
+  Production starts with cloud75 immediately. The previous version's 120-day
+  qualification does not transfer to this changed configuration.
+- Faster convection and reduced ice-cloud path remain separate experiments.
+  See the [validation record](docs/validation-v0.1.6.md).
+
 ### 0.1.5 — 2026-09-30
 
 - Use consistent branch types in the sea-ice momentum and EVP stress kernels.

@@ -12,6 +12,7 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.ocean_dynamics
 @test config.sea_ice_dynamics
 @test config.land_model == :terrarium
+@test config.terrarium_precision == :float64
 @test config.terrarium_soil_layers == 16
 @test config.atmosphere_vertical_diffusion ==
       :speedyweather_0_21_1_zero_operator_control
@@ -19,6 +20,8 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.atmosphere_convection == :betts_miller_constant_rh
 @test config.forcing.radiation == :rrtmgp_all_sky
 @test config.forcing.co2_ppm == 420
+@test config.forcing.cloud_liquid_water_path_gm2 == 75
+@test config.forcing.cloud_ice_water_path_gm2 == 25
 @test config.forcing.aerosol_optical_depth_550nm == 0
 
 diagnostic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "diagnostics.jl"), String)
@@ -66,3 +69,4 @@ include("precipitation_diagnostics.jl")
 include("precipitation_pressure.jl")
 include("sea_ice_branch_types.jl")
 include("sea_ice_thermal_conservation.jl")
+include("land_precision.jl")

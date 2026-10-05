@@ -4,11 +4,12 @@
 
 - SpeedyWeather 0.21.1, T31/L27, ERA5 initial atmosphere.
 - RRTMGP all-sky radiation with 420 ppm prescribed CO2, diagnostic clouds and
-  zero sulfate AOD in the production configuration.
+  zero sulfate AOD. Liquid/ice cloud paths are 75/25 g/m².
 - Oceananigans on a 360 x 180 x 60 tripolar grid, initialized from ECCO V4r4.
 - ClimaSeaIce dynamics and thermodynamics. Ice and snow volume are advected
   directly and conservatively; velocity and tracer halos are refreshed first.
 - Terrarium 0.1.6 `LandModel` with 16 soil layers and prescribed vegetation.
+  Land state and water accounting use Float64; atmosphere and ocean use Float32.
   Its new snow component is disabled for the current compatibility baseline,
   so snowfall follows the previously qualified liquid-input treatment.
 - Terrarium runoff is accumulated at every native land step and transferred
@@ -33,11 +34,12 @@ Their source and licences are included under `vendor/`.
   See the [validation record](docs/validation-v0.1.5.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
-  and is not included in v0.1.5. Its later ice-interface non-convergence
+  and is not included in v0.1.6. Its later ice-interface non-convergence
   also remains under investigation.
-- The late model energy balance is still too positive (about +20 W m-2 all-sky
-  and +45 W m-2 clear-sky in the completed control). The model is not spun up
-  or calibrated for projections.
+- The model energy balance remains too positive: +16.6 W/m² all-sky over
+  days 20–30, versus +21.7 in the matched cloud60 control. Clear-sky net flux
+  is almost unchanged (+43.6 versus +43.5 W/m²); zero clear-sky flux is not
+  an independent equilibrium target. The model is not spun up or calibrated.
 - Clouds are diagnosed from humidity; cloud liquid, ice and overlap are not a
   prognostic cloud system.
 - Arctic ice can still converge into coastal cells. Direct volume transport
@@ -50,10 +52,13 @@ Their source and licences are included under `vendor/`.
 - One-degree river mouths can retain very fresh surface lenses. Broad enhanced
   mixing was too intrusive; a narrowly loading-scaled closure is still being
   tested and is not selected in `production.yml`.
-- Terrarium 0.1.6 has passed CPU and GPU water-conservation gates plus a coupled
-  RRTMGP/Terrarium GPU step. Native-runoff component restart checks and short
-  coupled checks pass; reliable GPU continuation and long-term qualification
-  remain unresolved.
+- Double-precision land closes its water budget to 2.8e-10 mm through the
+  coupled 30-day run, including exact native-precision checkpoint restoration.
+  This does not qualify century-scale closure or conversion of old checkpoints.
+  Atmospheric water accounting is separate: its day-30 residual is
+  -0.178 kg/m², versus -0.099 in the cloud60 control. The normal diagnostic
+  checks require finite later residuals but do not impose a quantitative
+  atmospheric closure bound.
 - Forcing is concentration/AOD driven. Carbon-cycle, SO2 and aerosol-emissions
   modules are not present.
 

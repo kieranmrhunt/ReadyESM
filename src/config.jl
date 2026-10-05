@@ -85,6 +85,8 @@ Base.@kwdef struct ExperimentConfig
     terrarium_soil_layers::Int = 8
     terrarium_max_layer_thickness_m::Float64 = 5.0
     terrarium_timestep_seconds::Float64 = 60.0
+    # Opt-in mixed precision: atmosphere/ocean allocations are unaffected.
+    terrarium_precision::Symbol = :float32
     output_dir::String = joinpath(PROJECT_ROOT, "artifacts", "baseline")
     forcing::ForcingConfig = ForcingConfig()
 end
@@ -486,6 +488,7 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         terrarium_timestep_seconds = Float64(
             _mapping_value(raw, "terrarium_timestep_seconds", 60.0),
         ),
+        terrarium_precision = Symbol(_mapping_value(raw, "terrarium_precision", "float32")),
         output_dir = output_dir,
         forcing = forcing,
     )
@@ -866,6 +869,8 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         throw(ArgumentError("terrarium_max_layer_thickness_m must be at least 0.05"))
     config.terrarium_timestep_seconds > 0 ||
         throw(ArgumentError("terrarium_timestep_seconds must be positive"))
+    config.terrarium_precision in (:float32, :float64) ||
+        throw(ArgumentError("terrarium_precision must be float32 or float64"))
     config.forcing.radiation in (
         :speedy_simplified,
         :rrtmgp_clear_sky,

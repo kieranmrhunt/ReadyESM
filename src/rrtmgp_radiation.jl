@@ -281,7 +281,7 @@ const _ATMOSPHERE_PROCESS_PROFILE_ACCUMULATOR_FIELDS = (
 )
 
 """Daily global atmospheric, process-profile, and hydrological diagnostics."""
-Base.@kwdef mutable struct GlobalAtmosphereDiagnosticsCallback{NF, W, Z, A, R} <:
+Base.@kwdef mutable struct GlobalAtmosphereDiagnosticsCallback{NF, W, Z, A, R, LNF, LW} <:
                            SpeedyWeather.AbstractCallback
     timestep_counter::Int = 0
     sample_every_n_steps::Int = 1
@@ -307,7 +307,7 @@ Base.@kwdef mutable struct GlobalAtmosphereDiagnosticsCallback{NF, W, Z, A, R} <
     column_water_vapor::Vector{NF} = NF[]
     mass_weighted_temperature::Vector{NF} = NF[]
     land_surface_soil_moisture::Vector{NF} = NF[]
-    land_total_water_storage::Vector{NF} = NF[]
+    land_total_water_storage::Vector{LNF} = LNF[]
     land_soil_layer_temperature::Vector{NF} = NF[]
     land_soil_layer_saturation::Vector{NF} = NF[]
     land_rainfall_flux::Vector{NF} = NF[]
@@ -317,12 +317,12 @@ Base.@kwdef mutable struct GlobalAtmosphereDiagnosticsCallback{NF, W, Z, A, R} <
     land_transpiration_flux::Vector{NF} = NF[]
     land_surface_runoff_flux::Vector{NF} = NF[]
     land_infiltration_flux::Vector{NF} = NF[]
-    cumulative_land_precipitation::Vector{NF} = NF[]
-    cumulative_land_evapotranspiration::Vector{NF} = NF[]
-    cumulative_land_surface_runoff::Vector{NF} = NF[]
-    cumulative_balanced_launch_land_water_source::Vector{NF} = NF[]
-    balanced_launch_land_water_source::NF = zero(NF)
-    land_water_budget_residual::Vector{NF} = NF[]
+    cumulative_land_precipitation::Vector{LNF} = LNF[]
+    cumulative_land_evapotranspiration::Vector{LNF} = LNF[]
+    cumulative_land_surface_runoff::Vector{LNF} = LNF[]
+    cumulative_balanced_launch_land_water_source::Vector{LNF} = LNF[]
+    balanced_launch_land_water_source::LNF = zero(LNF)
+    land_water_budget_residual::Vector{LNF} = LNF[]
     cumulative_convective_humidity_change_profile::Vector{NF} = NF[]
     cumulative_convective_temperature_change_profile::Vector{NF} = NF[]
     cumulative_large_scale_humidity_change_profile::Vector{NF} = NF[]
@@ -335,14 +335,14 @@ Base.@kwdef mutable struct GlobalAtmosphereDiagnosticsCallback{NF, W, Z, A, R} <
     surface_sigma_thickness::NF
     point_weights::W
     land_point_weights::W
-    land_column_weights::W
+    land_column_weights::LW
     column_cumulative_surface_water_vapor::W
     column_cumulative_precipitation::W
-    column_cumulative_land_precipitation::W
-    column_cumulative_land_evapotranspiration::W
-    column_cumulative_land_surface_runoff::W
+    column_cumulative_land_precipitation::LW
+    column_cumulative_land_evapotranspiration::LW
+    column_cumulative_land_surface_runoff::LW
     soil_layer_thickness::Z
-    soil_porosity::NF
+    soil_porosity::LNF
     weighted_cumulative_convective_humidity_change::A
     weighted_cumulative_convective_temperature_change::A
     weighted_cumulative_large_scale_humidity_change::A
@@ -472,7 +472,7 @@ function _terrarium_soil_geometry(model, spectral_grid)
     soil_model = land.model
     field_grid = Terrarium.get_field_grid(soil_model.grid)
     cpu_grid = Oceananigans.on_architecture(Oceananigans.CPU(), field_grid)
-    NF = spectral_grid.NF
+    NF = eltype(soil_model.grid)
     layer_thickness = NF[
         Oceananigans.Δzᵃᵃᶜ(1, 1, k, cpu_grid) for k in 1:cpu_grid.Nz
     ]
@@ -517,6 +517,8 @@ end
 function GlobalAtmosphereDiagnosticsCallback(model::SpeedyWeather.AbstractModel)
     spectral_grid = model.spectral_grid
     NF = spectral_grid.NF
+    soil_layer_thickness, soil_porosity = _terrarium_soil_geometry(model, spectral_grid)
+    LNF = typeof(soil_porosity)
     weights = _global_point_weights(spectral_grid)
     # Geometry arrays live on the selected architecture. Cache the one scalar
     # needed by the per-step surface-process kernel while constructing the
@@ -532,7 +534,7 @@ function GlobalAtmosphereDiagnosticsCallback(model::SpeedyWeather.AbstractModel)
     land_area_fraction = sum(land_point_weights)
     land_area_fraction > 0 || error("global atmosphere diagnostics found no land points")
     land_point_weights ./= land_area_fraction
-    land_column_weights = (
+    land_column_weights = LNF.(
         host_weights[host_land_mask] .* host_land_fraction[host_land_mask]
     )
     land_column_weights ./= sum(land_column_weights)
@@ -543,10 +545,6 @@ function GlobalAtmosphereDiagnosticsCallback(model::SpeedyWeather.AbstractModel)
     land_column_weights = SpeedyWeather.on_architecture(
         spectral_grid.architecture,
         land_column_weights,
-    )
-    soil_layer_thickness, soil_porosity = _terrarium_soil_geometry(
-        model,
-        spectral_grid,
     )
     column_cumulative_surface_water_vapor = similar(weights)
     column_cumulative_precipitation = similar(weights)
@@ -575,6 +573,8 @@ function GlobalAtmosphereDiagnosticsCallback(model::SpeedyWeather.AbstractModel)
         typeof(soil_layer_thickness),
         typeof(process_accumulator),
         typeof(model.longwave_radiation),
+        LNF,
+        typeof(land_column_weights),
     }(
         ; point_weights = weights,
         timestep_seconds = NF(model.time_stepping.Δt_sec),
@@ -620,6 +620,7 @@ end
 
 function _sample_global_atmosphere!(callback, vars, model; precipitation = true)
     NF = eltype(callback.time_days)
+    LNF = eltype(callback.land_total_water_storage)
     weights = callback.point_weights
     nlayers = model.geometry.nlayers
     Δσ = model.geometry.σ_levels_thick
@@ -805,7 +806,7 @@ function _sample_global_atmosphere!(callback, vars, model; precipitation = true)
             push!(callback.land_transpiration_flux, zero(NF))
         end
         push!(callback.land_total_water_storage,
-              NF(_global_grid_mean(
+              LNF(_global_grid_mean(
                   column_water_storage,
                   callback.land_column_weights,
               )))
@@ -815,15 +816,15 @@ function _sample_global_atmosphere!(callback, vars, model; precipitation = true)
         push!(callback.land_infiltration_flux,
               NF(_FRESHWATER_DENSITY_KG_M3 *
                  _global_grid_mean(land_infiltration, callback.land_column_weights)))
-        cumulative_land_precipitation = NF(_global_grid_mean(
+        cumulative_land_precipitation = LNF(_global_grid_mean(
             callback.column_cumulative_land_precipitation,
             callback.land_column_weights,
         ))
-        cumulative_land_evapotranspiration = NF(_global_grid_mean(
+        cumulative_land_evapotranspiration = LNF(_global_grid_mean(
             callback.column_cumulative_land_evapotranspiration,
             callback.land_column_weights,
         ))
-        cumulative_land_surface_runoff = NF(_global_grid_mean(
+        cumulative_land_surface_runoff = LNF(_global_grid_mean(
             callback.column_cumulative_land_surface_runoff,
             callback.land_column_weights,
         ))
@@ -843,7 +844,7 @@ function _sample_global_atmosphere!(callback, vars, model; precipitation = true)
             callback.cumulative_balanced_launch_land_water_source,
             callback.balanced_launch_land_water_source,
         )
-        push!(callback.land_water_budget_residual, NF(
+        push!(callback.land_water_budget_residual, LNF(
             last(callback.land_total_water_storage) -
             first(callback.land_total_water_storage) -
             cumulative_land_precipitation +
