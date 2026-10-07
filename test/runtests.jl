@@ -18,6 +18,8 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
       :speedyweather_0_21_1_zero_operator_control
 @test config.atmosphere_large_scale_precipitation == :upstream_observed
 @test config.atmosphere_convection == :betts_miller_constant_rh
+@test config.atmosphere_convection_timescale_seconds == 7200
+include("convection_timescale.jl")
 @test config.forcing.radiation == :rrtmgp_all_sky
 @test config.forcing.co2_ppm == 420
 @test config.forcing.cloud_liquid_water_path_gm2 == 75

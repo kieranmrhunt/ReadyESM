@@ -3,6 +3,7 @@
 ## Current model
 
 - SpeedyWeather 0.21.1, T31/L27, ERA5 initial atmosphere.
+- Two-hour Betts–Miller convection, reference RH0.7, net-column rain diagnosis.
 - RRTMGP all-sky radiation with 420 ppm prescribed CO2, diagnostic clouds and
   zero sulfate AOD. Liquid/ice cloud paths are 75/25 g/m².
 - Oceananigans on a 360 x 180 x 60 tripolar grid, initialized from ECCO V4r4.
@@ -22,19 +23,19 @@ Their source and licences are included under `vendor/`.
 ## Main known limitations
 
 - Earlier versions intermittently failed with GPU illegal access during
-  sea-ice stepping. v0.1.5 subsequently passed through day 120, and v0.1.6's
-  changed land/cloud configuration passes through day 30 with exact restored
+  sea-ice stepping. v0.1.6 and the v0.1.7 convection branch subsequently passed
+  through day120 with native Float64 land and exact restored
   states. The GPU and driver also changed between failed and successful
   attempts; general restart reliability and patch-only causality remain
   unqualified. See the [v0.1.5 record](docs/validation-v0.1.5.md) and
-  [v0.1.6 record](docs/validation-v0.1.6.md).
+  [v0.1.7 record](docs/validation-v0.1.7.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. A checked startup solver is being tested separately
-  and is not included in v0.1.6. Its later ice-interface non-convergence
+  and is not included in v0.1.7. Its later ice-interface non-convergence
   also remains under investigation.
-- The model energy balance remains too positive: +16.6 W/m² all-sky over
-  days 20–30, versus +21.7 in the matched cloud60 control. Clear-sky net flux
-  is almost unchanged (+43.6 versus +43.5 W/m²); zero clear-sky flux is not
+- The model energy balance remains too positive: +7.27 W/m² all-sky over
+  days90–120, versus +9.34 in the matched four-hour convection control.
+  Rain increases10.4% and snow decreases32.2%. Zero clear-sky flux is not
   an independent equilibrium target. The model is not spun up or calibrated.
 - Clouds are diagnosed from humidity; cloud liquid, ice and overlap are not a
   prognostic cloud system.
@@ -48,11 +49,12 @@ Their source and licences are included under `vendor/`.
 - One-degree river mouths can retain very fresh surface lenses. Broad enhanced
   mixing was too intrusive; a narrowly loading-scaled closure is still being
   tested and is not selected in `production.yml`.
-- Double-precision land closes its water budget to 2.8e-10 mm through the
-  coupled 30-day run, including exact native-precision checkpoint restoration.
+- Double-precision land closes its water budget to approximately1.1e-9 mm
+  through day120, including exact native-precision checkpoint restoration.
   This does not qualify century-scale closure or conversion of old checkpoints.
-  Atmospheric water accounting is separate: its day-30 residual is
-  -0.178 kg/m², versus -0.099 in the cloud60 control. The normal diagnostic
+  Atmospheric water accounting is separate: its smaller day120 cumulative
+  residual partly cancels inherited error and is not a conservation repair.
+  The normal diagnostic
   checks require finite later residuals but do not impose a quantitative
   atmospheric closure bound.
 - Forcing is concentration/AOD driven. Carbon-cycle, SO2 and aerosol-emissions

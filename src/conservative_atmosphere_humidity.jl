@@ -287,10 +287,12 @@ function _atmosphere_convection(
 )
     convection = if config.atmosphere_convection ==
                     :betts_miller_constant_rh
-        SpeedyWeather.BettsMillerConvection(spectral_grid)
+        SpeedyWeather.BettsMillerConvection(spectral_grid;
+            time_scale = Second(config.atmosphere_convection_timescale_seconds))
     elseif config.atmosphere_convection == :betts_miller_sigma_rh_v1
         SigmaProfileBettsMillerConvection(
             spectral_grid;
+            time_scale = Second(config.atmosphere_convection_timescale_seconds),
             upper_relative_humidity = config.
                 atmosphere_convection_upper_relative_humidity,
             lower_relative_humidity = config.

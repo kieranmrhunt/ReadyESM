@@ -31,6 +31,7 @@ Base.@kwdef struct ExperimentConfig
         :speedyweather_0_21_1_zero_operator_control
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
     atmosphere_convection::Symbol = :betts_miller_constant_rh
+    atmosphere_convection_timescale_seconds::Int = 14400
     atmosphere_convection_upper_relative_humidity::Float64 = 0.5
     atmosphere_convection_lower_relative_humidity::Float64 = 0.7
     atmosphere_convection_transition_top_sigma::Float64 = 0.3
@@ -304,6 +305,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "betts_miller_constant_rh",
             ),
         ),
+        atmosphere_convection_timescale_seconds = Int(
+            _mapping_value(raw, "atmosphere_convection_timescale_seconds", 14400),
+        ),
         atmosphere_convection_upper_relative_humidity = Float64(
             _mapping_value(
                 raw,
@@ -536,6 +540,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     ) || throw(ArgumentError(
         "atmosphere_convection must be betts_miller_constant_rh or " *
         "betts_miller_sigma_rh_v1",
+    ))
+    config.atmosphere_convection_timescale_seconds > 0 || throw(ArgumentError(
+        "atmosphere_convection_timescale_seconds must be positive",
     ))
     0 <= config.atmosphere_convection_upper_relative_humidity <= 1 || throw(
         ArgumentError(

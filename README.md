@@ -7,22 +7,21 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-Version `v0.1.6` uses double precision for land state and water accounting,
-and increases diagnostic liquid cloud path from 60 to 75 g/m².
+Version `v0.1.7` shortens convection adjustment from four hours to two,
+retaining double-precision land and liquid/ice cloud paths of 75/25 g/m².
 See the [release history](HISTORY.md) and
-[validation record](docs/validation-v0.1.6.md).
+[validation record](docs/validation-v0.1.7.md).
 
-The tested trajectory reaches day 30 through fresh-process restarts; cloud75
-is enabled at day 2. Compared with its matched cloud60 control, late net
-top-of-atmosphere energy uptake falls by 24%, from 21.7 to 16.6 W/m².
-Land-water accounting closes to rounding precision. Atmospheric water error,
-radiative imbalance, ocean drift and local ice pile-up remain.
+In matched day-30 to day-120 continuations, late net top-of-atmosphere energy
+uptake falls by 22%, from 9.34 to 7.27 W/m². Rain increases by 10%.
+Land-water accounting remains near rounding precision; atmospheric water
+error, radiative imbalance, ocean hot cells and coastal ice pile-up remain.
 
-![ReadyESM v0.1.6: ocean, sea ice, atmosphere and land at model day 30](docs/readiesm-v0.1.6-snapshot.png)
+![ReadyESM v0.1.7: ocean, sea ice, atmosphere and land at model day 120](docs/readiesm-v0.1.7-snapshot.png)
 
-*A 30-day initialised v0.1.6 run.*
-[Timelines](docs/readiesm-v0.1.6-timelines.png) ·
-[Figure provenance](docs/readiesm-v0.1.6-snapshot.json)
+*A 120-day initialised run; v0.1.7 convection from day 30.*
+[Timelines](docs/readiesm-v0.1.7-timelines.png) ·
+[Figure provenance](docs/readiesm-v0.1.7-snapshot.json)
 
 ## Run
 

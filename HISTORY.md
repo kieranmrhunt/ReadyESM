@@ -6,6 +6,22 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### 0.1.7 — 2026-10-07
+
+- Shorten production Betts–Miller convection adjustment from four hours to
+  two. Add `atmosphere_convection_timescale_seconds`; its generic default
+  remains 14400 for existing configurations, while production selects 7200.
+  Cloud paths, reference humidity and the net-column rainfall fix are unchanged.
+- Matched native-Float64-land continuations from day 30 to day 120 reduce
+  days 90–120 net TOA uptake from 9.34 to 7.27 W/m² (22.2%). Both runs pass
+  exact restoration and retain land-water residuals near 1.1e-9 mm.
+- Trade-offs: rain +10.4%, snow -32.2%, surface-air temperature -0.13 K.
+  The smaller cumulative atmospheric water residual partly cancels inherited
+  error; it is not a conservation repair. Ice pile-up and ocean hot cells remain.
+- Update README maps and timelines to the day-120 candidate. The first 30 days
+  used four-hour convection; the subsequent 90 days used the release setting.
+  This does not establish equilibrium or a century-scale qualification.
+
 ### 0.1.6 — 2026-10-05
 
 - Use Float64 for the production Terrarium state, geometry and cumulative
