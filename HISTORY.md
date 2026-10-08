@@ -6,6 +6,13 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### Unreleased — 2026-10-08
+
+- Check ocean temperature and salinity bounds throughout the saved history,
+  not just on the final day. A recovered endpoint no longer hides earlier
+  negative salinity or overheating. Physical limits and model physics are
+  unchanged. Add 46 regression checks; the full CPU suite passes.
+
 ### 0.1.7 — 2026-10-07
 
 - Shorten production Betts–Miller convection adjustment from four hours to

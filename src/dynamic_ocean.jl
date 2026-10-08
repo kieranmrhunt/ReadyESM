@@ -4440,6 +4440,13 @@ function validate_dynamic_diagnostics(diagnostics)
     ) || error("surface-salinity minimum indices and time dimensions differ")
     all(all(isfinite, values) for values in coupled_budget_series) ||
         error("coupled conservation budget contains non-finite values")
+    _validate_ocean_extrema_history(
+        diagnostics.coupled_budget_time_days,
+        diagnostics.ocean_temperature_minimum_series,
+        diagnostics.ocean_temperature_maximum_series,
+        diagnostics.ocean_salinity_minimum_series,
+        diagnostics.ocean_salinity_maximum_series,
+    )
     all(
         diagnostics.ocean_temperature_minimum_series .<=
         diagnostics.ocean_temperature_maximum_series,
