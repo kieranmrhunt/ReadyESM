@@ -262,6 +262,7 @@ function collect_diagnostics(simulation, config::ExperimentConfig)
                 _atmosphere_vertical_diffusion_provenance(
                     model.vertical_diffusion,
                 ),
+            _atmosphere_saturation_provenance(config)...,
             mixed_layer_depth_m = config.mixed_layer_depth_m,
             atmosphere_initial_conditions = String(config.atmosphere_initial_conditions),
             era5_month = config.era5_month,

@@ -30,6 +30,9 @@ Base.@kwdef struct ExperimentConfig
     atmosphere_vertical_diffusion::Symbol =
         :speedyweather_0_21_1_zero_operator_control
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
+    # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
+    # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
+    atmosphere_saturation_law::Symbol = :liquid
     atmosphere_convection::Symbol = :betts_miller_constant_rh
     atmosphere_convection_timescale_seconds::Int = 14400
     atmosphere_convection_upper_relative_humidity::Float64 = 0.5
@@ -298,6 +301,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "upstream_observed",
             ),
         ),
+        atmosphere_saturation_law = Symbol(
+            _mapping_value(raw, "atmosphere_saturation_law", "liquid"),
+        ),
         atmosphere_convection = Symbol(
             _mapping_value(
                 raw,
@@ -533,6 +539,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     ) || throw(ArgumentError(
         "atmosphere_large_scale_precipitation must be upstream_observed or " *
         "net_column_conservative",
+    ))
+    config.atmosphere_saturation_law in (:liquid, :mixed_phase) || throw(ArgumentError(
+        "atmosphere_saturation_law must be liquid or mixed_phase",
     ))
     config.atmosphere_convection in (
         :betts_miller_constant_rh,

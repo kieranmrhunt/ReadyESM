@@ -3393,6 +3393,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 "Gaussian-area layer-mean conservative rescaling",
             atmosphere_convective_precipitation_scheme =
                 "Betts-Miller net column humidity drying",
+            _atmosphere_saturation_provenance(config)...,
             atmosphere_convection = String(config.atmosphere_convection),
             atmosphere_convection_reference_humidity_profile =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?

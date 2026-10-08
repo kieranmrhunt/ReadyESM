@@ -194,6 +194,7 @@ function build_baseline(config::ExperimentConfig)
     drag = _atmosphere_speed_limit_drag(config, spectral_grid)
     spectral_transform = _speedy_spectral_transform(spectral_grid)
     hole_filling = LayerConservativeHumidityHoleFilling(spectral_grid)
+    atmosphere = _atmosphere_thermodynamics(config, spectral_grid)
     large_scale_condensation =
         _atmosphere_large_scale_condensation(config, spectral_grid)
     convection = _atmosphere_convection(config, spectral_grid)
@@ -204,6 +205,7 @@ function build_baseline(config::ExperimentConfig)
     sea_ice = ThermodynamicSeaIce(spectral_grid)
     model = PrimitiveWetModel(
         spectral_grid;
+        atmosphere,
         ocean,
         sea_ice,
         time_stepping,
@@ -254,6 +256,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
     drag = _atmosphere_speed_limit_drag(config, spectral_grid)
     spectral_transform = _speedy_spectral_transform(spectral_grid)
     hole_filling = LayerConservativeHumidityHoleFilling(spectral_grid)
+    atmosphere = _atmosphere_thermodynamics(config, spectral_grid)
     large_scale_condensation =
         _atmosphere_large_scale_condensation(config, spectral_grid)
     prognostic_cloud_condensate =
@@ -408,6 +411,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         albedo = _coupled_atmosphere_albedo(spectral_grid)
         PrimitiveWetModel(
             spectral_grid;
+            atmosphere,
             ocean,
             sea_ice,
             initial_conditions,
@@ -440,6 +444,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         )
         PrimitiveWetModel(
             spectral_grid;
+            atmosphere,
             ocean,
             sea_ice,
             initial_conditions,
@@ -460,6 +465,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
     else
         PrimitiveWetModel(
             spectral_grid;
+            atmosphere,
             ocean,
             sea_ice,
             initial_conditions,
