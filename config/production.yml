@@ -9,7 +9,8 @@ atmosphere_timestep_at_t31_minutes: 15
 atmosphere_hyperdiffusion_hours: 4
 atmosphere_divergence_hyperdiffusion_hours: 1
 atmosphere_vertical_diffusion: speedyweather_0_21_1_zero_operator_control
-atmosphere_large_scale_precipitation: upstream_observed
+atmosphere_large_scale_precipitation: net_column_conservative
+atmosphere_saturation_law: mixed_phase
 atmosphere_convection: betts_miller_constant_rh
 atmosphere_convection_timescale_seconds: 7200
 atmosphere_speed_limit_ms: 60

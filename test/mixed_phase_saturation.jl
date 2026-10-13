@@ -29,11 +29,15 @@ function cold_column_tendency(atmosphere)
 end
 
 @testset "Mixed-phase saturation option" begin
-    # Configuration: liquid by default and in production, explicit opt-in only.
+    # Preserve old configurations; production explicitly selects the D pair.
     @test R.ExperimentConfig().atmosphere_saturation_law == :liquid
+    @test R.ExperimentConfig().atmosphere_large_scale_precipitation == :upstream_observed
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml");
         check_input_files = false)
-    @test production.atmosphere_saturation_law == :liquid
+    @test production.atmosphere_saturation_law == :mixed_phase
+    @test production.atmosphere_large_scale_precipitation == :net_column_conservative
+    legacy = with(production; atmosphere_saturation_law = :liquid,
+        atmosphere_large_scale_precipitation = :upstream_observed)
     mktempdir() do directory
         path = joinpath(directory, "config.yml")
         write(path, "atmosphere_saturation_law: mixed_phase\n")
@@ -45,9 +49,10 @@ end
         check_input_files = false) isa R.ExperimentConfig
 
     grid = SW.SpectralGrid(trunc = 31, nlayers = 27)
-    liquid_atmosphere = R._atmosphere_thermodynamics(production, grid)
-    mixed_atmosphere = R._atmosphere_thermodynamics(
-        with(production; atmosphere_saturation_law = :mixed_phase), grid)
+    liquid_atmosphere = R._atmosphere_thermodynamics(legacy, grid)
+    mixed_atmosphere = R._atmosphere_thermodynamics(production, grid)
+    @test R._atmosphere_large_scale_condensation(production, grid) isa R.NetColumnImplicitCondensation
+    @test !(R._atmosphere_large_scale_condensation(legacy, grid) isa R.NetColumnImplicitCondensation)
     earth = SW.EarthAtmosphere(grid)
     @test liquid_atmosphere isa SW.EarthAtmosphere{Float32}
     @test all(isequal(getfield(liquid_atmosphere, n), getfield(earth, n)) for n in fieldnames(typeof(earth)))
@@ -58,10 +63,9 @@ end
     @test propertynames(mixed_atmosphere) == propertynames(earth)
     @test all(isequal(getproperty(mixed_atmosphere, n), getproperty(earth, n)) for n in propertynames(earth))
     @test Adapt.adapt(Array, mixed_atmosphere) === mixed_atmosphere
-    @test R._atmosphere_saturation_provenance(production).atmosphere_saturation_law == "liquid"
-    @test isnan(R._atmosphere_saturation_provenance(production).atmosphere_saturation_all_ice_temperature_K)
-    mixed_provenance = R._atmosphere_saturation_provenance(
-        with(production; atmosphere_saturation_law = :mixed_phase))
+    @test R._atmosphere_saturation_provenance(legacy).atmosphere_saturation_law == "liquid"
+    @test isnan(R._atmosphere_saturation_provenance(legacy).atmosphere_saturation_all_ice_temperature_K)
+    mixed_provenance = R._atmosphere_saturation_provenance(production)
     @test mixed_provenance.atmosphere_saturation_law == "mixed_phase"
     @test mixed_provenance.atmosphere_saturation_all_ice_temperature_K == 250.16
 
@@ -98,9 +102,11 @@ end
     config = R.ExperimentConfig(device = :cpu, truncation = 7, nlayers = 8,
         land_model = :terrarium, terrarium_soil_layers = 3, terrarium_max_layer_thickness_m = 0.5,
         terrarium_timestep_seconds = 60, atmosphere_saturation_law = :mixed_phase,
+        atmosphere_large_scale_precipitation = :net_column_conservative,
         forcing = R.ForcingConfig(radiation = :rrtmgp_clear_sky))
     simulation = R.build_rrtmgp(config)
     @test simulation.model.atmosphere isa R.MixedPhaseEarthAtmosphere
+    @test simulation.model.large_scale_condensation isa R.NetColumnImplicitCondensation
     SW.run!(simulation; steps = 4)
     @test all(isfinite, Array(simulation.variables.grid.temperature_prev.data))
     @test all(isfinite, Array(simulation.variables.grid.humidity_prev.data))

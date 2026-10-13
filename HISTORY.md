@@ -6,7 +6,25 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
-### Unreleased — 2026-10-08
+### 0.1.8 — candidate
+
+- Select mixed liquid/ice saturation and net-column-conservative large-scale
+  precipitation in production (the tested D combination). The generic defaults
+  remain liquid saturation and upstream-observed precipitation for existing
+  configurations. Convection stays at two hours; cloud paths remain 75/25 g/m².
+- In the matched day-360–384 window, net TOA uptake falls from 8.75 to
+  3.49 W/m². D reaches day 390; its liquid/upstream control stops near day 385
+  on negative ocean salinity. These are single trajectories, not equilibrium
+  or ensemble validation.
+- Cooling and drying increase, and atmospheric water closure is not repaired:
+  over days 90–384 the residual grows by 5.43 kg/m² in D versus 2.17 in the
+  control (0.0185 versus 0.00739 kg/m²/day). It remains positive late in D.
+  Ocean warming and coastal ice pile-up remain. Derivative repairs,
+  ozone changes and new cloud/convection prototypes are not included.
+- These runs do not close the full system energy budget or establish a
+  repeat envelope for D; the analytic ozone profile is unchanged.
+- Release-package CPU tests pass; fresh-process GPU qualification is running.
+  See the [validation record](docs/validation-v0.1.8.md).
 
 - Check ocean temperature and salinity bounds throughout the saved history,
   not just on the final day. A recovered endpoint no longer hides earlier

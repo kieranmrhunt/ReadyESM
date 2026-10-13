@@ -15,10 +15,12 @@ energy SpeedyWeather's condensation already releases when it forms snow; it is
 within 2% of Murphy and Koop (2005) at 210 K, whereas the separate 2801 kJ/kg
 sublimation constant would overestimate ice saturation there by about 9%.
 
-Latent heating is unchanged: Betts--Miller's moist adiabat keeps the
-vaporisation heat. The implicit large-scale condensation factor is also left
-as upstream; its derivative term is about 0.2% of unity, so the choice of latent
-heat inside it is immaterial.
+Latent heating and the derivative approximations in Betts--Miller's moist
+adiabat and implicit large-scale condensation are unchanged. Those inherited
+approximations are not fully consistent with the mixed-phase saturation curve.
+This is the tested saturation-only change, not a complete phase-aware
+thermodynamic closure; derivative and parcel-heating repairs are separate
+experiments.
 """
 struct MixedPhaseEarthAtmosphere{A <: SpeedyWeather.EarthAtmosphere} <:
        SpeedyWeather.AbstractWetAtmosphere

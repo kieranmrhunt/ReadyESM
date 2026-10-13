@@ -16,7 +16,8 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.terrarium_soil_layers == 16
 @test config.atmosphere_vertical_diffusion ==
       :speedyweather_0_21_1_zero_operator_control
-@test config.atmosphere_large_scale_precipitation == :upstream_observed
+@test config.atmosphere_large_scale_precipitation == :net_column_conservative
+@test config.atmosphere_saturation_law == :mixed_phase
 @test config.atmosphere_convection == :betts_miller_constant_rh
 @test config.atmosphere_convection_timescale_seconds == 7200
 include("convection_timescale.jl")
