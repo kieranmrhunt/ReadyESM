@@ -2380,6 +2380,7 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
         atmosphere_model;
         time = config.start_date,
     )
+    _initial_spectral_truncation!(atmosphere, config)
     atmosphere_Δt = Float64(atmosphere.model.time_stepping.Δt_sec)
     atmosphere_stop_time = isnothing(steps) ?
         config.duration_days * 86_400 : steps * atmosphere_Δt

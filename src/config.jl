@@ -33,6 +33,9 @@ Base.@kwdef struct ExperimentConfig
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
     atmosphere_saturation_law::Symbol = :liquid
+    # Zero the l = lmax+1 spectral row of the prognostic state after the initial conditions are set
+    # (spectral_truncation.jl). Opt-in: false keeps the existing launch bitwise.
+    atmosphere_initial_spectral_truncation::Bool = false
     atmosphere_convection::Symbol = :betts_miller_constant_rh
     atmosphere_convection_timescale_seconds::Int = 14400
     atmosphere_convection_upper_relative_humidity::Float64 = 0.5
@@ -303,6 +306,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         ),
         atmosphere_saturation_law = Symbol(
             _mapping_value(raw, "atmosphere_saturation_law", "liquid"),
+        ),
+        atmosphere_initial_spectral_truncation = Bool(
+            _mapping_value(raw, "atmosphere_initial_spectral_truncation", false),
         ),
         atmosphere_convection = Symbol(
             _mapping_value(

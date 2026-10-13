@@ -218,7 +218,7 @@ function build_baseline(config::ExperimentConfig)
         convection,
     )
     add!(model.callbacks, :global_surface_temperature => GlobalSurfaceTemperatureCallback(spectral_grid))
-    return initialize!(model)
+    return _initial_spectral_truncation!(initialize!(model), config)
 end
 
 """Run a configured baseline and return the simulation plus collected diagnostics."""
@@ -499,7 +499,7 @@ function build_rrtmgp(config::ExperimentConfig)
     config.ocean_model == :slab || throw(
         ArgumentError("build_rrtmgp requires ocean_model=slab; use build_dynamic_esm otherwise"),
     )
-    return initialize!(_rrtmgp_atmosphere_model(config))
+    return _initial_spectral_truncation!(initialize!(_rrtmgp_atmosphere_model(config)), config)
 end
 
 function run_rrtmgp!(config::ExperimentConfig; steps::Union{Nothing, Int} = nothing)
