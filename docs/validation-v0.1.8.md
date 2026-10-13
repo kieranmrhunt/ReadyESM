@@ -1,6 +1,7 @@
 # v0.1.8 validation
 
-Candidate; release-package qualification is pending.
+Released 13 October 2026. Local and GitHub CPU tests and GPU launch/restart
+qualification pass; climate limitations remain below.
 
 ## Change
 
@@ -74,13 +75,20 @@ The saturation law also affects diagnostic cloud detection. The net-radiation
 response is not attributed solely to one process, and the inherited parcel
 and condensation derivative approximations remain unchanged.
 
-## Remaining checks and limitations
+## Release qualification
 
 - Full CPU suite passes (job 59313164, 19m55), including 419 mixed-phase assertions,
   legacy configuration defaults and the production saturation/precipitation
   combination. Runtime hashes match before and after the tests.
-- Exercise a fresh production-resolution GPU launch and an independent-process
-  restore, checking the restored state exactly and subsequent diagnostics.
+- GPU job 59321185 passes (1h46m50): a fresh production-resolution hour,
+  independent-process restoration and a second hour of evolution. The saved
+  model state restores exactly; this does not claim identical restarted and
+  uninterrupted GPU trajectories. Both processes' output independently confirms
+  mixed-phase/net-column physics, 420 ppm CO₂ and the correct diagnostic clocks.
+  Source, input and output hashes pass.
+- GitHub CPU tests pass for candidate `7374ed1`:
+  [run 38448979005](https://github.com/kieranmrhunt/ReadyESM/actions/runs/38448979005).
+  The final release changes documentation only; its tested runtime is unchanged.
 - README maps and timelines now show D through day 390. Figure job 59314808
   passes all 11 sample-contract assertions and both images have been visually
   checked. The day 90 switch is labelled; missing initial samples stay missing.

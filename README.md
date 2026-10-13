@@ -7,7 +7,7 @@ with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
 This is a research model under development, not a calibrated projection model.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-The `v0.1.8` candidate adds mixed liquid/ice saturation and net-column
+`v0.1.8` adds mixed liquid/ice saturation and net-column
 large-scale rain diagnosis: surface rain matches that scheme's column water
 removal, but total atmospheric water is not conserved. Two-hour convection,
 double-precision land and cloud paths of 75/25 g/m² are retained.
@@ -19,11 +19,11 @@ top-of-atmosphere energy uptake falls from 8.75 to 3.49 W/m². The atmosphere
 is 1.36 K cooler and 4.07 kg/m² drier than the control; its unclosed water
 budget grows by 5.43 kg/m² over days 90–384, versus 2.17 in the control.
 Ocean hot cells, coastal ice pile-up and whole-system energy closure remain
-unresolved. Release-package qualification is in progress.
+unresolved. CPU tests and a fresh-process GPU launch/restart check pass.
 
 ![ReadyESM D: ocean, sea ice, atmosphere and land at model day 390](docs/readiesm-v0.1.8-snapshot.png)
 
-*A 390-day initialised run; v0.1.8 candidate physics from day 90.*
+*A 390-day initialised run; v0.1.8 physics from day 90.*
 [Timelines](docs/readiesm-v0.1.8-timelines.png) ·
 [Figure provenance](docs/readiesm-v0.1.8-snapshot.json)
 

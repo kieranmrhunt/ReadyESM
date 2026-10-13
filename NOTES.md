@@ -51,7 +51,7 @@ Their source and licences are included under `vendor/`.
 - The analytic ozone profile has no latitude/season dependence. A preliminary
   fixed-column comparison gives about 460 DU versus 245–378 DU in the sampled
   ERA5 columns, not a global observed range. Its upper-tropospheric radiative
-  effect needs validation; no ozone correction is included in this candidate.
+  effect needs validation; no ozone correction is included in v0.1.8.
 - GPU trajectories are not guaranteed bitwise reproducible. The long D run
   has no independent repeat; short tests cannot establish its uncertainty.
 - Clouds are diagnosed from humidity; cloud liquid, ice and overlap are not a

@@ -1,5 +1,5 @@
 {
-  "version": "0.1.8 candidate",
+  "version": "0.1.8",
   "experiment": "D: mixed-phase saturation and net-column-conservative large-scale precipitation",
   "model_day": 390,
   "model_hour": 9360,

@@ -6,7 +6,7 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
-### 0.1.8 — candidate
+### 0.1.8 — 2026-10-13
 
 - Select mixed liquid/ice saturation and net-column-conservative large-scale
   precipitation in production (the tested D combination). The generic defaults
@@ -23,9 +23,9 @@ failed commands, frozen-source hashes and diagnostic artefacts.
   ozone changes and new cloud/convection prototypes are not included.
 - These runs do not close the full system energy budget or establish a
   repeat envelope for D; the analytic ozone profile is unchanged.
-- Release-package CPU tests pass; fresh-process GPU qualification is running.
+- Local and GitHub CPU tests pass, alongside a production-resolution GPU
+  launch, independent-process restart and exact restored-state comparison.
   See the [validation record](docs/validation-v0.1.8.md).
-
 - Check ocean temperature and salinity bounds throughout the saved history,
   not just on the final day. A recovered endpoint no longer hides earlier
   negative salinity or overheating. Physical limits and model physics are
