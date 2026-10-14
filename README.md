@@ -27,6 +27,25 @@ unresolved. CPU tests and a fresh-process GPU launch/restart check pass.
 [Timelines](docs/readiesm-v0.1.8-timelines.png) ·
 [Figure provenance](docs/readiesm-v0.1.8-snapshot.json)
 
+## Experimental roadmap
+
+Snapshot: **14 October 2026**. These ten blue-sky tracks are experimental, not
+features of the released v0.1.8 model. Passing a component test does not establish
+coupled climate skill; releases need not wait for every track.
+
+| Track | Direction | Progress | Next step |
+| --- | --- | --- | --- |
+| BS01 | Conservative convection, then a learned closure | Standalone plume runs reach 20 days, but upper-air moisture is biased high. No learned closure yet. | Port the plume to GPU after the cloud microphysics; test water and energy budgets. |
+| BS02 | Prognostic clouds | A local liquid/ice store avoids the negative-condensate repair needed by the transported prototype. GPU port underway. | Couple stored condensate and cloud fraction to radiation; test restart and conservation. |
+| BS03 | Virtual vertical layers | Bottom-layer refinement removes about 69% of the offline surface longwave error against the high-resolution reference. Coupled tests submitted. | Compare 30-day runs with matched controls, including heating and surface fluxes. |
+| BS04 | Balanced initialisation | Remapping strongly reduces water drift in a 10-day test, but changes the initial inventory. More targeted spectral-cleanup tests submitted. | Qualify the GPU cleanup and compare fresh/restarted runs; gradual analysis increments later. |
+| BS05 | Parameter calibration | Two 33-member real-column sensitivity screens completed; an expanded plume screen now separates moistening and drying terms. No fitted calibration yet. | Apply the diagnostics to the newer plume, then select a bounded coupled parameter sweep. |
+| BS06 | Sea-ice thickness distribution | Five-category native transport and exact restart pass on a synthetic masked CPU grid. GPU qualification submitted. | Test mechanical feedback at the Arctic hotspot; the pile-up is not fixed yet. |
+| BS07 | Coastal connectivity and landfast ice | Fine-bathymetry connectivity and metric-interface benchmarks pass around the problem coast. No live coastal stress scheme yet. | Translate resolved channel geometry into a local dynamics benchmark. |
+| BS08 | Runoff storage and heat | Standalone routing closes water/heat budgets and restarts exactly. Receiver heat-replacement GPU test submitted. | Connect the land heat debit and source temperature without double-counting ocean heat. |
+| BS09 | Automated experiment branching | Bounded planning and archived-failure replay tested. The live evidence adapter is under review. | Drive one reviewed shadow experiment with verified inputs and no duplicate submissions. |
+| BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass; dated greenhouse-gas coupled tests submitted. | Replay spatial air–sea carbon exchange with a closed ledger, before interactive coupling. |
+
 ## Run
 
 The production configuration requires Julia 1.12 and an NVIDIA GPU with
