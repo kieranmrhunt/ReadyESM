@@ -42,14 +42,50 @@ function _initial_spectral_truncation!(simulation, config::ExperimentConfig)
     return simulation
 end
 
+const _GRID_PREVIOUS = (:u_prev, :v_prev, :temperature_prev, :pressure_prev, :humidity_prev)
+
+function _copy_grid_previous(vars::SpeedyWeather.Variables)
+    grid = vars.grid
+    saved = Dict{Symbol, Any}(name => copy(getproperty(grid, name)) for name in _GRID_PREVIOUS if hasproperty(grid, name))
+    if hasproperty(grid, :tracers)
+        for (name, field) in pairs(grid.tracers)
+            endswith(String(name), "_prev") && (saved[Symbol(:tracer_, name)] = copy(field))
+        end
+    end
+    return saved
+end
+
+function _restore_grid_previous!(vars::SpeedyWeather.Variables, saved)
+    grid = vars.grid
+    for name in _GRID_PREVIOUS
+        haskey(saved, name) && (getproperty(grid, name) .= saved[name])
+    end
+    if hasproperty(grid, :tracers)
+        for (name, field) in pairs(grid.tracers)
+            key = Symbol(:tracer_, name)
+            haskey(saved, key) && (field .= saved[key])
+        end
+    end
+    return vars
+end
+
 """
 Remove the l = lmax + 1 row from a RESTORED coupled atmosphere (e.g. a checkpoint of a run launched without the launch
-truncation) and recompute its grid state from the truncated spectra, as at initialisation (grid and its `*_prev`
-copy both from the current level). This changes the state: a continuation after it is not an exact restart.
+truncation) and recompute its current grid state from the truncated spectra. This changes the state: a continuation
+after it is not an exact restart.
+
+A restore copies the grid state, including the `*_prev` grids (the previous step's state, used by the
+parameterizations), without any transform. The recompute here uses `transform!(...; initialize = true)`, which would also
+overwrite `*_prev` with the current state. With `preserve_previous = true` (default) the restored `*_prev` grids are put
+back bit for bit, so the row removal (and the current grid recomputed from it) is the only change. `preserve_previous =
+false` keeps the initialisation semantics (`*_prev` = current).
 """
-function truncate_restored_atmosphere_lmax_plus_1!(simulation)
+function truncate_restored_atmosphere_lmax_plus_1!(simulation; preserve_previous::Bool = true)
     atmosphere = simulation.model.atmosphere
-    truncate_prognostic_lmax_plus_1!(atmosphere.variables)
-    SpeedyWeather.transform!(atmosphere.variables, 2, atmosphere.model; initialize = true)
+    vars = atmosphere.variables
+    saved = preserve_previous ? _copy_grid_previous(vars) : nothing
+    truncate_prognostic_lmax_plus_1!(vars)
+    SpeedyWeather.transform!(vars, 2, atmosphere.model; initialize = true)
+    preserve_previous && _restore_grid_previous!(vars, saved)
     return simulation
 end

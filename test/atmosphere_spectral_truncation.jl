@@ -66,18 +66,35 @@ step_of(var, lf) = SW.get_step(var, lf)
         @test spectra(vars) == after
     end
 
-    @testset "restored-state cleaning recomputes a consistent grid" begin
-        SW.run!(sim; steps = 3)                                               # evolve, then contaminate the top row
+    current_names = (:vorticity, :divergence, :temperature, :pressure, :humidity, :u, :v)
+    previous_names = (:u_prev, :v_prev, :temperature_prev, :pressure_prev, :humidity_prev)
+    grab(names) = Dict(n => copy(Array(getproperty(vars.grid, n).data)) for n in names)
+    @testset "restored-state cleaning: transform-only identity, row removal, previous grids preserved" begin
+        SW.run!(sim; steps = 3)                                               # evolve: grid = transform of level 2
+        fake = (; model = (; atmosphere = sim))
+        # identity: on an already-truncated state the recompute reproduces the current grid bitwise and, with the
+        # default preserve_previous, leaves every *_prev grid bitwise unchanged
+        current0 = grab(current_names); previous0 = grab(previous_names)
+        @test all(n -> previous0[n] != current0[n === :pressure_prev ? :pressure : Symbol(replace(String(n), "_prev" => ""))],
+                  (:u_prev, :temperature_prev, :humidity_prev))                 # prev really is a different (older) state
+        R.truncate_restored_atmosphere_lmax_plus_1!(fake)
+        @test grab(current_names) == current0
+        @test grab(previous_names) == previous0
+        # contaminate the top row, then clean: row zeroed, current grid recomputed from it, *_prev untouched
         T2 = step_of(vars.prognostic.temperature, 2)
         l, m = lm_indices(T2); i = findfirst((l .== maximum(l)) .& (m .== 1))
         T2.data[i, 1] += 1.0f0                                                  # l = lmax + 1, m = 0, top layer
         @test top_rows(T2)[1] > 0
-        fake = (; model = (; atmosphere = sim))
         R.truncate_restored_atmosphere_lmax_plus_1!(fake)
         @test top_rows(step_of(vars.prognostic.temperature, 2))[1] == 0
-        @test Array(vars.grid.temperature.data) == Array(vars.grid.temperature_prev.data)
+        @test grab(previous_names) == previous0
+        @test grab(current_names) == current0                                   # the added row is gone again
         regrid = ST.transform(step_of(vars.prognostic.temperature, 2), model.spectral_transform)
         @test isapprox(Array(regrid.data), Array(vars.grid.temperature.data); rtol = 1e-6)
+        # preserve_previous = false keeps the initialisation semantics (*_prev = current)
+        R.truncate_restored_atmosphere_lmax_plus_1!(fake; preserve_previous = false)
+        @test Array(vars.grid.temperature.data) == Array(vars.grid.temperature_prev.data)
+        @test Array(vars.grid.humidity.data) == Array(vars.grid.humidity_prev.data)
     end
 
     @testset "builder: the flag zeroes only the l = lmax + 1 row of the launch state" begin
