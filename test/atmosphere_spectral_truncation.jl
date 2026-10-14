@@ -120,5 +120,47 @@ step_of(var, lf) = SW.get_step(var, lf)
         # there), so the default path differs from the truncated one exactly in that row
         @test any(!iszero, reshape(sa[:temperature][1], length(lb), :)[top, :])
     end
+
+    # Contract on the ordering the launch flag relies on (Codex review 2026-10-14 17:38): the builder truncates the
+    # spectra, and SpeedyWeather's simulation initialize! (scale, then transform! with initialize = true) rebuilds the
+    # first grid state from them. After it, for both flag values: the current T, q, ln ps, u, v grids equal fresh
+    # transforms of the selected leapfrog level's spectra, and every *_prev grid equals the initialised current grid.
+    @testset "post-initialisation grids are the transforms of the (truncated) spectra; *_prev = current" begin
+        small = R.ExperimentConfig(device = :cpu, truncation = 7, nlayers = 8, atmosphere_timestep_at_t31_minutes = 3.75,
+            atmosphere_convection_timescale_seconds = 7200, forcing = R.ForcingConfig(radiation = :rrtmgp_all_sky))
+        grids = Dict{Bool, Dict{Symbol, Array}}()
+        for flag in (false, true)
+            sim = R.build_rrtmgp(with(small; atmosphere_initial_spectral_truncation = flag))
+            model = sim.model; v = sim.variables; S = model.spectral_transform
+            @test model.time_stepping.Δt_sec == 900
+            SW.initialize!(sim; steps = 4)
+            @test v.prognostic.scale[] == model.planet.radius
+            lf = model.time_stepping.first_step_euler ? 1 : 2
+            P = v.prognostic; G = v.grid
+            for name in (:temperature, :humidity, :pressure)
+                spec = step_of(getproperty(P, name), lf)
+                flag && @test top_rows(spec)[1] == 0                            # the first grid state comes from clean spectra
+                expected = ST.transform(spec, S)
+                name === :humidity && SW.hole_filling!(expected, model.hole_filling, model)   # as transform! does
+                @test isapprox(Array(getproperty(G, name).data), Array(expected.data); rtol = 1e-6, atol = 1e-12)
+            end
+            vor = step_of(P.vorticity, lf); div = step_of(P.divergence, lf)
+            U = similar(vor); V = similar(vor)
+            ST.UV_from_vordiv!(U, V, vor, div, S)
+            @test isapprox(Array(G.u.data), Array(ST.transform(U, S; unscale_coslat = true).data); rtol = 1e-6, atol = 1e-6)
+            @test isapprox(Array(G.v.data), Array(ST.transform(V, S; unscale_coslat = true).data); rtol = 1e-6, atol = 1e-6)
+            @test Array(G.u_prev.data) == Array(G.u.data) && Array(G.v_prev.data) == Array(G.v.data)
+            @test Array(G.temperature_prev.data) == Array(G.temperature.data)
+            @test Array(G.humidity_prev.data) == Array(G.humidity.data)
+            @test Array(G.pressure_prev.data) == exp.(Array(G.pressure.data))       # stored in Pa
+            grids[flag] = Dict(n => copy(Array(getproperty(G, n).data)) for n in (:temperature, :humidity, :pressure))
+            for _ in 1:4
+                SW.timestep!(sim)
+                @test all(all(isfinite, Array(getproperty(G, n).data)) for n in (:temperature, :humidity, :pressure, :u, :v))
+            end
+        end
+        # the flag changes the first grid state (the imprint is not only in unused spectra)
+        @test grids[true][:temperature] != grids[false][:temperature]
+    end
 end
 end
