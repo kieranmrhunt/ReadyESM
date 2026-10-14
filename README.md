@@ -7,19 +7,19 @@ with dynamic sea ice and 16-layer land. Initial state comes from ERA5 and ECCO.
 This is still under development so please don't use it for projections.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-`v0.1.8` adds mixed liquid/ice saturation and net-column
-large-scale rain diagnosis: surface rain matches that scheme's column water
-removal, but total atmospheric water is still(!) not conserved. Two-hour convection,
-double-precision land and cloud paths of 75/25 g/m² are retained.
+`v0.1.9` removes an invalid, frozen spectral row from the ERA5 launch state.
+In a matched fresh 30-day pair this reduces the magnitude of atmospheric-water
+drift by 94.8% and removes a spurious 80–90 hPa polar pressure depression.
+The change has a material climate effect and is not applied silently to old
+checkpoints. Two-hour convection, mixed-phase saturation, double-precision land
+and cloud paths of 75/25 g/m² are retained.
 See the [release history](HISTORY.md) and
-[validation record](docs/validation-v0.1.8.md).
+[validation record](docs/validation-v0.1.9.md).
 
-The current version reaches at least day 390. Compared with 0.17, over days 360–384, net
-top-of-atmosphere energy uptake falls from 8.75 to 3.49 W/m². The atmosphere
-is 1.36 K cooler and 4.07 kg/m² drier, its unclosed water
-budget grows by 5.43 kg/m² over days 90–384, versus 2.17 in the control.
-Ocean hot cells, coastal ice pile-up and whole-system energy closure remain
-unresolved. CPU tests and a fresh-process GPU launch/restart check pass.
+The longest accepted trajectory remains the pre-fix v0.1.8 run to day 390,
+shown below. The repaired v0.1.9 launch has been tested for 30 days; it is not
+yet a centennial or equilibrium qualification. Ocean hot cells, coastal ice
+pile-up and whole-system energy closure remain unresolved.
 
 ![ReadyESM D: ocean, sea ice, atmosphere and land at model day 390](docs/readiesm-v0.1.8-snapshot.png)
 
@@ -30,21 +30,22 @@ unresolved. CPU tests and a fresh-process GPU launch/restart check pass.
 ## Experimental roadmap
 
 Snapshot: **14 October 2026**. These ten blue-sky tracks are experimental, not
-features of the released v0.1.8 model. Passing a component test does not establish
-coupled climate skill; releases need not wait for every track.
+features of the released model unless stated otherwise. Passing a component
+test does not establish coupled climate skill; releases need not wait for every
+track.
 
 | Track | Direction | Progress | Next step |
 | --- | --- | --- | --- |
 | BS01 | Conservative convection, then a learned closure | Standalone plume runs reach 20 days, but upper-air moisture is biased high. No learned closure yet. | Port the plume to GPU after the cloud microphysics; test water and energy budgets. |
-| BS02 | Prognostic clouds | A local liquid/ice store avoids the negative-condensate repair needed by the transported prototype. GPU port underway. | Couple stored condensate and cloud fraction to radiation; test restart and conservation. |
-| BS03 | Virtual vertical layers | Bottom-layer refinement removes about 69% of the offline surface longwave error against the high-resolution reference. Coupled tests submitted. | Compare 30-day runs with matched controls, including heating and surface fluxes. |
-| BS04 | Balanced initialisation | Remapping strongly reduces water drift in a 10-day test, but changes the initial inventory. More targeted spectral-cleanup tests submitted. | Qualify the GPU cleanup and compare fresh/restarted runs; gradual analysis increments later. |
+| BS02 | Prognostic clouds | A local liquid/ice store avoids the transported prototype's negative-condensate repair. CPU and GPU smoke gates pass; the coupled three-case GPU comparison is running. | Assess conservation, restart and radiative response against matched controls. |
+| BS03 | Virtual vertical layers | Bottom-layer refinement improves an offline surface-longwave column, but the first coupled option worsens TOA balance. | Revisit only with conservative heating and a clean-launch control. |
+| BS04 | Balanced initialisation | A targeted spectral launch cleanup removes a frozen pressure/temperature/humidity row and is selected in v0.1.9. | Extend the clean launch beyond 30 days; test gradual analysis increments separately. |
 | BS05 | Parameter calibration | Two 33-member real-column sensitivity screens completed; an expanded plume screen now separates moistening and drying terms. No fitted calibration yet. | Apply the diagnostics to the newer plume, then select a bounded coupled parameter sweep. |
 | BS06 | Sea-ice thickness distribution | Five-category native transport and exact restart pass on a synthetic masked CPU grid. GPU qualification submitted. | Test mechanical feedback at the Arctic hotspot; the pile-up is not fixed yet. |
 | BS07 | Coastal connectivity and landfast ice | Fine-bathymetry connectivity and metric-interface benchmarks pass around the problem coast. No live coastal stress scheme yet. | Translate resolved channel geometry into a local dynamics benchmark. |
 | BS08 | Runoff storage and heat | Standalone routing closes water/heat budgets and restarts exactly. Receiver heat-replacement GPU test submitted. | Connect the land heat debit and source temperature without double-counting ocean heat. |
 | BS09 | Automated experiment branching | Bounded planning and archived-failure replay tested. The live evidence adapter is under review. | Drive one reviewed shadow experiment with verified inputs and no duplicate submissions. |
-| BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass; dated greenhouse-gas coupled tests submitted. | Replay spatial air–sea carbon exchange with a closed ledger, before interactive coupling. |
+| BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass. Dated gases give the expected lower forcing, but land and radiation currently receive inconsistent CO₂. | Drive both components from one concentration, then replay spatial air–sea exchange with a closed ledger. |
 
 ## Run
 
@@ -74,9 +75,11 @@ julia --project=. scripts/plot_final_day_summary.jl \
     artifacts/production/diagnostics.nc artifacts/production/final_day.png
 ```
 
-CO2 is an active prescribed concentration in RRTMGP. Sulfate aerosol can be
-applied as prescribed optical depth. There is no interactive carbon cycle,
-emissions-driven CO2 or aerosol chemistry yet.
+CO2 is an active prescribed concentration in RRTMGP. The present Terrarium
+vegetation interface still uses its 380 ppm default, so a shared land/radiation
+CO2 driver is required before concentration experiments are treated as fully
+coupled. Sulfate aerosol can be applied as prescribed optical depth. There is no
+interactive carbon cycle, emissions-driven CO2 or aerosol chemistry yet.
 
 See [`NOTES.md`](NOTES.md) for the present scientific limitations and
 [`HISTORY.md`](HISTORY.md) for the short model history.

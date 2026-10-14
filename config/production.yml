@@ -18,6 +18,7 @@ atmosphere_speed_limit_drag_per_m: 2.0e-6
 atmosphere_surface_speed_limit_ms: 40
 atmosphere_surface_speed_limit_drag_per_m: 2.0e-5
 atmosphere_initial_conditions: era5_instantaneous
+atmosphere_initial_spectral_truncation: true
 era5_pressure_levels_path: data/era5_initial_state/era5_pressure_levels_stratosphere_19930101T0000Z.nc
 era5_single_levels_path: data/era5_initial_state/era5_single_levels_19930101T0000Z.nc
 era5_land_state_path: data/era5_initial_state/era5_land_state_19930101T0000Z.nc

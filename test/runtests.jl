@@ -20,6 +20,8 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.atmosphere_saturation_law == :mixed_phase
 @test config.atmosphere_convection == :betts_miller_constant_rh
 @test config.atmosphere_convection_timescale_seconds == 7200
+@test config.atmosphere_initial_spectral_truncation
+@test !ExperimentConfig().atmosphere_initial_spectral_truncation
 include("convection_timescale.jl")
 @test config.forcing.radiation == :rrtmgp_all_sky
 @test config.forcing.co2_ppm == 420

@@ -20,10 +20,12 @@ step_of(var, lf) = SW.get_step(var, lf)
 
 @testset "atmosphere initial spectral truncation" begin
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"))
-    @test production.atmosphere_initial_spectral_truncation == false            # opt-in
+    @test production.atmosphere_initial_spectral_truncation                     # selected in production
+    @test !R.ExperimentConfig().atmosphere_initial_spectral_truncation           # generic compatibility default
 
     # ERA5 launch exactly as ReadyESM builds it (T31/L27, CPU), without the coupled components
-    config = with(production; atmosphere_initial_conditions = :era5_instantaneous)
+    config = with(production; atmosphere_initial_conditions = :era5_instantaneous,
+        atmosphere_initial_spectral_truncation = false)                         # retain the unfixed reproducer
     sg = SW.SpectralGrid(; NF = Float32, trunc = config.truncation, Grid = SW.RingGrids.FullGaussianGrid,
                          nlayers = config.nlayers)
     model = SW.PrimitiveWetModel(sg; initial_conditions = R._atmosphere_initial_conditions(config, sg))

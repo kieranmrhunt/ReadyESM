@@ -3,10 +3,12 @@
 ## Current model
 
 - SpeedyWeather 0.21.1, T31/L27, ERA5 initial atmosphere.
+- Production removes the extra `l = lmax + 1` row from the ERA5 spectral
+  launch before the first grid transform. The generic option remains off.
 - Two-hour Betts–Miller convection, reference RH0.7, net-column rain diagnosis.
 - Mixed liquid/ice saturation and net-column large-scale rain diagnosis:
   surface precipitation equals that scheme's net column water removal,
-  not conservation of total atmospheric water.
+  but this alone does not guarantee conservation of total atmospheric water.
   The inherited moist-adiabat and condensation derivative approximations are
   unchanged; this is not yet a fully phase-consistent thermodynamic closure.
 - RRTMGP all-sky radiation with 420 ppm prescribed CO2, diagnostic clouds and
@@ -38,8 +40,8 @@ Their source and licences are included under `vendor/`.
   surface temperatures. A checked startup solver is being tested separately
   and is not included in production. Its later ice-interface non-convergence
   also remains under investigation.
-- The D experiment reaches day390, with +3.49 W/m² all-sky net TOA uptake
-  over days360–384 versus +8.75 for the matched liquid/upstream control.
+- The pre-fix v0.1.8 D experiment reaches day390, with +3.49 W/m² all-sky net
+  TOA uptake over days360–384 versus +8.75 for the matched liquid/upstream control.
   D is also 1.36 K cooler and has 4.07 kg/m² less column water in that window.
   Temperature/water gaps grow between day 120 and day 384, though not
   monotonically. Ocean heat uptake remains 9.25 W/m² per global area,
@@ -51,7 +53,7 @@ Their source and licences are included under `vendor/`.
 - The analytic ozone profile has no latitude/season dependence. A preliminary
   fixed-column comparison gives about 460 DU versus 245–378 DU in the sampled
   ERA5 columns, not a global observed range. Its upper-tropospheric radiative
-  effect needs validation; no ozone correction is included in v0.1.8.
+  effect needs validation; no ozone correction is included in v0.1.9.
 - GPU trajectories are not guaranteed bitwise reproducible. The long D run
   has no independent repeat; short tests cannot establish its uncertainty.
 - Clouds are diagnosed from humidity; cloud liquid, ice and overlap are not a
@@ -69,17 +71,16 @@ Their source and licences are included under `vendor/`.
 - Double-precision land's maximum cumulative water residual is 2.97e-9 mm
   through D's day 390, with native-precision checkpoint restoration.
   This does not qualify century-scale closure or conversion of old checkpoints.
-  Atmospheric water accounting is separate. The normal diagnostic
-  checks require finite later residuals but do not impose a quantitative
-  atmospheric closure bound.
-  Over days 90–384, D's residual grows by 5.43 kg/m² (0.0185 kg/m²/day),
-  versus 2.17 (0.00739/day) in the control. It persists late: +0.407 kg/m²
-  over days 360–384 (0.0169/day); the control changes by -0.167 kg/m².
-  Net-column process rain diagnosis does not close the full
-  transport, filtering and coupling budget. That remaining source is being
-  diagnosed separately.
+- Atmospheric water accounting is separate. v0.1.9 removes a frozen launch
+  row that was a major source: in one fresh matched pair the days 5–30 residual
+  rate changes from +0.01560 to -0.00081 kg/m²/day. This is a 30-day result,
+  not a century-scale conservation guarantee. The older v0.1.8 D run retains
+  the imprint and grows by 5.43 kg/m² over days 90–384. Net-column process rain
+  diagnosis still does not by itself close transport, filtering and coupling.
 - Forcing is concentration/AOD driven. Carbon-cycle, SO2 and aerosol-emissions
-  modules are not present.
+  modules are not present. RRTMGP receives the configured 420 ppm CO2, while
+  Terrarium's prescribed-atmosphere vegetation input still defaults to 380 ppm;
+  this cross-component mismatch must be fixed before interactive CO2 work.
 
 ## Decisions retained from development
 
@@ -92,8 +93,9 @@ Their source and licences are included under `vendor/`.
   drift but worsened temperature drift, so it is not in the production config.
 - No polar sponge, global depth correction, arbitrary ice-thickness cap or
   broad river-mouth diffusivity is applied.
-- Initial conditions are inserted directly. A balanced incremental launch is a
-  useful future experiment, not part of this configuration.
+- Initial conditions are inserted directly, followed only by the spectral
+  consistency cleanup above. A balanced incremental launch remains a useful
+  future experiment.
 
 The internal development labbook and rejected experiment matrix are intentionally
 not shipped in this repository.

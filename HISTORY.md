@@ -6,6 +6,31 @@ failed commands, frozen-source hashes and diagnostic artefacts.
 
 ## Releases
 
+### 0.1.9 — 2026-10-14
+
+- Remove the extra `l = lmax + 1` row from the ERA5 atmosphere immediately
+  before the first grid transform. ReadyESM previously left non-zero pressure,
+  temperature and humidity coefficients in this row; SpeedyWeather truncates
+  tendencies but never updates those coefficients, so the launch imprint stayed
+  frozen for the whole integration. Production enables the repair; the generic
+  configuration default remains off for compatibility.
+- In a matched fresh 30-day pair, the days 5–30 atmospheric-water residual rate
+  changes from +0.01560 to -0.00081 kg/m²/day, a 94.8% reduction in magnitude.
+  The one-time launch change is -0.134 kg/m² total atmospheric mass and
+  -0.00097 kg/m² water. A separate cleanup of an old day-120 checkpoint reduces
+  its subsequent residual by 99.8%, but is not used as a release trajectory.
+- The fix also removes a spurious 80–90 hPa polar surface-pressure depression.
+  This materially changes the climate and exposes an existing cold polar bias;
+  it is not a bitwise-compatible restart change or a tuning adjustment. Existing
+  checkpoints are not cleaned automatically; an explicit migration helper is
+  provided.
+- The fresh 30-day run passes the production-output safety gates. It has no
+  tropical ice and lowers maximum area-equivalent ice thickness from 8.36 to
+  4.90 m in this pair, but that single response does not establish that the
+  coastal pile-up is fixed. Ocean hot cells, whole-system energy closure and
+  long-run climate drift remain open. See the
+  [validation record](docs/validation-v0.1.9.md).
+
 ### 0.1.8 — 2026-10-13
 
 - Select mixed liquid/ice saturation and net-column-conservative large-scale
