@@ -70,7 +70,11 @@ step_of(var, lf) = SW.get_step(var, lf)
     previous_names = (:u_prev, :v_prev, :temperature_prev, :pressure_prev, :humidity_prev)
     grab(names) = Dict(n => copy(Array(getproperty(vars.grid, n).data)) for n in names)
     @testset "restored-state cleaning: transform-only identity, row removal, previous grids preserved" begin
-        SW.run!(sim; steps = 3)                                               # evolve: grid = transform of level 2
+        # step as the coupled model does (initialize!, then timestep! without finalize), so vorticity and divergence
+        # stay radius-scaled; the current grid is then the transform of level 2
+        SW.initialize!(sim; steps = 3)
+        for _ in 1:3; SW.timestep!(sim); end
+        @test vars.prognostic.scale[] == model.planet.radius
         fake = (; model = (; atmosphere = sim))
         # identity: on an already-truncated state the recompute reproduces the current grid bitwise and, with the
         # default preserve_previous, leaves every *_prev grid bitwise unchanged
@@ -95,6 +99,9 @@ step_of(var, lf) = SW.get_step(var, lf)
         R.truncate_restored_atmosphere_lmax_plus_1!(fake; preserve_previous = false)
         @test Array(vars.grid.temperature.data) == Array(vars.grid.temperature_prev.data)
         @test Array(vars.grid.humidity.data) == Array(vars.grid.humidity_prev.data)
+        # an unscaled state (after run!'s finalize) would give u/radius: refused
+        SW.unscale!(vars)
+        @test_throws ArgumentError R.truncate_restored_atmosphere_lmax_plus_1!(fake)
     end
 
     @testset "builder: the flag zeroes only the l = lmax + 1 row of the launch state" begin

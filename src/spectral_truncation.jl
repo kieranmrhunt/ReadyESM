@@ -79,10 +79,19 @@ parameterizations), without any transform. The recompute here uses `transform!(.
 overwrite `*_prev` with the current state. With `preserve_previous = true` (default) the restored `*_prev` grids are put
 back bit for bit, so the row removal (and the current grid recomputed from it) is the only change. `preserve_previous =
 false` keeps the initialisation semantics (`*_prev` = current).
+
+SpeedyWeather's transform! derives u and v from radius-scaled vorticity and divergence, the state of a stepping
+atmosphere (the coupled model calls `SpeedyWeather.timestep!` and never unscales between steps; `run!`'s finalize does).
+An unscaled state would give u/radius, so it is refused.
 """
 function truncate_restored_atmosphere_lmax_plus_1!(simulation; preserve_previous::Bool = true)
     atmosphere = simulation.model.atmosphere
     vars = atmosphere.variables
+    radius = atmosphere.model.planet.radius
+    vars.prognostic.scale[] == radius || throw(ArgumentError(
+        "truncate_restored_atmosphere_lmax_plus_1! needs the radius-scaled state of a stepping atmosphere " *
+        "(prognostic.scale[] == planet radius = $radius), got scale $(vars.prognostic.scale[])",
+    ))
     saved = preserve_previous ? _copy_grid_previous(vars) : nothing
     truncate_prognostic_lmax_plus_1!(vars)
     SpeedyWeather.transform!(vars, 2, atmosphere.model; initialize = true)
