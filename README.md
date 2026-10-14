@@ -116,3 +116,5 @@ model state and finite continuation. They do not establish a stationary climate
 or exact equality between continuous and restarted trajectories. Model
 construction and the first GPU step can take hours despite the short simulated
 duration.
+
+Developed by Kieran Hunt with AI coding assistance from Claude and OpenAI Codex.
