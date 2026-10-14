@@ -4,12 +4,15 @@ const R = ReadyESM
 
 @testset "Recorded history in atmosphere output" begin
     for mode in (:speedy_simplified,:rrtmgp_clear_sky)
+        launch_cleanup = mode == :rrtmgp_clear_sky
         config = R.ExperimentConfig(;name="sampled_history_$mode",device=:cpu,
             truncation=7,nlayers=8,duration_days=0.1,mixed_layer_depth_m=30.,
+            atmosphere_initial_spectral_truncation=launch_cleanup,
             forcing=R.ForcingConfig(;radiation=mode))
         runner = mode == :speedy_simplified ? R.run_baseline! : R.run_rrtmgp!
         simulation, complete = runner(config;steps=2)
         @test complete.metadata.active_radiation == String(mode)
+        @test complete.metadata.atmosphere_initial_spectral_truncation == launch_cleanup
         @test length(complete.time_days) == 3
         @test all(isfinite,complete.global_surface_temperature)
         callback = simulation.model.callbacks[:global_surface_temperature]
@@ -48,6 +51,8 @@ const R = ReadyESM
                 @test haskey(dataset,"toa_net_downward") == !isnothing(radiation)
                 @test dataset["global_surface_temperature"].attrib["long_name"] ==
                     R._GLOBAL_AIR_TEMPERATURE_LONG_NAME
+                @test dataset.attrib["atmosphere_initial_spectral_truncation"] ==
+                    Int8(launch_cleanup)
             end
         end
     end

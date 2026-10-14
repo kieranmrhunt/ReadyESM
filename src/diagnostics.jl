@@ -265,6 +265,8 @@ function collect_diagnostics(simulation, config::ExperimentConfig)
             _atmosphere_saturation_provenance(config)...,
             mixed_layer_depth_m = config.mixed_layer_depth_m,
             atmosphere_initial_conditions = String(config.atmosphere_initial_conditions),
+            atmosphere_initial_spectral_truncation =
+                config.atmosphere_initial_spectral_truncation,
             era5_month = config.era5_month,
             _atmosphere_initial_condition_provenance(
                 model.initial_conditions,

@@ -56,6 +56,8 @@ The focused regression checks exact row removal, idempotence, retained
 coefficients, first-grid reconstruction, previous-step grids, restored-state
 semantics and finite stepping; all 97 assertions pass locally. Full CPU and production-resolution GPU
 launch/restart qualification are recorded before the release tag is created.
+The applied launch setting is written to atmospheric-only and coupled NetCDF
+metadata; its 50-assertion output round-trip test also passes locally.
 
 This validation does not establish equilibrium, centennial stability or a
 complete energy budget. Ocean hot cells and coastal ice pile-up remain open.
