@@ -78,9 +78,11 @@ Their source and licences are included under `vendor/`.
   the imprint and grows by 5.43 kg/m² over days 90–384. Net-column process rain
   diagnosis still does not by itself close transport, filtering and coupling.
 - Forcing is concentration/AOD driven. Carbon-cycle, SO2 and aerosol-emissions
-  modules are not present. RRTMGP receives the configured 420 ppm CO2, while
-  Terrarium's prescribed-atmosphere vegetation input still defaults to 380 ppm;
-  this cross-component mismatch must be fixed before interactive CO2 work.
+  modules are not present. RRTMGP receives the configured 420 ppm CO2.
+  Terrarium carries a default 380 ppm ambient input, but it is physically
+  dormant in production: no photosynthesis model is constructed and the
+  prescribed evapotranspiration has no CO2 term. A shared driver and assertion
+  are still required before CO2-responsive vegetation is enabled.
 
 ## Decisions retained from development
 

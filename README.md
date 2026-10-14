@@ -36,16 +36,16 @@ track.
 
 | Track | Direction | Progress | Next step |
 | --- | --- | --- | --- |
-| BS01 | Conservative convection, then a learned closure | Standalone plume runs reach 20 days, but upper-air moisture is biased high. No learned closure yet. | Port the plume to GPU after the cloud microphysics; test water and energy budgets. |
-| BS02 | Prognostic clouds | A local liquid/ice store avoids the transported prototype's negative-condensate repair. CPU and GPU smoke gates pass; the coupled three-case GPU comparison is running. | Assess conservation, restart and radiative response against matched controls. |
+| BS01 | Conservative convection, then a learned closure | A nine-arm 60-day prescribed-SST screen found no material trigger, humidity or plume candidate. The plume arms weaken overturning, dry column water and run about five times slower. | Decompose latent and radiative heating in ascent and subtropical subsidence before another closure sweep. |
+| BS02 | Prognostic clouds | The first local liquid/ice store is stable, conservative and restartable, but its coupled run has far too little tropical/mid-level cloud and worsens net TOA by 19.8 W/m². | Test relative-humidity threshold and conservative convective detrainment separately in short paired runs. |
 | BS03 | Virtual vertical layers | Bottom-layer refinement improves an offline surface-longwave column, but the first coupled option worsens TOA balance. | Revisit only with conservative heating and a clean-launch control. |
 | BS04 | Balanced initialisation | A targeted spectral launch cleanup removes a frozen pressure/temperature/humidity row and is selected in v0.1.9. | Extend the clean launch beyond 30 days; test gradual analysis increments separately. |
-| BS05 | Parameter calibration | Two 33-member real-column sensitivity screens completed; an expanded plume screen now separates moistening and drying terms. No fitted calibration yet. | Apply the diagnostics to the newer plume, then select a bounded coupled parameter sweep. |
-| BS06 | Sea-ice thickness distribution | Five-category native transport and exact restart pass on a synthetic masked CPU grid. GPU qualification submitted. | Test mechanical feedback at the Arctic hotspot; the pile-up is not fixed yet. |
+| BS05 | Parameter calibration | Two 33-member real-column screens and the nine-arm convection screen are complete; no fitted calibration has been accepted. | Use the heating-budget diagnosis to choose identifiable parameters before a bounded coupled sweep. |
+| BS06 | Sea-ice thickness distribution | Five-category GPU evolution and bitwise fresh-process restart pass on a synthetic immersed island. A coupled five-arm Arctic factorial is queued. | Test material hotspot reduction and displacement; the pile-up is not fixed yet. |
 | BS07 | Coastal connectivity and landfast ice | Fine-bathymetry connectivity and metric-interface benchmarks pass around the problem coast. No live coastal stress scheme yet. | Translate resolved channel geometry into a local dynamics benchmark. |
 | BS08 | Runoff storage and heat | Standalone routing closes water/heat budgets and restarts exactly. Receiver heat-replacement GPU test submitted. | Connect the land heat debit and source temperature without double-counting ocean heat. |
 | BS09 | Automated experiment branching | Bounded planning and archived-failure replay tested. The live evidence adapter is under review. | Drive one reviewed shadow experiment with verified inputs and no duplicate submissions. |
-| BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass. Dated gases give the expected lower forcing, but land and radiation currently receive inconsistent CO₂. | Drive both components from one concentration, then replay spatial air–sea exchange with a closed ledger. |
+| BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass. Dated gases give the expected lower forcing; production land currently has no CO₂-responsive vegetation. | Add a shared driver before enabling interactive vegetation, then replay spatial air–sea exchange with a closed ledger. |
 
 ## Run
 
@@ -75,11 +75,12 @@ julia --project=. scripts/plot_final_day_summary.jl \
     artifacts/production/diagnostics.nc artifacts/production/final_day.png
 ```
 
-CO2 is an active prescribed concentration in RRTMGP. The present Terrarium
-vegetation interface still uses its 380 ppm default, so a shared land/radiation
-CO2 driver is required before concentration experiments are treated as fully
-coupled. Sulfate aerosol can be applied as prescribed optical depth. There is no
-interactive carbon cycle, emissions-driven CO2 or aerosol chemistry yet.
+CO2 is an active prescribed concentration in RRTMGP. Production land uses
+prescribed evapotranspiration without a CO2 response; Terrarium's ambient-CO2
+input is dormant because no photosynthesis model is constructed. A shared
+driver will be required before CO2-responsive vegetation is enabled. Sulfate
+aerosol can be applied as prescribed optical depth. There is no interactive
+carbon cycle, emissions-driven CO2 or aerosol chemistry yet.
 
 See [`NOTES.md`](NOTES.md) for the present scientific limitations and
 [`HISTORY.md`](HISTORY.md) for the short model history.

@@ -54,10 +54,27 @@ Physical-gate record SHA256:
 
 The focused regression checks exact row removal, idempotence, retained
 coefficients, first-grid reconstruction, previous-step grids, restored-state
-semantics and finite stepping; all 97 assertions pass locally. Full CPU and production-resolution GPU
-launch/restart qualification are recorded before the release tag is created.
-The applied launch setting is written to atmospheric-only and coupled NetCDF
-metadata; its 50-assertion output round-trip test also passes locally.
+semantics and finite stepping; all 97 assertions pass. The applied launch
+setting is written to atmospheric-only and coupled NetCDF metadata; its
+50-assertion output round-trip test also passes.
+
+The full CPU suite passed in Slurm job 59599522 (exit 0, 22m19s). GPU job
+59599523 then passed a fresh four-step production-resolution coupled run,
+restored every owned state in a fresh process, advanced steps 5--8 and found
+the saved hour-one boundary byte-identical to the restored boundary. Its last
+metadata checker failed after those model gates because NCDatasets decoded a
+CF-time coordinate as `DateTime` while the harness assumed a number. The
+original outputs and failure are retained unchanged.
+
+Metadata-only recovery job 59622244 reran no model physics. It reverified the
+frozen CPU and GPU evidence, passed a one-device CUDA preflight, checked the
+applied setting at hours one and two, and confirmed the removed spectral row
+is zero in the fresh, restored-boundary and resumed checkpoints. It completed
+with exit 0 in 3m45s. The original-GPU and recovery receipt-manifest SHA256
+values are respectively
+`c4e9ca98be790fede0e5b363adbf969e32705eeb4c71c0380d899f1568113613`
+and
+`e940a17e64fbf1f2639096f68eb3fad23d072ac0449fcbddc7c94c4e5a23b797`.
 
 This validation does not establish equilibrium, centennial stability or a
 complete energy budget. Ocean hot cells and coastal ice pile-up remain open.
