@@ -44,12 +44,14 @@ end
 
 const _GRID_PREVIOUS = (:u_prev, :v_prev, :temperature_prev, :pressure_prev, :humidity_prev)
 
+# Copies of the backing arrays (`field.data`): Base.copy of a RingGrids.Field falls back to element-wise copying, which is
+# scalar indexing on the GPU (water_truncation_comparison_v4 job 59532423_1), while array copy and broadcast are native.
 function _copy_grid_previous(vars::SpeedyWeather.Variables)
     grid = vars.grid
-    saved = Dict{Symbol, Any}(name => copy(getproperty(grid, name)) for name in _GRID_PREVIOUS if hasproperty(grid, name))
+    saved = Dict{Symbol, Any}(name => copy(getproperty(grid, name).data) for name in _GRID_PREVIOUS if hasproperty(grid, name))
     if hasproperty(grid, :tracers)
         for (name, field) in pairs(grid.tracers)
-            endswith(String(name), "_prev") && (saved[Symbol(:tracer_, name)] = copy(field))
+            endswith(String(name), "_prev") && (saved[Symbol(:tracer_, name)] = copy(field.data))
         end
     end
     return saved
@@ -58,12 +60,12 @@ end
 function _restore_grid_previous!(vars::SpeedyWeather.Variables, saved)
     grid = vars.grid
     for name in _GRID_PREVIOUS
-        haskey(saved, name) && (getproperty(grid, name) .= saved[name])
+        haskey(saved, name) && copyto!(getproperty(grid, name).data, saved[name])
     end
     if hasproperty(grid, :tracers)
         for (name, field) in pairs(grid.tracers)
             key = Symbol(:tracer_, name)
-            haskey(saved, key) && (field .= saved[key])
+            haskey(saved, key) && copyto!(field.data, saved[key])
         end
     end
     return vars
