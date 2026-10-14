@@ -19,12 +19,15 @@ spectra(vars) = Dict(name => [copy(Array(SW.get_step(getproperty(vars.prognostic
 step_of(var, lf) = SW.get_step(var, lf)
 
 @testset "atmosphere initial spectral truncation" begin
-    production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"))
+    production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
     @test production.atmosphere_initial_spectral_truncation                     # selected in production
     @test !R.ExperimentConfig().atmosphere_initial_spectral_truncation           # generic compatibility default
 
-    # ERA5 launch exactly as ReadyESM builds it (T31/L27, CPU), without the coupled components
-    config = with(production; atmosphere_initial_conditions = :era5_instantaneous,
+    # Exercise the exact ERA5 launch when the private inputs are available. Public CI falls back to the analytic
+    # launch for the data-independent truncation, restore and builder contracts below.
+    have_era5 = isfile(production.era5_pressure_levels_path) && isfile(production.era5_single_levels_path)
+    initial_conditions = have_era5 ? :era5_instantaneous : :analytic
+    config = with(production; atmosphere_initial_conditions = initial_conditions,
         atmosphere_initial_spectral_truncation = false)                         # retain the unfixed reproducer
     sg = SW.SpectralGrid(; NF = Float32, trunc = config.truncation, Grid = SW.RingGrids.FullGaussianGrid,
                          nlayers = config.nlayers)
@@ -33,25 +36,30 @@ step_of(var, lf) = SW.get_step(var, lf)
     vars = sim.variables
 
     @testset "the ERA5 launch leaves l = lmax + 1 content in ln ps, T and q, and it stays frozen (the bug)" begin
-        @test top_rows(step_of(vars.prognostic.pressure, 1))[1] > 0
-        @test top_rows(step_of(vars.prognostic.temperature, 1))[1] > 0
-        @test top_rows(step_of(vars.prognostic.humidity, 1))[1] > 0
-        @test top_rows(step_of(vars.prognostic.vorticity, 1))[1] == 0          # curl! output is truncated
-        # a separate launch, integrated: the l = lmax + 1 row of ln ps does not change (only tendencies are
-        # truncated), while the l = lmax row is damped
-        sim2 = SW.initialize!(SW.PrimitiveWetModel(sg; initial_conditions = R._atmosphere_initial_conditions(config, sg),
-                                  time_stepping = SW.Leapfrog(sg; Δt_at_T31 = SW.Minute(15)),
-                                  horizontal_diffusion = R._atmosphere_horizontal_diffusion(config, sg));
-                              time = config.start_date)
-        p0 = top_rows(step_of(sim2.variables.prognostic.pressure, 1))
-        l, _ = lm_indices(step_of(sim2.variables.prognostic.pressure, 1)); top = l .== maximum(l)
-        c0 = Array(step_of(sim2.variables.prognostic.pressure, 1).data)[top]
-        SW.run!(sim2; steps = 96)
-        c1 = Array(step_of(sim2.variables.prognostic.pressure, 2).data)[top]
-        p1 = top_rows(step_of(sim2.variables.prognostic.pressure, 2))
-        @test all(isfinite, Array(step_of(sim2.variables.prognostic.pressure, 2).data))
-        @test c1 == c0                                                          # frozen, bitwise
-        @test p1[2] < p0[2] / 10                                                # l = lmax damped within a day
+        if have_era5
+            @test top_rows(step_of(vars.prognostic.pressure, 1))[1] > 0
+            @test top_rows(step_of(vars.prognostic.temperature, 1))[1] > 0
+            @test top_rows(step_of(vars.prognostic.humidity, 1))[1] > 0
+            @test top_rows(step_of(vars.prognostic.vorticity, 1))[1] == 0      # curl! output is truncated
+            # a separate launch, integrated: the l = lmax + 1 row of ln ps does not change (only tendencies are
+            # truncated), while the l = lmax row is damped
+            sim2 = SW.initialize!(SW.PrimitiveWetModel(sg;
+                                      initial_conditions = R._atmosphere_initial_conditions(config, sg),
+                                      time_stepping = SW.Leapfrog(sg; Δt_at_T31 = SW.Minute(15)),
+                                      horizontal_diffusion = R._atmosphere_horizontal_diffusion(config, sg));
+                                  time = config.start_date)
+            p0 = top_rows(step_of(sim2.variables.prognostic.pressure, 1))
+            l, _ = lm_indices(step_of(sim2.variables.prognostic.pressure, 1)); top = l .== maximum(l)
+            c0 = Array(step_of(sim2.variables.prognostic.pressure, 1).data)[top]
+            SW.run!(sim2; steps = 96)
+            c1 = Array(step_of(sim2.variables.prognostic.pressure, 2).data)[top]
+            p1 = top_rows(step_of(sim2.variables.prognostic.pressure, 2))
+            @test all(isfinite, Array(step_of(sim2.variables.prognostic.pressure, 2).data))
+            @test c1 == c0                                                      # frozen, bitwise
+            @test p1[2] < p0[2] / 10                                            # l = lmax damped within a day
+        else
+            @test_skip false                                                    # private ERA5 launch inputs unavailable
+        end
     end
 
     before = spectra(vars)
