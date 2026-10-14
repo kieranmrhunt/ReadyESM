@@ -2,21 +2,21 @@
 
 ReadyESM couples SpeedyWeather, RRTMGP, Oceananigans, ClimaSeaIce and Terrarium.
 The current model is a T31/L27 atmosphere over a 1° tripolar, 60-level ocean,
-with dynamic sea ice and 16-layer land. ERA5 and ECCO provide the initial state.
+with dynamic sea ice and 16-layer land. Initial state comes from ERA5 and ECCO.
 
-This is a research model under development, not a calibrated projection model.
+This is still under development so please don't use it for projections.
 The production configuration is [`config/production.yml`](config/production.yml).
 
 `v0.1.8` adds mixed liquid/ice saturation and net-column
 large-scale rain diagnosis: surface rain matches that scheme's column water
-removal, but total atmospheric water is not conserved. Two-hour convection,
+removal, but total atmospheric water is still(!) not conserved. Two-hour convection,
 double-precision land and cloud paths of 75/25 g/m² are retained.
 See the [release history](HISTORY.md) and
 [validation record](docs/validation-v0.1.8.md).
 
-The D experiment reaches day 390. Over matched days 360–384, net
+The current version reaches at least day 390. Compared with 0.17, over days 360–384, net
 top-of-atmosphere energy uptake falls from 8.75 to 3.49 W/m². The atmosphere
-is 1.36 K cooler and 4.07 kg/m² drier than the control; its unclosed water
+is 1.36 K cooler and 4.07 kg/m² drier, its unclosed water
 budget grows by 5.43 kg/m² over days 90–384, versus 2.17 in the control.
 Ocean hot cells, coastal ice pile-up and whole-system energy closure remain
 unresolved. CPU tests and a fresh-process GPU launch/restart check pass.
@@ -97,10 +97,3 @@ model state and finite continuation. They do not establish a stationary climate
 or exact equality between continuous and restarted trajectories. Model
 construction and the first GPU step can take hours despite the short simulated
 duration.
-
-Checkpoints made before v0.1.4's native-runoff repair lack pending exchange
-water and are rejected explicitly.
-The v0.1.6 production configuration uses `terrarium_precision: float64`;
-old Float32 land checkpoints cannot be converted implicitly. Start fresh or
-use a native Float64 checkpoint. To continue a compatible Float32 checkpoint,
-retain `terrarium_precision: float32` and its original forcing settings.
