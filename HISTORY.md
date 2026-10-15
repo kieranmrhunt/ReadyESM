@@ -1,9 +1,9 @@
 # History
 
-This document gives a curated history of the accepted model. It also records
-the main experiments that shaped the model. The internal labbook contains the
-full job-by-job record. This record includes failed commands, frozen-source
-hashes and diagnostic artefacts.
+This is a concise history of the accepted model releases and the main
+experiments that shaped them. The internal labbook retains the job-by-job
+record, including failed commands, frozen-source hashes and diagnostic
+artefacts.
 
 ## Releases
 
@@ -18,18 +18,16 @@ hashes and diagnostic artefacts.
 - In a matched fresh 30-day pair, the days 5–30 atmospheric-water residual rate
   changes from +0.01560 to -0.00081 kg/m²/day, a 94.8% reduction in magnitude.
   The one-time launch change is -0.134 kg/m² total atmospheric mass and
-  -0.00097 kg/m² water. A separate cleanup of an old day-120 checkpoint reduces
-  its subsequent residual by 99.8%, but is not used as a release trajectory.
+  -0.00097 kg/m² water. A separate diagnostic cleanup of an old day-120
+  checkpoint reduces its subsequent residual by 99.8%.
 - The fix also removes a spurious 80–90 hPa polar surface-pressure depression.
   This materially changes the climate and exposes an existing cold polar bias.
-  It is not a bitwise-compatible restart change or a tuning adjustment.
-  ReadyESM does not clean existing checkpoints automatically. It provides an
-  explicit migration helper.
+  The change alters restart trajectories. Existing checkpoints keep their
+  original spectra until the migration helper is applied explicitly.
 - The fresh 30-day run passes the production-output safety gates. It has no
   tropical ice and lowers maximum area-equivalent ice thickness from 8.36 to
-  4.90 m in this pair, but that single response does not establish that the
-  coastal pile-up is fixed. Ocean hot cells, whole-system energy closure and
-  long-run climate drift remain open. See the
+  4.90 m in this pair. Coastal pile-up, ocean hot cells, whole-system energy
+  closure and long-run climate drift are the main follow-up problems. See the
   [validation record](docs/validation-v0.1.9.md).
 
 ### 0.1.8 — 2026-10-13
@@ -41,23 +39,21 @@ hashes and diagnostic artefacts.
   remain 75 and 25 g/m².
 - In the matched day-360–384 window, net TOA uptake falls from 8.75 to
   3.49 W/m². D reaches day 390. Its liquid-saturation and upstream-observed
-  control stops near day 385
-  on negative ocean salinity. These are single trajectories, not equilibrium
-  or ensemble validation.
-- Cooling and drying increase, and atmospheric water closure is not repaired:
+  control stops near day 385 after ocean salinity becomes negative. Each arm
+  contains one trajectory.
+- Cooling and drying increase. Atmospheric water closure remains positive:
   over days 90–384 the residual grows by 5.43 kg/m² in D versus 2.17 in the
   control (0.0185 versus 0.00739 kg/m²/day). It remains positive late in D.
-  Ocean warming and coastal ice pile-up remain. Derivative repairs,
-  ozone changes and new cloud and convection prototypes are not included.
-- These runs do not close the full system energy budget or establish a
-  repeat envelope for D. The analytic ozone profile is unchanged.
+  Ocean warming and coastal ice pile-up remain. The release keeps the existing
+  derivatives, analytic ozone profile, clouds and convection.
+- Follow-up work covers full-system energy closure and a repeat envelope for D.
 - Local and GitHub CPU tests pass, alongside a production-resolution GPU
   launch, independent-process restart and exact restored-state comparison.
   See the [validation record](docs/validation-v0.1.8.md).
-- Check ocean temperature and salinity bounds throughout the saved history,
-  not just on the final day. A recovered endpoint no longer hides earlier
-  negative salinity or overheating. Physical limits and model physics are
-  unchanged. Add 46 regression checks. The full CPU suite passes.
+- Check ocean temperature and salinity bounds throughout the saved history.
+  A recovered endpoint no longer hides earlier negative salinity or
+  overheating. Physical limits and model physics are unchanged. Add 46
+  regression checks. The full CPU suite passes.
 
 ### 0.1.7 — 2026-10-07
 
@@ -70,29 +66,28 @@ hashes and diagnostic artefacts.
   exact restoration and retain land-water residuals near 1.1e-9 mm.
 - Trade-offs: rain +10.4%, snow -32.2%, surface-air temperature -0.13 K.
   The smaller cumulative atmospheric water residual partly cancels inherited
-  error. It is not a conservation repair. Ice pile-up and ocean hot cells remain.
+  error. Ice pile-up and ocean hot cells remain.
 - Update README maps and timelines to the day-120 candidate. The first 30 days
   used four-hour convection. The subsequent 90 days used the release setting.
-  This does not establish equilibrium or a century-scale qualification.
 
 ### 0.1.6 — 2026-10-05
 
 - Use Float64 for the production Terrarium state, geometry and cumulative
   water accounting. Atmosphere and ocean remain Float32. In the coupled
   30-day test, maximum land-water residual is 2.8e-10 mm. Native Float64
-  fresh-process restarts restore exactly. Old Float32 checkpoints are not
-  silently converted. Add 45 land-precision and restart-history checks.
+  fresh-process restarts restore exactly. Old Float32 checkpoints retain their
+  original precision. Add 45 land-precision and restart-history checks.
 - Increase diagnostic liquid cloud path from 60 to 75 g/m². Retain ice path
   at 25 g/m² and four-hour convection. Against a matched Float64-land control,
   days 20–30 net TOA uptake falls from 21.70 to 16.56 W/m² (23.7%).
-- This is an incremental improvement, not an equilibrated climate. Clear-sky
-  uptake is nearly unchanged, atmospheric water residual worsens, and the
-  late mean of worst-cell ice thickness increases despite a slightly lower
-  final value. Ocean drift and coastal pile-up remain.
+- This release gives an incremental improvement. Clear-sky uptake is nearly
+  unchanged, atmospheric water residual worsens, and the late mean of
+  worst-cell ice thickness increases despite a slightly lower final value.
+  Follow-up work covers ocean drift, coastal pile-up and long-run balance.
 - Replace the README maps and timelines with the tested 30-day trajectory:
   fresh Float64 land, cloud75 enabled at day 2, another restart at day 10.
-  Production starts with cloud75 immediately. The previous version's 120-day
-  qualification does not transfer to this changed configuration.
+  Production starts with cloud75 immediately. The configuration change resets
+  the previous 120-day validation horizon.
 - Faster convection and reduced ice-cloud path remain separate experiments.
   See the [validation record](docs/validation-v0.1.6.md).
 
@@ -110,28 +105,28 @@ hashes and diagnostic artefacts.
   artificial mass flux from broader type promotion.
 - The updated public CPU suite passes, including the existing land, runoff,
   precipitation and output regressions. GitHub CPU CI also passes on the
-  release candidate. The final release changes only documentation.
+  release candidate. The final release adds documentation to that candidate.
 - Production-state CPU comparisons are exact. Two earlier candidate GPU
   restarts pass, one using ordinary package loading. Both pass the unchanged
   diagnostics and independent exact restored-state checks.
 - The earlier 48-hour attempt fails with CUDA700 in its first resumed step, before
   loading the ice-consolidation kernel. The initiating operation is unknown.
-  the momentum and stress change alone did not eliminate the GPU fault.
+  The GPU fault remained after the momentum and stress change.
 - The snow-updated candidate completes 184 resumed steps from model hour 2 to
   hour 48, with full diagnostics and exact restored-state comparison, in 59m03s.
   It uses ordinary package loading, without a runtime patch or diagnostic
-  observer. Its A100 driver is newer than in the failed run, so this does not
-  isolate patch causality or establish general GPU reliability. See the
+  observer. Its A100 driver differs from the failed run, leaving patch causality
+  and general GPU reliability unresolved. See the
   [validation record](docs/validation-v0.1.5.md).
 - Replace the README snapshot with actual hour-48 maps and add timeline plots.
 - A separate process restores that hour-48 checkpoint and reaches hour 49,
   again passing full diagnostics and exact restored-state comparison (56m24s).
-- Experimental land and air–ice surface-solver changes are not included.
+- Production keeps the existing land and air–ice surface-solver settings.
 - Follow-up on 1 October: the same runtime reaches day 30 and then day 120
   through fresh-process restarts, passing normal diagnostics and exact
   restored-state checks. Update the README maps and timelines to day 120.
-  Ocean drift, radiative imbalance and local ice pile-up remain unresolved.
-  This is longer validation, not a new physics release.
+  Follow-up work shifts to ocean drift, radiative imbalance and local ice
+  pile-up.
 
 ### 0.1.4 — 2026-09-24
 
@@ -144,10 +139,10 @@ hashes and diagnostic artefacts.
   ocean. The previous endpoint-rate approximation could lose runoff water.
 - Route only to unique ocean cells at the tripolar join, and fill the copied
   boundary cells from their physical partners before applying the flux.
-- Checkpoints now retain pending runoff and held discharge. Older checkpoints
-  cannot silently restore into this updated exchange.
+- Checkpoints now retain pending runoff and held discharge. Restoring an older
+  checkpoint fails with an explicit incompatibility.
 - Check rainfall-component sums at native Float32 precision. Exporting rates
-  as Float64 does not remove their original rounding error.
+  as Float64 retains their original rounding error.
 - Retain the pressure used by convection and condensation when checking
   precipitation against humidity tendencies, rather than using later pressure.
 - Include both scratch buffers and array layouts in the Fourier GPU graph
@@ -168,7 +163,7 @@ hashes and diagnostic artefacts.
 - CPU CI, focused GPU regressions, a fresh production smoke and short coupled
   sanitizer checks pass. This maintenance release retains the first-step GPU
   illegal-access limitation already documented in v0.1.3. An ordinary restart
-  of its fresh smoke still fails. Reliable GPU restart is not qualified.
+  of its fresh smoke still fails. The next release qualifies GPU restart.
   The [validation record](docs/validation-v0.1.4.md) includes that failure,
   passing checks, source hashes and the scope of this incremental release.
 - Replace the README's v0.1.1 figure with v0.1.4's actual surface
@@ -180,13 +175,13 @@ hashes and diagnostic artefacts.
   Terrarium already fills a zero-gradient pressure-head halo for flux boundary
   conditions. Prescribed pressure gradients are no longer forced to zero.
 - Retain the separate porosity, evaporation and runoff-conservation fixes.
-  Production physics settings are unchanged. This is not a climate-bias fix.
+  Production physics settings are unchanged.
 - Checked plain and masked soil and land models on CPU and GPU, including
   prescribed-gradient boundaries and water conservation. Stored land states
   match the previous default-boundary implementation in these tests.
-- Maintenance release only. The new snow, land-energy and coupled-startup
-  work is still experimental and is not included. The README figure remains
-  the labelled v0.1.1 run, not output from a new v0.1.3 integration.
+- This maintenance release keeps the new snow, land-energy and coupled-startup
+  work in experimental branches. The README continues to show the labelled
+  v0.1.1 run. Version 0.1.3 reuses that integration.
 
 ### 0.1.1 to 0.1.2 at a glance
 
@@ -194,13 +189,13 @@ hashes and diagnostic artefacts.
 |---|---|---|
 | Model physics and parameters | Accepted 0.1.1 model | Unchanged |
 | Land coupling | Correct Terrarium evapotranspiration method | Unchanged |
-| Saved shortwave surface albedo | Not available | Exact albedo used by RRTMGP |
+| Saved shortwave surface albedo | Unavailable | Exact albedo used by RRTMGP |
 | Additional checks | — | Albedo provenance, consistency and bounds |
 | Expected model trajectory from the same state | Baseline | Same as 0.1.1 |
 
 Version `v0.1.1` was a model fix. Version `v0.1.2` changed output and
 verification only. The extra albedo field diagnoses the outstanding
-top-of-atmosphere radiation imbalance. It does not fix that imbalance.
+top-of-atmosphere radiation imbalance.
 
 ### 0.1.2 — 2026-08-27
 
@@ -211,8 +206,8 @@ top-of-atmosphere radiation imbalance. It does not fix that imbalance.
   agreement, spectral-band invariance and physical bounds.
 - Passed the complete development regression and a real coupled
   RRTMGP-to-NetCDF smoke test.
-- No model physics, configuration or parameter changed from `v0.1.1`. This is
-  an observability release and does not repair the outstanding TOA imbalance.
+- Model physics, configuration and parameters match `v0.1.1`. This release adds
+  observability for the outstanding TOA imbalance.
 
 ### 0.1.1 — 2026-08-27
 
@@ -233,9 +228,9 @@ ERA5 and ECCO provide the initial state. RRTMGP uses prescribed 420 ppm CO2
 and zero sulfate AOD in the production configuration.
 
 The release also includes repaired atmospheric water accounting, direct ice
-and snow volume transport, restart machinery and strict configuration
-contracts. It also includes final-state diagnostics. It is a research baseline
-rather than a calibrated projection model.
+and snow volume transport, restart machinery, strict configuration contracts
+and final-state diagnostics. It is a research baseline for later calibration
+and projection work.
 
 ## Development chronology
 
@@ -253,9 +248,8 @@ radiation, then gained:
 - NetCDF diagnostics, Makie figures and Orchid GPU launchers.
 
 A fixed-profile CO2 sweep gave a monotonic longwave response from 280 to
-1120 ppm. The aerosol test showed that fixed sulfate mass does not imply fixed
-AOD as humidity changes. Recalibrating column mass against realised AOD closed
-that test.
+1120 ppm. AOD varied with humidity even when sulfate mass stayed fixed.
+Recalibrating column mass against realised AOD closed that test.
 
 Terrarium 0.1.4 was initially incompatible with SpeedyWeather 0.21.1's land
 extension, so the early stack used 0.1.2. Renamed initialization keywords,
@@ -265,11 +259,11 @@ atmosphere–radiation–land–ocean–ice step passed.
 
 ### 5–6 August — GPU year and the first unacceptable climate
 
-The initial one-degree ocean was unstable with a WENO momentum choice that did
-not match ClimaOcean's long-running examples. Vector-invariant momentum and
-WENO7 tracers gave stable ten-day ocean-and-ice-only and fully coupled runs. A
-365-day full-A100 integration then completed 35,040 coupled steps in about two
-hours, proving the engineering path but producing an unacceptable climate:
+The initial one-degree ocean was unstable with a WENO momentum choice that
+differed from ClimaOcean's long-running examples. Vector-invariant momentum
+and WENO7 tracers gave stable ten-day ocean-and-ice-only and fully coupled runs.
+A 365-day full-A100 integration then completed 35,040 coupled steps in about
+two hours, proving the engineering path but producing an unacceptable climate:
 severe atmospheric cooling, tropical sea ice, extreme coastal salinity and
 implausible ice growth.
 
@@ -291,7 +285,7 @@ defects:
 
 - `RingGrids.similar(::Field)` could round-trip undefined memory when the
   element type already matched.
-- an RRTMGP net-flux work buffer was not fully written.
+- an incompletely written RRTMGP net-flux work buffer.
 - cuSPARSE `CSR_ALG1` admitted documented run-to-run variation.
 - an atomic Float32 Legendre accumulation depended on arrival order despite a
   clean racecheck.
@@ -313,16 +307,16 @@ troposphere and lower stratosphere. ERA5 was mapped into the T31 atmosphere.
 ECCO supplied the 360 × 180 × 60 tripolar ocean, currents, free surface and
 sea-ice state.
 
-Two 730-day latitude–longitude candidates, called V3 and V4 in the labbook,
-were useful but were not releases. V3 was rejected when a shallow Indonesian
+Two 730-day latitude–longitude development candidates, called V3 and V4 in the
+labbook, informed later work. V3 was rejected when a shallow Indonesian
 column exceeded 40 °C. V4 imposed a 40 m minimum on wet cells and reduced the
 bias, but still crossed the unchanged gate for five days by up to 0.09 °C. The
 global depth correction was later retired from the tripolar production route as
 a coarse-resolution workaround rather than a general physical treatment.
 
-The land gained ERA5 soil temperature and moisture. It also gained prescribed
-vegetation fraction, LAI and roots, moisture-limited transpiration and
-conservative runoff transfer.
+The land gained ERA5 soil temperature and moisture, prescribed vegetation
+fraction, LAI and roots, moisture-limited transpiration and conservative runoff
+transfer.
 A runoff and storage defect was repaired with porosity- and layer-thickness-aware
 reconciliation. Daily land storage and flux ledgers replaced endpoint-only soil
 moisture checks.
@@ -334,22 +328,22 @@ water source. An inactive-cell mask also removed ECCO ice retained in dry
 cells, which had contaminated coastal mechanics and early low-latitude maps.
 
 Import latency fell substantially after Makie became lazy. Persistent batch
-processes and shared precompiled depots were kept. ReadyESM did not cache
-complete constructed models because too much mutable GPU and package state was
-unsafe.
+processes and shared precompiled depots were kept. Constructed-model caching
+stays disabled because the GPU and package state is mutable.
 
 ### 13–16 August — restart exactness and Arctic ice attribution
 
 ECCO `SIheff` was corrected to effective thickness. Geographic EVEL and NVEL
 currents were rotated together into tripolar axes. Both were real defects, but
-matched 30-day tests showed that neither removed the Arctic pile-up. Fold-vector
-halo corrections were also necessary but did not cure it.
+the Arctic pile-up persisted in matched 30-day tests and after the necessary
+fold-vector halo corrections.
 
 Force and transport diagnostics showed conservative dynamic convergence into
 poorly connected coastal cells, followed by a pressure-supported near-stall.
-It was not global ice-volume creation or the display-only marginal conditional-
-thickness ceiling. Increased EVP substeps, generic immersed coastal drag,
-current rotation alone and broad mask changes all failed their declared gates.
+The evidence pointed away from global ice-volume creation and the marginal
+conditional-thickness display ceiling. Increased EVP substeps, generic
+immersed coastal drag, current rotation alone and broad mask changes all failed
+their declared gates.
 
 Exact fresh-process restart required more than the obvious prognostic arrays:
 
@@ -381,7 +375,7 @@ The high-top atmosphere reduced the radiative error, but positive TOA imbalance
 and first-month cooling and moistening remained. Crossed offline replays separated
 initial-state, cloud and clear-sky contributions. The adjustment was vertically
 broad. Latent moistening offset much of the dry-temperature enthalpy loss but
-did not close the full energy budget.
+left a residual in the full energy budget.
 
 Several plausible cloud changes were rejected rather than tuned into the
 control: a physical-sigma diagnostic rule, a SimCloud transplant, altered fixed
@@ -391,15 +385,15 @@ to reproduce the required cloud-radiation effects. Diagnostic clouds therefore
 remained the baseline, with prognostic clouds retained as future work.
 
 Restart testing found and repaired a CATKE closure-history omission.
-Repeat-aware comparison envelopes were introduced so tiny GPU reduction-order
-variation could not be mistaken for a climate response.
+Repeat-aware comparison envelopes separate tiny GPU reduction-order variation
+from climate responses.
 
 ### 19–21 August — long tripolar evidence and river mouths
 
-The strict tripolar two-year chain reached its horizon but failed scientific
-acceptance. It reproduced late coastal subsurface heating, a widening two-sided
+The strict tripolar chain completed two years, but produced an unacceptable
+climate. It reproduced late coastal subsurface heating, a widening two-sided
 salinity envelope and Arctic ice above 20 m area-equivalent thickness. Its
-final atlas is negative evidence, not current model output.
+final atlas is archived with the rejected result.
 
 The first salinity failure was localised to shallow, poorly connected runoff
 receivers. Equal areal freshwater flux causes much greater fractional dilution
@@ -410,9 +404,9 @@ physical bounds and explicit receiver histories.
 Column-volume routing, strong vertical and horizontal estuary mixing, weaker
 receiver-centred mixing and salinity-only mixing were compared. Strong mixing
 removed fresh pits but overmixed broadly. Weaker variants improved salinity
-while worsening SST or dormant-mouth locality. None entered production. The
-tests established that salinity and trapped heat overlap spatially without
-sharing one acceptable coefficient.
+while worsening SST or dormant-mouth locality. Production kept its existing
+closure. The tests established that salinity and trapped heat overlap spatially
+without sharing one acceptable coefficient.
 
 A coupled incremental-analysis launch was also built for atmosphere, land,
 ocean and ice, including hidden component memory and conservation sources.
@@ -420,58 +414,55 @@ ocean and ice, including hidden component memory and conservation sources.
 ### 22–24 August — launch, process ledgers and fail-closed jobs
 
 The five-day balanced launch crossed the old early failure horizon and reduced
-insertion shock, but did not repair the later climate. It remained experimental.
-The work did expose separate land-state and skin-energy defects, which were
-fixed.
+insertion shock. The later climate bias persisted. The work exposed separate
+land-state and skin-energy defects, which were fixed.
 
 Layer-resolved humidity and temperature tendencies were added for convection,
 large-scale condensation, radiation and surface exchange. This observer found
 the Betts–Miller water source. A net-column correction to SpeedyWeather's
 large-scale precipitation was then rejected at 30 days because it overcorrected
-the climate. Production observes the upstream scheme without applying it.
+the climate. Production kept the upstream scheme and recorded it diagnostically.
 
 Slurm orchestration became fail closed. Invalid dependency jobs were removed,
 submitters gained `--kill-on-invalid-dep=yes`, source and configuration digests
-became mandatory, and downstream analyses could not run after failed branches.
+became mandatory, and the scheduler cancels downstream analyses after failed
+branches.
 Driver stalls and zero-runtime submission errors are recorded separately from
 scientific failures.
 
 Small blue-sky screens were also informative. Finite cloud memory smoothed
-weather but not the climate bias. Five ice categories required real
+weather while the climate bias persisted. Five ice categories required real
 redistribution physics rather than a new container. A subgrid coastal graph
-recovered channels, but connectivity alone could not remove the ice peak.
+recovered channels, while the ice peak persisted with connectivity alone.
 
 ### 25 August — constrained successors
 
 A loading-scaled river-mouth closure removed the 60-day fresh pit but failed its
 global-locality guardrail. A sigma-dependent Betts–Miller humidity profile
 improved radiation and column-water drift at 30 days but worsened temperature.
-Both remained experiments. The predefined thresholds did not change after the
-results became available.
+Both failed their declared gates.
 
-Sea-ice transport was found to advect concentration and conditional thickness
-in a way that did not conserve represented volume under all concentration
-changes. ReadyESM changed to direct conservative transport of ice and snow
-volume. This removes that mass error but is not claimed to solve coastal
-convergence.
+Sea-ice transport violated represented-volume conservation under some
+concentration changes. ReadyESM changed to direct conservative transport of
+ice and snow volume. This removes the mass error. Coastal convergence remains
+the next target.
 
 The first full-GPU prognostic-cloud prototype was scientifically rejected. It
-established a working cloud-state and radiation interface. It also showed that
-simply adding condensate memory is not enough.
+established a working cloud-state and radiation interface and showed that
+condensate memory alone was insufficient.
 
 ### 26 August — Terrarium 0.1.6 and the public repository
 
 Terrarium moved from the patched 0.1.2 baseline to 0.1.6, with Oceananigans
-0.110.15. This was an API and physics migration, not a simple dependency update.
-It required the new state layout and model-owned timestepper, separate boundary
-and auxiliary phases, changed evapotranspiration and hydrology signatures, new
-stratigraphy fields and physical water-flux units.
+0.110.15. The API and physics migration required the new state layout and
+model-owned timestepper, separate boundary and auxiliary phases, changed
+evapotranspiration and hydrology signatures, new stratigraphy fields and
+physical water-flux units.
 
-The new snow store remains disabled in the compatibility baseline. ReadyESM
-passes snowfall once as liquid water equivalent. This avoids the temporary
-double count found during migration. Existing albedo, emissivity, skin
-conductivity, prescribed vegetation and porosity-aware water repairs were
-retained.
+The compatibility baseline disables the new snow store and passes snowfall
+once as liquid water equivalent. This avoids the temporary double count found
+during migration. Existing albedo, emissivity, skin conductivity, prescribed
+vegetation and porosity-aware water repairs were retained.
 
 Fresh GPU compilation exposed a Terrarium generated-function helper defined too
 late for Julia 1.12. Moving the unchanged helper before its generated method
@@ -481,14 +472,14 @@ The clean accepted model was then published as `v0.1.0`.
 
 The first release-exact T31/L27 documentation run exposed an ambiguity between
 Terrarium's vegetation-free forwarding method and ReadyESM's prescribed-
-vegetation method. The earlier small GPU test had not selected that exact full
-production dispatch. The exact bridge and regression form `v0.1.1`.
+vegetation method. The earlier small GPU test selected a different dispatch
+path. The exact bridge and regression form `v0.1.1`.
 
 ## Naming note
 
 Only `0.1.x` identifiers are GitHub releases. Capital V3/V4 were pre-release
 ocean and bathymetry configurations. `localized_estuary_v1` through `v5` were
-river-mouth experiments. None is active in `config/production.yml`.
+river-mouth experiments. Production uses none of them.
 
 Current scientific limitations and active work are summarised in
 [`NOTES.md`](NOTES.md).
