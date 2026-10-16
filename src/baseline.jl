@@ -387,7 +387,14 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             surface_hydrology,
             timestepper = Terrarium.ForwardEuler(FT),
         )
-        land = SpeedyWeather.LandModel(
+        land = config.terrarium_runoff_enthalpy ? SpeedyWeather.LandModel(
+            spectral_grid,
+            terrarium_model;
+            timestepper = Terrarium.get_timestepper(terrarium_model),
+            initializers = terrarium_field_initializers,
+            Δt = config.terrarium_timestep_seconds,
+            input_variables = _bs08_enthalpy_variables(),
+        ) : SpeedyWeather.LandModel(
             spectral_grid,
             terrarium_model;
             timestepper = Terrarium.get_timestepper(terrarium_model),

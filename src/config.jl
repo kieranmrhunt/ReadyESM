@@ -94,6 +94,7 @@ Base.@kwdef struct ExperimentConfig
     era5_month::Int = 1
     land_model::Symbol = :speedy_bucket
     terrarium_runoff_routing::Symbol = :equal_area_flux
+    terrarium_runoff_enthalpy::Bool = false
     terrarium_initial_conditions::Symbol = :hydrostatic
     terrarium_evapotranspiration::Symbol = :bare_ground
     terrarium_max_leaf_conductance_ms::Float64 = 2.0e-3
@@ -528,6 +529,11 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
             "terrarium_runoff_routing",
             "equal_area_flux",
         )),
+        terrarium_runoff_enthalpy = Bool(_mapping_value(
+            raw,
+            "terrarium_runoff_enthalpy",
+            false,
+        )),
         terrarium_initial_conditions = Symbol(
             _mapping_value(raw, "terrarium_initial_conditions", "hydrostatic"),
         ),
@@ -920,6 +926,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     ) || throw(ArgumentError(
         "terrarium_runoff_routing must be equal_area_flux or " *
         "equal_column_fraction",
+    ))
+    !config.terrarium_runoff_enthalpy || config.land_model == :terrarium || throw(ArgumentError(
+        "terrarium_runoff_enthalpy requires land_model=terrarium",
     ))
     config.terrarium_initial_conditions in (
         :hydrostatic,

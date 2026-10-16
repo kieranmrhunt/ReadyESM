@@ -378,7 +378,7 @@ function _build_terrarium_runoff_land(
         routing.routing_weighting,
         sum(source_area),
         river_mouth_mixing,
-        (; pending_depth),
+        _runoff_exchange_storage(terrarium_state, pending_depth, surface_runoff, ocean),
     )
 end
 

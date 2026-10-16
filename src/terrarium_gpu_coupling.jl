@@ -121,11 +121,18 @@ function _copy_terrarium_restart_entry!(
     source::NamedTuple,
     label,
 )
-    keys(destination) == keys(source) || error(
-        "$label checkpoint keys $(keys(source)) do not match destination " *
-        "$(keys(destination))",
-    )
-    for name in keys(destination)
+    names = keys(destination)
+    if keys(destination) != keys(source)
+        missing_names = Tuple(setdiff(keys(destination), keys(source)))
+        isempty(setdiff(keys(source), keys(destination))) && !isempty(missing_names) &&
+            all(in(BS08_STATE_KEYS), missing_names) || error(
+            "$label checkpoint keys $(keys(source)) do not match destination " *
+            "$(keys(destination))",
+        )
+        _bs08_legacy_zero!(destination, missing_names)
+        names = keys(source)
+    end
+    for name in names
         _copy_terrarium_restart_entry!(
             getproperty(destination, name),
             getproperty(source, name),
@@ -427,7 +434,15 @@ function Terrarium.StateVariables(
         fields,
         boundary_conditions,
     )
-    soil_heat_flux = ground_heat_flux
+    # BS08 (option on) adds the infiltration enthalpy to the top boundary, so it needs its own field. Option off
+    # keeps the native alias.
+    soil_heat_flux = _bs08_requested(input_variables) ? Terrarium.initialize(
+        variables.ground_heat_flux,
+        grid,
+        clock,
+        fields,
+        boundary_conditions,
+    ) : ground_heat_flux
     soil_heat_flux_boundary = Terrarium.SoilHeatFlux(soil_heat_flux)
     saturation_infiltration = -(infiltration * inv(porosity))
     infiltration_boundary = Terrarium.InfiltrationFlux(
@@ -656,6 +671,56 @@ function Terrarium.compute_tendencies!(
         model.constants,
     )
     Terrarium.compute_tendencies!(state, grid, model.vegetation)
+    return nothing
+end
+
+# BS08 (option on only): Terrarium adds the soil top-boundary heat flux to the internal-energy tendency inside
+# compute_boundary_conditions! (soil BCs, after the SEB solve). The separate soil_heat_flux must therefore be filled
+# between the SEB and the soil BCs, in the same substep (filling it later lags the ground heat flux by one substep).
+# This replica runs the native sequence with the BS08 partition inserted there. Option off takes the upstream method.
+function Terrarium.compute_boundary_conditions!(
+    state,
+    model::Terrarium.LandModel{NF, GridType, Nothing, Soil, Nothing},
+) where {NF, GridType <: Terrarium.AbstractLandGrid{NF}, Soil}
+    _bs08_owns_enthalpy(state) || return invoke(
+        Terrarium.compute_boundary_conditions!,
+        Tuple{Any, Terrarium.LandModel},
+        state,
+        model,
+    )
+    grid = Terrarium.get_grid(model)
+    Terrarium.solve_surface_energy_balance!(state, grid, model.surface_energy_balance, model.constants,
+        model.atmosphere, model.surface_hydrology, model.snow)
+    Terrarium.compute_snow_interface_fluxes!(state, grid, model.snow, model.surface_energy_balance, model.soil,
+        model.constants, model.atmosphere)
+    _bs08_partition!(state, model)
+    Terrarium.compute_boundary_conditions!(state, grid, model.soil)
+    return nothing
+end
+
+# BS08 (option on only): replace the soil hydrology closure's saturation adjustment by its enthalpy-aware replica,
+# then run the rest of the native closure sequence unchanged. Option off takes the upstream method.
+function Terrarium.closure!(
+    state,
+    model::Terrarium.LandModel{NF, GridType, Nothing, Soil, Nothing},
+) where {NF, GridType <: Terrarium.AbstractLandGrid{NF}, Soil}
+    _bs08_owns_enthalpy(state) || return invoke(
+        Terrarium.closure!,
+        Tuple{Any, Terrarium.LandModel},
+        state,
+        model,
+    )
+    soil = model.soil
+    soil isa Terrarium.SoilEnergyWaterCarbon || error("BS08 requires SoilEnergyWaterCarbon soil")
+    soil.hydrology.vertical_flow isa Terrarium.RichardsEq || error("BS08 requires Richards soil hydrology")
+    Terrarium.get_closure(soil.hydrology) isa Terrarium.SoilSaturationPressureClosure ||
+        error("BS08 requires the SoilSaturationPressureClosure")
+    model.surface_hydrology.surface_runoff isa Terrarium.DirectSurfaceRunoff ||
+        error("BS08 requires DirectSurfaceRunoff")
+    grid = Terrarium.get_grid(model)
+    _bs08_hydrology_closure!(state, grid, soil.hydrology, soil, model.constants)
+    Terrarium.closure!(state, grid, Terrarium.get_closure(soil.energy), soil.energy, soil, model.constants)
+    Terrarium.closure!(state, grid, model.snow, model.constants)
     return nothing
 end
 
@@ -1711,6 +1776,7 @@ function _run_terrarium_land!(
             Terrarium.timestep!(integrator, land_timestep; finalize = false)
         end
         _accumulate_native_runoff!(integrator.state, land_timestep)
+        _bs08_after_substep!(integrator.state, land_timestep)
         isnothing(diagnostics) || _accumulate_terrarium_land_water_budget!(
             diagnostics,
             integrator.state,
@@ -1745,6 +1811,7 @@ function _run_terrarium_land!(
             )
         end
         _accumulate_native_runoff!(integrator.state, schedule.remainder)
+        _bs08_after_substep!(integrator.state, schedule.remainder)
         isnothing(diagnostics) || _accumulate_terrarium_land_water_budget!(
             diagnostics,
             integrator.state,
