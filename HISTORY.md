@@ -7,7 +7,7 @@ artefacts.
 
 ## Releases
 
-### Unreleased BS04 candidate
+### 0.1.10 — 2026-10-17
 
 - Keep the v0.1.9 model source and physics. Change the production ocean launch
   state to the midpoint of the December 1992 and January 1993 ECCO monthly
@@ -21,14 +21,18 @@ artefacts.
   gain comes from calendar centring rather than this cache cleanup.
 - Three matched 30-day pairs improve days 1–10 SST RMSE by 0.208 K, from
   1.237 K to 1.029 K. All paired gains lie between 0.207 and 0.210 K. The gain
-  is about 75 times the repeat envelope, and 95% remains on days 8–10.
-- Southern Ocean SST RMSE falls from 2.043 K to 1.568 K. Antarctic ice-area
-  error improves by 24%. Antarctic 15% extent error worsens by 15%, and IIEE
-  worsens by 1.1%. The release replication therefore gates extent and IIEE.
+  is about 76 times the frozen 0.0027 K native-control repeat envelope. Of the
+  day-zero gain, 95% remains on days 8–10.
+- Over days 1–10, Southern Ocean SST RMSE falls from 2.043 K to 1.568 K.
+  Antarctic ice-area error improves by 24%. Antarctic 15% extent error worsens
+  by 15%, and IIEE worsens by 1.1%. All pairs pass the preregistered Antarctic
+  regrowth guard on ice area and 15% extent. IIEE is report-only.
 - Ocean freshwater relative closure peaks at 0.00331 and stays below the 0.01
   stop. The launch transient decays to control levels by about day 8.
-- This entry records a candidate. Production and the public release remain
-  v0.1.9 until the release replication passes and the user accepts it.
+- The full CPU suite, the real ERA5 launch tests and the fresh-cache A100 gate
+  pass. The GPU gate rebuilds all five ocean caches from the eight base files,
+  reproduces the qualified construction hashes and completes a one-day
+  production run.
 
 ### 0.1.9 — 2026-10-14
 

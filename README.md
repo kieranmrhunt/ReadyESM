@@ -8,27 +8,26 @@ provide its initial state.
 ReadyESM is a research model under active development.
 The production configuration is [`config/production.yml`](config/production.yml).
 
-`v0.1.9` removes an invalid, frozen spectral row from the ERA5 launch state.
-In a matched fresh 30-day pair, this change reduces the magnitude of
-atmospheric-water drift by 94.8% and removes a spurious 80–90 hPa polar pressure
-depression. The change has a material climate effect. Old checkpoints keep
-their original launch state until explicit migration. The model retains
-two-hour convection, mixed-phase saturation, double-precision land and liquid
-and ice cloud paths of 75 and 25 g/m².
-See the [release history](HISTORY.md) and
-[validation record](docs/validation-v0.1.9.md).
+`v0.1.10` keeps the v0.1.9 model physics and changes the ocean launch state to
+the midpoint of the December 1992 and January 1993 ECCO monthly means. Sea ice
+stays on the January state. In three matched 30-day pairs, days 1–10 SST RMSE
+falls by 0.208 K. Over the same window, Antarctic ice-area error improves by
+24% and Antarctic extent error worsens by 15%. All pairs pass the Antarctic
+regrowth guard. Ocean freshwater closure stays within its 0.01 bound.
 
-The v0.1.10 release candidate keeps the v0.1.9 model physics. It changes the
-ocean launch state to the midpoint of the December 1992 and January 1993 ECCO
-monthly means. Sea ice stays on the January state. In three matched 30-day
-pairs, days 1–10 SST RMSE falls by 0.208 K. Antarctic ice-area error improves
-by 24%. Antarctic extent error worsens by 15%, so the release replication has
-an explicit extent guard.
+`v0.1.9` removes an invalid frozen spectral row from the ERA5 launch state.
+In a matched fresh 30-day pair, this reduces the magnitude of atmospheric-water
+drift by 94.8% and removes a spurious 80–90 hPa polar pressure depression. Old
+checkpoints keep their original launch state until explicit migration. The
+model retains two-hour convection, mixed-phase saturation, double-precision
+land and liquid and ice cloud paths of 75 and 25 g/m². See the
+[release history](HISTORY.md) and
+[v0.1.10 validation record](docs/validation-v0.1.10.md).
 
 The longest accepted trajectory remains the pre-fix v0.1.8 run to day 390.
-The figure below shows this run. The v0.1.10 candidate has three matched
-30-day tests and a passing day-one production gate. Current work targets ocean
-hot cells, coastal ice pile-up and whole-system energy closure.
+The figure below shows this run. v0.1.10 has three matched 30-day tests and a
+passing day-one production gate. Current work targets ocean hot cells, coastal
+ice pile-up and whole-system energy closure.
 
 ![ReadyESM D: ocean, sea ice, atmosphere and land at model day 390](docs/readiesm-v0.1.8-snapshot.png)
 
@@ -46,13 +45,13 @@ A track enters a release after its coupled gate passes.
 | BS01 | Conservative convection, then a learned closure | A nine-arm 60-day prescribed-SST screen found no material trigger, humidity or plume candidate. The plume arms weaken overturning, dry column water and run about five times slower. | Decompose latent and radiative heating in ascent and subtropical subsidence before another closure sweep. |
 | BS02 | Prognostic clouds | The first local liquid/ice store is stable, conservative and restartable, but its coupled run has far too little tropical/mid-level cloud and worsens net TOA by 19.8 W/m². | Test relative-humidity threshold and conservative convective detrainment separately in short paired runs. |
 | BS03 | Virtual vertical layers | Bottom-layer refinement improves an offline surface-longwave column, but the first coupled option worsens TOA balance. | Revisit only with conservative heating and a clean-launch control. |
-| BS04 | Balanced initialisation | The v0.1.9 spectral cleanup is selected. A calendar-centred ocean state improves 10-day SST RMSE by 0.208 K in three matched pairs. | Replicate the result through the release configuration with Antarctic extent and freshwater guards. |
-| BS05 | Parameter calibration | Two 33-member real-column screens and the nine-arm convection screen are complete; no fitted calibration has been accepted. | Use the heating-budget diagnosis to choose identifiable parameters before a bounded coupled sweep. |
-| BS06 | Sea-ice thickness distribution | Five-category GPU evolution and bitwise fresh-process restart pass on a synthetic immersed island. A coupled five-arm Arctic factorial is queued. | Test material hotspot reduction and displacement; the pile-up is not fixed yet. |
-| BS07 | Coastal connectivity and landfast ice | Fine-bathymetry connectivity and metric-interface benchmarks pass around the problem coast. No live coastal stress scheme yet. | Translate resolved channel geometry into a local dynamics benchmark. |
-| BS08 | Runoff storage and heat | Standalone routing closes water/heat budgets and restarts exactly. Receiver heat-replacement GPU test submitted. | Connect the land heat debit and source temperature without double-counting ocean heat. |
-| BS09 | Automated experiment branching | Bounded planning and archived-failure replay tested. The live evidence adapter is under review. | Drive one reviewed shadow experiment with verified inputs and no duplicate submissions. |
-| BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass. Dated gases give the expected lower forcing. Production land uses prescribed evapotranspiration. | Add a shared CO₂ driver for interactive vegetation, then replay spatial air–sea exchange with a closed ledger. |
+| BS04 | Balanced initialisation | v0.1.10 selects a calendar-centred ocean state. It improves 10-day SST RMSE by 0.208 K in three matched pairs and passes the release gates. | Extend the clean launch beyond 30 days and measure Antarctic extent. |
+| BS05 | Parameter calibration | Two 33-member real-column screens and the nine-arm convection screen are complete. No fitted calibration has been accepted. | Use the heating-budget diagnosis to choose identifiable parameters before a bounded coupled sweep. |
+| BS06 | Sea-ice thickness distribution | Category transport and restart tools pass. The tested coupled pressure hybrid worsens growth and closes. Two v0.1.9 controls show no runaway through day 390. | Reopen after a defined coastal-growth or thickness trigger. |
+| BS07 | Coastal connectivity and landfast ice | Connectivity tools pass. The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form closes. | Reserve geometry-specific landfast physics for a triggered reopen. |
+| BS08 | Runoff storage and heat | Routing, heat exchange and exact restart pass their component gates. A same-A100 5+5 test exposes bimodal repeat noise and fails the comparator design. | Use a larger label-permutation test before a coupled climate decision. |
+| BS09 | Automated experiment branching | Version 5 completes a live recovery with exact four-process option-off states. The tested incident-specific tool closes as archived infrastructure. | Reopen only for a general tool with resource and environment checks. |
+| BS10 | Carbon, aerosols and emissions | Stage 0a option-off passivity and restart pass. Stage 0b carbonate chemistry passes 106 A100 comparisons with device-safe repeatability. | Add the live Oceananigans adapter with an independent carbon inventory and top-boundary sign test. |
 
 ## Run
 
