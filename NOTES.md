@@ -13,7 +13,9 @@
   unchanged; this is not yet a fully phase-consistent thermodynamic closure.
 - RRTMGP all-sky radiation with 420 ppm prescribed CO2, diagnostic clouds and
   zero sulfate AOD. Liquid/ice cloud paths are 75/25 g/m².
-- Oceananigans on a 360 x 180 x 60 tripolar grid, initialized from ECCO V4r4.
+- Oceananigans on a 360 x 180 x 60 tripolar grid. This candidate initializes
+  ocean fields halfway between the December 1992 and January 1993 ECCO V4r4
+  monthly means. Sea ice uses the January state.
 - ClimaSeaIce dynamics and thermodynamics. Ice and snow volume are advected
   directly and conservatively; velocity and tracer halos are refreshed first.
 - Terrarium 0.1.6 `LandModel` with 16 soil layers and prescribed vegetation.

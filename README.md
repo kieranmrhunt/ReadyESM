@@ -18,10 +18,17 @@ and ice cloud paths of 75 and 25 g/m².
 See the [release history](HISTORY.md) and
 [validation record](docs/validation-v0.1.9.md).
 
+The v0.1.10 release candidate keeps the v0.1.9 model physics. It changes the
+ocean launch state to the midpoint of the December 1992 and January 1993 ECCO
+monthly means. Sea ice stays on the January state. In three matched 30-day
+pairs, days 1–10 SST RMSE falls by 0.208 K. Antarctic ice-area error improves
+by 24%. Antarctic extent error worsens by 15%, so the release replication has
+an explicit extent guard.
+
 The longest accepted trajectory remains the pre-fix v0.1.8 run to day 390.
-The figure below shows this run. Validation of the repaired v0.1.9 launch
-currently reaches day 30. Current work targets ocean hot cells, coastal ice
-pile-up and whole-system energy closure.
+The figure below shows this run. The v0.1.10 candidate has three matched
+30-day tests and a passing day-one production gate. Current work targets ocean
+hot cells, coastal ice pile-up and whole-system energy closure.
 
 ![ReadyESM D: ocean, sea ice, atmosphere and land at model day 390](docs/readiesm-v0.1.8-snapshot.png)
 
@@ -31,18 +38,19 @@ pile-up and whole-system energy closure.
 
 ## Experimental roadmap
 
-Snapshot: **15 October 2026**. Current blue-sky work:
+Snapshot: **17 October 2026**. These ten blue-sky tracks are experimental.
+A track enters a release after its coupled gate passes.
 
 | Track | Direction | Progress | Next step |
 | --- | --- | --- | --- |
-| BS01 | Conservative convection, then a learned closure | An idealised shallow-convection latitude taper recovers much of the missing Southern Hemisphere eddy activity. Its GPU lifecycle test passes, and a full day-30-to-120 comparison is running. | Measure circulation, water and radiation together in the coupled run. |
-| BS02 | Prognostic clouds | The first local liquid and ice store is stable, conservative and restartable, but its coupled run has too little tropical and mid-level cloud and worsens net TOA by 19.8 W/m². | Test the relative-humidity threshold and conservative convective detrainment separately in short paired runs. |
-| BS03 | Virtual vertical layers | Bottom-layer refinement improves an offline surface-longwave column, but the first coupled option worsens TOA balance. | Use conservative heating and a clean-launch control for the next test. |
-| BS04 | Balanced initialisation | A targeted spectral launch cleanup removes a frozen pressure, temperature and humidity row. Version 0.1.9 uses this cleanup. | Extend the clean launch beyond 30 days. Test gradual analysis increments separately. |
-| BS05 | Parameter calibration | Two 33-member real-column screens and the nine-arm convection screen are complete. Calibration remains at the screening stage. | Use the heating-budget diagnosis to choose identifiable parameters before a bounded coupled sweep. |
-| BS06 | Sea-ice thickness distribution | Seven-day attribution shows that the Rothrock strength law caused almost all of the prototype's added pile-up. Retaining native aggregate pressure closes 94% of that excess. A repeated day-30 check is running. | Compare the original target, its 3-by-3 neighbourhood and relocated maxima with native ice. |
-| BS07 | Coastal connectivity and landfast ice | Fine-bathymetry connectivity and metric-interface benchmarks pass around the problem coast. | Translate resolved channel geometry into a local dynamics benchmark. |
-| BS08 | Runoff storage and heat | Standalone routing closes water and heat budgets and restarts exactly. A receiver heat-replacement GPU test is submitted. | Connect the land heat debit and source temperature without double-counting ocean heat. |
+| BS01 | Conservative convection, then a learned closure | A nine-arm 60-day prescribed-SST screen found no material trigger, humidity or plume candidate. The plume arms weaken overturning, dry column water and run about five times slower. | Decompose latent and radiative heating in ascent and subtropical subsidence before another closure sweep. |
+| BS02 | Prognostic clouds | The first local liquid/ice store is stable, conservative and restartable, but its coupled run has far too little tropical/mid-level cloud and worsens net TOA by 19.8 W/m². | Test relative-humidity threshold and conservative convective detrainment separately in short paired runs. |
+| BS03 | Virtual vertical layers | Bottom-layer refinement improves an offline surface-longwave column, but the first coupled option worsens TOA balance. | Revisit only with conservative heating and a clean-launch control. |
+| BS04 | Balanced initialisation | The v0.1.9 spectral cleanup is selected. A calendar-centred ocean state improves 10-day SST RMSE by 0.208 K in three matched pairs. | Replicate the result through the release configuration with Antarctic extent and freshwater guards. |
+| BS05 | Parameter calibration | Two 33-member real-column screens and the nine-arm convection screen are complete; no fitted calibration has been accepted. | Use the heating-budget diagnosis to choose identifiable parameters before a bounded coupled sweep. |
+| BS06 | Sea-ice thickness distribution | Five-category GPU evolution and bitwise fresh-process restart pass on a synthetic immersed island. A coupled five-arm Arctic factorial is queued. | Test material hotspot reduction and displacement; the pile-up is not fixed yet. |
+| BS07 | Coastal connectivity and landfast ice | Fine-bathymetry connectivity and metric-interface benchmarks pass around the problem coast. No live coastal stress scheme yet. | Translate resolved channel geometry into a local dynamics benchmark. |
+| BS08 | Runoff storage and heat | Standalone routing closes water/heat budgets and restarts exactly. Receiver heat-replacement GPU test submitted. | Connect the land heat debit and source temperature without double-counting ocean heat. |
 | BS09 | Automated experiment branching | Bounded planning and archived-failure replay tested. The live evidence adapter is under review. | Drive one reviewed shadow experiment with verified inputs and no duplicate submissions. |
 | BS10 | Carbon, aerosols and emissions | Fixed-CO₂ radiation identity and closed carbon-box tests pass. Dated gases give the expected lower forcing. Production land uses prescribed evapotranspiration. | Add a shared CO₂ driver for interactive vegetation, then replay spatial air–sea exchange with a closed ledger. |
 
@@ -55,17 +63,26 @@ CUDA drivers.
 julia --project=. -e 'using Pkg' -e 'Pkg.instantiate()'
 python -m pip install -r scripts/requirements.txt
 python scripts/download_era5_initial_state.py --include-stratosphere
+julia --project=. scripts/prepare_ecco_monthly_bundle.jl \
+    /path/to/ecco-december-raw data/ecco_v4r4_1992_12 1992-12
+python -I scripts/download_ecco_january_mirror.py \
+    data/ecco_january_mirror_1993_01
+python -I scripts/prepare_calendar_centred_ecco.py \
+    data/ecco_v4r4_1992_12 data/ecco_january_mirror_1993_01 \
+    data/ecco_calendar_centred_1993_01
 julia --project=. scripts/run_dynamic_esm.jl config/production.yml
 ```
 
-The ERA5 download requires CDS credentials. The January 1993 ECCO V4r4 files
-download through ClimaOcean and NumericalEarth. A public
-[NumericalEarthArtifacts mirror](https://github.com/NumericalEarth/NumericalEarthArtifacts/releases/tag/data-v1)
-is available when the primary ECCO download fails. Initial downloads require
-network access. Later runs reuse the cached inputs.
-`scripts/prepare_ecco_monthly_bundle.jl`
-can verify and arrange a local monthly bundle for an explicit
-`ecco_initial_conditions_directory`.
+The ERA5 download requires CDS credentials. The December ECCO step requires
+the four PO.DAAC V4r4 monthly files and their published `.sha512` files. The
+January step uses the public
+[NumericalEarthArtifacts mirror](https://github.com/NumericalEarth/NumericalEarthArtifacts/releases/tag/data-v1).
+The preparation scripts verify every source and output hash. The production
+entry point is `scripts/run_dynamic_esm.jl`. It checks the NetCDF files before
+construction and checks the five generated inpainting caches before the first
+time step. Direct API calls check file presence but skip these release hashes.
+The cache bytes were qualified on A100. Another architecture that produces
+different cache bytes stops before the first time step.
 
 The runner validates its diagnostics and writes results under
 `artifacts/production`. To make a final-day atlas:

@@ -6,4 +6,6 @@
 *.jld2
 *.nc
 *.tmp
+__pycache__/
+*.py[cod]
 core

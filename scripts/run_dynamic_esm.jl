@@ -8,6 +8,38 @@ import CUDA
 
 config = load_config(only(ARGS))
 
+include(joinpath(@__DIR__, "verify_ecco_launch_bundle.jl"))
+expected_ecco_directory = joinpath(
+    ReadyESM.PROJECT_ROOT,
+    "data",
+    "ecco_calendar_centred_1993_01",
+)
+guard_production_ecco = requires_calendar_centred_ecco_verification(
+    config.name,
+    config.ecco_initial_conditions_directory,
+    expected_ecco_directory,
+)
+if guard_production_ecco
+    config.ocean_initial_conditions == :ecco_monthly_full_state || error(
+        "production requires the qualified calendar-centred ocean launch",
+    )
+    (config.ecco_year, config.ecco_month) == (1993, 1) || error(
+        "production requires the qualified January 1993 ocean launch label",
+    )
+    realpath(config.ecco_initial_conditions_directory) ==
+        realpath(expected_ecco_directory) || error(
+            "production requires the qualified ECCO launch directory",
+        )
+    verify_calendar_centred_ecco_bundle(
+        config.ecco_initial_conditions_directory,
+        joinpath(
+            ReadyESM.PROJECT_ROOT,
+            "config",
+            "ecco_calendar_centred_1993_01.sha256",
+        ),
+    )
+end
+
 if config.device == :gpu
     CUDA.functional() || error("device=gpu was requested but CUDA is not functional")
     CUDA.allowscalar(false)
@@ -15,7 +47,19 @@ if config.device == :gpu
 end
 
 println("Running $(config.name) with active $(config.forcing.co2_ppm) ppm CO2")
-simulation = run_dynamic_esm!(config)
+simulation = build_dynamic_esm(config)
+if guard_production_ecco
+    verify_calendar_centred_ecco_bundle(
+        config.ecco_initial_conditions_directory,
+        joinpath(
+            ReadyESM.PROJECT_ROOT,
+            "config",
+            "ecco_calendar_centred_1993_01.sha256",
+        );
+        require_caches = true,
+    )
+end
+ReadyESM.Oceananigans.run!(simulation)
 diagnostics = collect_dynamic_diagnostics(simulation, config)
 paths = save_dynamic_diagnostics(diagnostics, config; render_figure = false)
 println("SIMULATION_COMPLETION_PASS iteration=$(simulation.model.clock.iteration) " *
