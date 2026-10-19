@@ -1,11 +1,3 @@
-"""
-Finite-response three-plume convection for a Float32 CPU atmosphere.
-
-The closure evaluates profiles and exchanges in Float64, then returns Float32
-physical tendencies and precipitation. Detrained liquid and ice re-evaporate
-locally with their phase energy. The atmosphere carries no convective condensate
-memory. GPU execution requires a separate device-workspace implementation.
-"""
 include(joinpath(@__DIR__, "c08_finite", "C08FiniteConvection.jl"))
 const FiniteC08Core = C08FiniteConvection.C08MultiPlume
 
@@ -21,6 +13,14 @@ const FINITE_MULTIPLUME_FIELDS = (
     :finite_c08_target_cape, :finite_c08_final_cape, :finite_c08_initial_cape,
 )
 
+"""
+Finite-response three-plume convection for a Float32 CPU atmosphere.
+
+The closure evaluates profiles and exchanges in Float64, then returns Float32
+physical tendencies and precipitation. Detrained liquid and ice re-evaporate
+locally with their phase energy. The atmosphere carries no convective condensate
+memory. GPU execution requires a separate device-workspace implementation.
+"""
 struct FiniteMultiPlumeConvection{S} <: SpeedyWeather.AbstractConvection
     spectrum::S
     saturation_law::Symbol
