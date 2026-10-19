@@ -15,8 +15,8 @@ Main now includes the accepted [snow-accounting update](validation-snow-accounti
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
 | C06: rain evaporation and cold pools | Active | The rainfall-diagnostic correction passes 13 component tests and all three coupled pilots. Ten-day climate runs have started. The active dry-parcel screening flag remains failed. |
-| C07: convective momentum transport | Active | Eight repaired mixed-precision and control pilots pass. Fifteen January comparisons are submitted for wind scoring. |
-| C08: deterministic multi-plume convection | Active | All nine mixed-precision 30-day runs pass. January scoring and a three-seed parameter grid are in progress. |
+| C07: convective momentum transport | Active | All 15 January runs and their complete-run reader pass. ERA5 wind data have arrived. Combined scoring awaits temperature data. |
+| C08: deterministic multi-plume convection | Active | All 84 parameter-grid runs, 12 selected January runs and four coupled pilots pass. A clean host adapter passes 1,740 exact comparisons. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
 | C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests, six full-model pilots and six coupled restart tests pass. Ten-day climate tests are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
@@ -41,8 +41,8 @@ Their complete-run reader verifies every day and exact native/zero agreement.
 The active setting reduces mean column water by 1.79–1.82 kg/m² and raises
 precipitation by 0.054–0.069 mm/day. These changes need observational scoring.
 The scorer passes eight metric tests and independent checks of all nine files.
-ERA5's server confirms the reference request is queued. Water, precipitation
-and temperature will use common masks and area weights. These
+ERA5 surface and precipitation files have arrived. Temperature retrieval
+continues. Water, precipitation and temperature use common masks and area weights. These
 atmospheric tests use prescribed seasonal SST and simple radiation. Coupled
 assessment follows if the combined observed response supports it.
 
@@ -70,7 +70,11 @@ The failed screen remains archived. A separate ten-day assessment retains
 the physical checks, reports both coverage flags, and checks that unmapped
 rain passes through without evaporation. It compares native, middle and
 strongest settings with two repeats each. The diagnostic pilots have passed
-and the ten-day runs have started.
+and the ten-day runs have started. The first two attempts reached day ten but
+their report builder rejected missing launch diagnostics. A separate repair
+keeps those values in NetCDF and checks every later sample. The replacement
+native control now passes, including its report and restart file. Active
+settings and the second repeat remain in progress.
 
 ### C08 and C07
 
@@ -81,8 +85,8 @@ case completes 101,396 closure evaluations with zero rejected probes.
 
 Packed spectral arrays required a repair to the restart checker. Its 22
 regression checks pass. Four full-state restart tests pass, with exact
-checkpoint and continued states. A day-one restart extension and an active
-one-day coupled run are running. Four full-ESM pilots pass for finite C08,
+checkpoint and continued states. The active one-day coupled run also passes.
+Day-one restart extensions remain running. Four full-ESM pilots pass for finite C08,
 zero-strength C07, momentum transport, and momentum transport with heat return.
 
 The atmosphere screen starts from ERA5 on 1 January 1993. It uses T31/L27,
@@ -115,7 +119,17 @@ All nine mixed-precision thirty-day runs pass, with zero captured water or
 energy failures. Three fresh Float32 controls reproduce the earlier reports,
 maps and failure flags exactly. The precision change has little effect on
 global means. Large cold and dry differences from native convection remain.
-January comparisons and a 27-setting, three-seed parameter grid are running.
+The full 30-day parameter grid now passes all 84 members, including three native
+controls. Lower rain conversion and greater condensate retention improve water
+and temperature relative to the centre case. Four selected settings also pass
+two-hour coupled tests. Their maximum relative host-water residual is 1.94e-7.
+All 12 selected January runs pass, with exact 30-day prefixes and centre controls.
+Their observed skill awaits the temperature reference.
+
+The clean C08 package removes the experimental source wrappers. It passes 4,350
+solver comparisons and 1,740 host comparisons exactly. This CPU-only option uses
+the normal model configuration and leaves native defaults unchanged. Full CPU, coupled and
+fresh-process restart checks are in progress.
 
 All six combined C07/C08 cases pass their physical checks. Days 10–30 mean
 column water is 16.535 and 16.440 kg/m² for the centre and faster settings,
@@ -128,8 +142,12 @@ plumes in Float64, while C07 rebuilt them in Float32. Two exact failure replays
 show one-versus-two and two-versus-three active plumes. Both the momentum and
 heat paths now use C08's selection precision. The component test passes 6,961
 checks and all eight paired two-day pilots pass, including exact controls.
-Fifteen January runs compare native, C08 and C07 across three seeds. Passive
-wind output at 200, 500 and 850 hPa will support comparison with ERA5.
+All 15 January runs compare native, C08 and C07 across three seeds and pass
+the complete-run checks. Their reader initially loaded a shared helper into
+the wrong Julia module. The repaired reader passes without rerunning the models.
+Wind output at 200, 500 and 850 hPa and the ERA5 wind reference are ready.
+Both the 15-member wind scorer and 33-member parameter scorer pass input checks.
+Combined scoring awaits the ERA5 temperature file.
 
 ### C10
 
@@ -202,10 +220,14 @@ and immersed boundaries. The first gate passed 552 assertions but hit 144
 offset-array conversion errors in its test comparisons. The corrected test
 compares offset axes and parent storage. All 1,416 geometry assertions now
 pass. The compact GPU host test also passes, with relative inventory error
-6.58e-9 and exact saved carbon-controller state. Two production-tripolar pilots
-await GPU priority. They retain the real land, ice, radiation and ERA5/ECCO launch.
-A queued reader checks all inventory samples and preserves failed outcomes.
-Longer response and restart tests follow.
+6.58e-9 and exact saved carbon-controller state. Both production-tripolar pilots
+and their reader now pass. They retain real land, ice, radiation and ERA5/ECCO
+launch states. Maximum relative carbon-inventory errors are 1.37e-9 with live
+exchange and 1.38e-9 with zero exchange, below the unchanged 2e-6 limit.
+Full-grid GPU restarts and one-day budgets are queued. A nine-case sweep crosses
+three prescribed CO2 levels with three alkalinity settings. It resumes the test
+stopped by the earlier inventory bug and checks every step. Emissions-driven
+full-model coupling remains to implement.
 
 ## Evidence record
 
@@ -236,11 +258,17 @@ These job identifiers locate the evidence in that archive.
 | C10 coupled restart tests | 60676074, 60676200 |
 | C06 saved rainfall reconciliation | 60651213 |
 | C06 corrected diagnostic pilots | 60654516 |
-| C06 separate ten-day coupled assessment | 60656531, 60656533 |
+| C06 ten-day reporting repair and replacement assessment | 60656531, 60709864, 60709903 |
+| C08 thirty-day parameter grid and selected coupled tests | 60710059, 60710060, 60716600, 60716619 |
+| C07 and selected C08 January runs and repaired readers | 60712609, 60718700, 60746567 |
+| C07 and C08 parameter scoring input checks | 60748518, 60748519 |
+| Clean C08 solver and host checks | 60731314, 60738239 |
+| Clean C08 coupled and restart tests | 60739236, 60752549 |
 | BS08 six-plus-six GPU comparison and next tests | 60506397, 60508170, 60508197 |
 | BS10 matched inventory diagnosis | 60542721, 60542722, 60649076, 60649077 |
 | BS10 original grid regression and cancelled pilots | 60661629, 60662199 |
 | BS10 corrected grid regression, production pilots and reader | 60668131, 60668383, 60690215 |
+| BS10 full-grid restarts, day-one budgets and sensitivity sweep | 60717159, 60720035, 60756040 |
 
 Model releases use the combined climate response, conservation, stability,
 restart behaviour and cost. Each experiment keeps its stated comparison
