@@ -37,21 +37,31 @@ ice pile-up and whole-system energy closure.
 
 ## Experimental roadmap
 
-Snapshot: **17 October 2026**. These ten blue-sky tracks are experimental.
-A track enters a release after its coupled gate passes.
+Snapshot: **19 October 2026**. Production remains at v0.1.10.
+The tables below track research candidates. See the
+[experiment notes](docs/experiments.md) for the convection portfolio and test scope.
 
 | Track | Direction | Progress | Next step |
 | --- | --- | --- | --- |
-| BS01 | Conservative convection, then a learned closure | A nine-arm 60-day prescribed-SST screen found no material trigger, humidity or plume candidate. The plume arms weaken overturning, dry column water and run about five times slower. | Decompose latent and radiative heating in ascent and subtropical subsidence before another closure sweep. |
-| BS02 | Prognostic clouds | The first local liquid/ice store is stable, conservative and restartable, but its coupled run has far too little tropical/mid-level cloud and worsens net TOA by 19.8 W/m². | Test relative-humidity threshold and conservative convective detrainment separately in short paired runs. |
-| BS03 | Virtual vertical layers | Bottom-layer refinement improves an offline surface-longwave column, but the first coupled option worsens TOA balance. | Revisit only with conservative heating and a clean-launch control. |
-| BS04 | Balanced initialisation | v0.1.10 selects a calendar-centred ocean state. It improves 10-day SST RMSE by 0.208 K in three matched pairs and passes the release gates. | Extend the clean launch beyond 30 days and measure Antarctic extent. |
-| BS05 | Parameter calibration | Two 33-member real-column screens and the nine-arm convection screen are complete. No fitted calibration has been accepted. | Use the heating-budget diagnosis to choose identifiable parameters before a bounded coupled sweep. |
-| BS06 | Sea-ice thickness distribution | Category transport and restart tools pass. The tested coupled pressure hybrid worsens growth and closes. Two v0.1.9 controls show no runaway through day 390. | Reopen after a defined coastal-growth or thickness trigger. |
-| BS07 | Coastal connectivity and landfast ice | Connectivity tools pass. The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form closes. | Reserve geometry-specific landfast physics for a triggered reopen. |
-| BS08 | Runoff storage and heat | Routing, heat exchange and exact restart pass their component gates. A same-A100 5+5 test exposes bimodal repeat noise and fails the comparator design. | Use a larger label-permutation test before a coupled climate decision. |
-| BS09 | Automated experiment branching | Version 5 completes a live recovery with exact four-process option-off states. The tested incident-specific tool closes as archived infrastructure. | Reopen only for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | Stage 0a option-off passivity and restart pass. Stage 0b carbonate chemistry passes 106 A100 comparisons with device-safe repeatability. | Add the live Oceananigans adapter with an independent carbon inventory and top-boundary sign test. |
+| BS01 | Conservative convection, then a learned closure | The tested single-plume form is closed. Its conservative core supports the newer convection experiments. | Continue C08 and C10. |
+| BS02 | Prognostic clouds | Transport, water storage and restart components pass. The tested cloud closure worsens radiation. | Replace cloud fraction and overlap before another screen. |
+| BS03 | Virtual vertical layers | The partial-layer follow-up failed its registered effect tests. This form is closed. | Reopen with a clear observational benefit. |
+| BS04 | Balanced initialisation | Accepted in v0.1.10. Three matched pairs improve early SST error, with mixed Antarctic ice results. | Extend the accepted launch beyond 30 days. |
+| BS05 | Parameter calibration | Column screens establish parameter sensitivity. | Select the coupled parameter set after convection and cloud structure tests. |
+| BS06 | Sea-ice thickness distribution | The tested pressure hybrid is closed. Category transport and restart tools are retained. | Reopen after a defined coastal-growth or thickness trigger. |
+| BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
+| BS08 | Runoff storage and heat | Component and restart tests pass. A new six-release/six-candidate GPU repeat test is running. | Complete the repeatability, cost and coupled tests. |
+| BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
+| BS10 | Carbon, aerosols and emissions | The live carbon adapter works on CPU and GPU. A longer GPU case fails its inventory check. CPU diagnostic repeats pass. | Diagnose the queued GPU repeats with gas exchange on and off. |
+
+Current convection work:
+
+| Track | Progress | Next step |
+| --- | --- | --- |
+| C06 | Rain evaporation and cold-pool memory pass the ten-day atmosphere screen. | Run the queued full-ESM GPU pilots. |
+| C07 | Conservative momentum transport and heat return pass component and atmosphere tests. | Complete four full-ESM pilots and the 30-day ERA5-start comparisons. |
+| C08 | The revised finite-response closure passes its eight-step full-ESM pilot, including convective snow. | Complete the full-state restart tests, one-day coupled run and 30-day atmosphere screen. |
+| C10 | Eight internal transport steps remove the severe two-day hot spots in both tested high-area settings. | Complete the 8/16/32-step comparison and six ten-day follow-ups. |
 
 ## Run
 
