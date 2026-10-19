@@ -9,18 +9,37 @@ The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 | Track | Status | Result or next test |
 | --- | --- | --- |
 | C01: mixed-layer parcel launch | Closed | The stronger launch reduces tropical deep-convection area too much. |
-| C02: depth-limited shallow adjustment | Reserve | Retain the 0.7-depth setting for an observational comparison. The 0.8 setting is closed. |
+| C02: depth-limited shallow adjustment | Active | Current-model and passive monthly-capture pilots pass. Nine January runs compare native, zero limit and 0.7 against date-matched ERA5. The 0.8 setting is closed. |
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | Saved data confirm a rainfall-diagnostic error. The correction passes 13 component tests. Three coupled pilots precede six ten-day climate runs. Source coverage remains under review. |
+| C06: rain evaporation and cold pools | Active | The rainfall-diagnostic correction passes 13 component tests and all three coupled pilots. Ten-day climate runs have started. The active dry-parcel screening flag remains failed. |
 | C07: convective momentum transport | Active | Four coupled pilots pass. Both momentum-plus-heat settings pass all three 30-day repeats, but retain large cold and dry differences from native convection. |
-| C08: deterministic multi-plume convection | Active | The energy residual comes from rounding in plume and exchange calculations. A mixed-precision prototype passes component and two-day host tests. A thirty-day comparison is queued. |
+| C08: deterministic multi-plume convection | Active | The energy residual comes from rounding in plume and exchange calculations. A mixed-precision prototype passes component and two-day host tests. Twelve thirty-day comparisons are running. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
 | C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests and six full-model pilots pass. Ten-day climate tests and coupled restart tests are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
+
+### C02
+
+The 0.7 shallow-depth setting has entered a date-matched assessment. All 45
+current-model column checks pass. A zero limit reproduces all 4,608 columns
+exactly in both precisions. Three two-day ERA5 host pilots also pass, with
+exact native/disabled reports and maps and zero water-ledger failures.
+
+The monthly sampler passes 42 unit checks and three passive host pilots.
+Every original report and saved map remains unchanged. It collects hourly
+states, integrates rain plus snow over every step, and excludes unbracketed
+pressure-level temperatures. Complete January coverage requires 744 hourly
+states and 2,976 precipitation intervals.
+
+Nine 31-day runs are now running: native, zero limit and 0.7 for three matched
+seeds. They include launch adjustment. Water, precipitation and temperature
+will be compared with January-1993 ERA5 using common terrain masks. These
+atmospheric tests use prescribed seasonal SST and simple radiation. Coupled
+assessment follows if the combined observed response supports it.
 
 ### C06
 
@@ -32,8 +51,10 @@ The rainfall diagnostic omitted C06's separate humidity tendency. Adding it
 reduces the worst saved-column discrepancy from 4–8e-5 to about 3e-9 kg/m²/s.
 Every final column then meets the unchanged 3e-6 tolerance. The corrected
 collector exports base, C06 and total tendencies. Thirteen component tests
-pass. The native GPU pilot passes the collector, file output and full validator.
-The disabled and strongest active pilots are still running.
+pass. Native, disabled and strongest active GPU pilots all pass the collector,
+file output and full validator. The active case has zero internal physical
+failures. Its dry-parcel fraction is 3.16%, so the inherited 1.25% screening
+flag remains failed.
 
 The source review finds 14 cases with heating or drying below the diagnosed
 cloud interval. They carry at most 0.01485% of sampled rain. C06 leaves all
@@ -43,7 +64,8 @@ The earlier 1.25% coverage limit came from a project screening choice.
 The failed screen remains archived. A separate ten-day assessment retains
 the physical checks, reports both coverage flags, and checks that unmapped
 rain passes through without evaporation. It compares native, middle and
-strongest settings with two repeats each, after the diagnostic pilots pass.
+strongest settings with two repeats each. The diagnostic pilots have passed
+and the ten-day runs have started.
 
 ### C08 and C07
 
@@ -84,8 +106,9 @@ existing solver in this single matched host test. The earlier selected-column
 benchmark cost 3.42 times as much, so retain both timing results.
 
 Twelve thirty-day runs compare three active settings and a fresh Float32
-centre control across three seeds. They wait for an exact passive-capture
-pilot. The capture saves the full column input for any core or host budget
+centre control across three seeds. All twelve are running after the passive-
+capture pilot reproduced its qualified reports and maps exactly. The capture
+saves the full column input for any core or host budget
 failure, including host-only water failures. The reader retains failed science
 flags and compares each setting with its frozen Float32 reference.
 
@@ -144,9 +167,11 @@ throughout, while alkalinity hashes match at 8 of 25 samples with equal extrema.
 The committed repair has tests for CPU/GPU, both precisions, three grid types
 and immersed boundaries. The first gate passed 552 assertions but hit 144
 offset-array conversion errors in its test comparisons. The corrected test
-compares offset axes and parent storage. A new gate and two dependent pilots
-on the full production tripolar mesh are queued. They retain the real land,
-ice, radiation and ERA5/ECCO launch. Longer response and restart tests follow.
+compares offset axes and parent storage. All 1,416 geometry assertions now
+pass. The compact GPU host test is running, with two production-tripolar pilots
+queued behind it. They retain the real land, ice, radiation and ERA5/ECCO launch.
+A queued reader checks all inventory samples and preserves failed outcomes.
+Longer response and restart tests follow.
 
 ## Evidence record
 
@@ -155,6 +180,9 @@ These job identifiers locate the evidence in that archive.
 
 | Evidence | Jobs |
 | --- | --- |
+| C02 current-model columns and ERA5 host pilots | 60681564, 60683567, 60683670 |
+| C02 passive monthly capture and reader | 60691659, 60691662 |
+| C02 nine-member January assessment | 60692616 |
 | Finite-C08 coupled pilot and readout | 60575928, 60575955 |
 | Full-state coupled restart | 60652124, 60652400, 60652401 |
 | Active finite-C08 coupled day | 60610464 |
@@ -177,7 +205,7 @@ These job identifiers locate the evidence in that archive.
 | C06 separate ten-day coupled assessment | 60656531, 60656533 |
 | BS10 matched inventory diagnosis | 60542721, 60542722, 60649076, 60649077 |
 | BS10 original grid regression and cancelled pilots | 60661629, 60662199 |
-| BS10 corrected grid regression and production pilots | 60668131, 60668383 |
+| BS10 corrected grid regression, production pilots and reader | 60668131, 60668383, 60690215 |
 
 Model releases use the combined climate response, conservation, stability,
 restart behaviour and cost. Each experiment keeps its stated comparison

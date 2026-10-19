@@ -52,15 +52,16 @@ The tables below track research candidates. See the
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
 | BS08 | Runoff storage and heat | Component and restart tests pass. A new six-release/six-candidate GPU repeat test is running. | Complete the repeatability, cost and coupled tests. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | A host-grid copy lost changing cell volumes. Preserving them cuts the GPU carbon-inventory error by 554 times, with unchanged tracer states and air–sea uptake. | Test the committed repair across grid types and on the full production mesh. |
+| BS10 | Carbon, aerosols and emissions | Preserving changing cell volumes cuts the matched GPU carbon-inventory error by 554 times. All 1,416 grid-geometry checks pass. | Finish the compact GPU test, then the queued production-mesh pair. |
 
 Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
-| C06 | Coupled runs exposed a rainfall diagnostic that omitted C06's humidity tendency. The correction passes component tests and its native coupled pilot. | Finish active and disabled pilots, then run the queued ten-day repeats. |
+| C02 | The 0.7 shallow-depth setting passes current-model conservation and disabled checks. Monthly diagnostics preserve the original trajectories exactly. | Complete nine January runs and compare with date-matched ERA5. |
+| C06 | The rainfall diagnostic correction passes all three coupled pilots. The active dry-parcel screening flag remains failed. | Complete six ten-day repeats and assess moisture, rain and source coverage. |
 | C07 | Four coupled pilots and six combined C07/C08 thirty-day cases pass physical checks. Cold and dry differences from native convection remain large. | Assess climate skill against observations. |
-| C08 | Wider arithmetic removes the sampled energy error. All six two-day host pilots pass, with exact disabled agreement. | Complete the queued thirty-day comparison and coupled restart tests. |
+| C08 | Wider arithmetic removes the sampled energy error. All six two-day host pilots pass, with exact disabled agreement. | Complete the running thirty-day comparison and coupled restart tests. |
 | C10 | Internal substeps reduce peak temperatures from about 358 K to 324 K. All six full-model pilots pass. | Complete ten-day climate tests and six fresh-process coupled restart tests. |
 
 ## Run
