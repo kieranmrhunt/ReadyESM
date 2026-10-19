@@ -71,7 +71,7 @@ SpeedyWeather.initialize!(
 ) = _require_finite_multiplume_cpu(model.spectral_grid)
 
 function _finite_multiplume_metadata(config::ExperimentConfig)
-    config.atmosphere_convection == :finite_multiplume_c08_v1 || return (;)
+    config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) || return (;)
     return (
         atmosphere_convection_closure = "finite_host_state_CAPE_relaxation",
         atmosphere_convection_solver_precision = "Float64",

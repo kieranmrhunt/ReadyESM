@@ -41,6 +41,8 @@ Base.@kwdef struct ExperimentConfig
     atmosphere_c08_entrainment_scale::Float64 = 0.75
     atmosphere_c08_precipitation_conversion_m_inv::Float64 = 0.0015
     atmosphere_c08_condensate_threshold_kg_kg::Float64 = 0.0005
+    atmosphere_c07_momentum_strength::Float64 = 0.5
+    atmosphere_c07_maximum_subcycles::Int = 16
     atmosphere_convection_upper_relative_humidity::Float64 = 0.5
     atmosphere_convection_lower_relative_humidity::Float64 = 0.7
     atmosphere_convection_transition_top_sigma::Float64 = 0.3
@@ -339,6 +341,12 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         atmosphere_c08_condensate_threshold_kg_kg = Float64(
             _mapping_value(raw, "atmosphere_c08_condensate_threshold_kg_kg", 0.0005),
         ),
+        atmosphere_c07_momentum_strength = Float64(
+            _mapping_value(raw, "atmosphere_c07_momentum_strength", 0.5),
+        ),
+        atmosphere_c07_maximum_subcycles = Int(
+            _mapping_value(raw, "atmosphere_c07_maximum_subcycles", 16),
+        ),
         atmosphere_convection_lower_relative_humidity = Float64(
             _mapping_value(
                 raw,
@@ -565,16 +573,17 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         :betts_miller_constant_rh,
         :betts_miller_sigma_rh_v1,
         :finite_multiplume_c08_v1,
+        :finite_multiplume_c07_v1,
     ) || throw(ArgumentError(
         "atmosphere_convection must be betts_miller_constant_rh or " *
-        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1",
+        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1 or finite_multiplume_c07_v1",
     ))
-    if config.atmosphere_convection == :finite_multiplume_c08_v1
+    if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         config.device == :cpu || throw(ArgumentError(
-            "finite_multiplume_c08_v1 requires device=cpu",
+            "finite multi-plume convection requires device=cpu",
         ))
         config.forcing.cloud_scheme != :prognostic_condensate || throw(ArgumentError(
-            "finite_multiplume_c08_v1 uses local condensate re-evaporation and requires a diagnostic cloud scheme",
+            "finite multi-plume convection uses local condensate re-evaporation and requires a diagnostic cloud scheme",
         ))
         for name in (
             :atmosphere_c08_entrainment_scale,
@@ -586,6 +595,16 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
                 "$name must be non-negative and finite",
             ))
         end
+    end
+    if config.atmosphere_convection == :finite_multiplume_c07_v1
+        isfinite(config.atmosphere_c07_momentum_strength) &&
+            isfinite(Float32(config.atmosphere_c07_momentum_strength)) &&
+            config.atmosphere_c07_momentum_strength >= 0 || throw(ArgumentError(
+                "atmosphere_c07_momentum_strength must be non-negative and finite",
+            ))
+        config.atmosphere_c07_maximum_subcycles > 0 || throw(ArgumentError(
+            "atmosphere_c07_maximum_subcycles must be positive",
+        ))
     end
     config.atmosphere_convection_timescale_seconds > 0 || throw(ArgumentError(
         "atmosphere_convection_timescale_seconds must be positive",
