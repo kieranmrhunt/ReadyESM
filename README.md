@@ -47,7 +47,7 @@ The tables below track research candidates. See the
 | BS02 | Prognostic clouds | Transport, water storage and restart components pass. The tested cloud closure worsens radiation. | Replace cloud fraction and overlap before another screen. |
 | BS03 | Virtual vertical layers | The partial-layer follow-up failed its registered effect tests. This form is closed. | Reopen with a clear observational benefit. |
 | BS04 | Balanced initialisation | Accepted in v0.1.10. Three matched pairs improve early SST error, with mixed Antarctic ice results. | Extend the accepted launch beyond 30 days. |
-| BS05 | Parameter calibration | All 84 thirty-day runs and four selected coupled pilots pass. | Compare the selected January runs with ERA5. |
+| BS05 | Parameter calibration | January ERA5 scores favour case 12 over the original C08 setting for moisture and temperature, with similar rainfall skill. | Extend cases 12 and 3 with coupled controls. |
 | BS06 | Sea-ice thickness distribution | The tested pressure hybrid is closed. Category transport and restart tools are retained. | Reopen after a defined coastal-growth or thickness trigger. |
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
 | BS08 | Runoff storage and heat | GPU compatibility and physical checks pass. The kernel costs 34% more, above its 25% limit. | Profile and reduce the added cost before the coupled test. |
@@ -58,10 +58,10 @@ Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
-| C02 | All nine January runs pass physical checks. Native and disabled reports, maps and monthly fields match exactly for each seed. | Score the completed runs against date-matched ERA5 when its queued reference arrives. |
+| C02 | January ERA5 scores improve moisture and rainfall but worsen temperature at all three tested levels. | Assess a weaker setting before a coupled test. |
 | C06 | The rainfall diagnostic correction passes all three coupled pilots. The active dry-parcel screening flag remains failed. | Complete six ten-day repeats and assess moisture, rain and source coverage. |
-| C07 | All 15 January runs and their complete-run reader pass. | Score winds, temperature, water and rain against ERA5. |
-| C08 | The 84-run parameter grid and selected January and coupled tests pass. Cold and dry differences remain. | Complete ERA5 scoring and test the clean model integration. |
+| C07 | January scores show better global winds at all three levels. Tropical gains exceed the smaller extratropical losses. | Test the improved C08 moisture parameters with matched momentum-transport controls. |
+| C08 | Case 12 reduces moisture and temperature error relative to the original setting. Cold and dry biases remain against ERA5. | Complete clean integration and restart checks, then longer coupled tests. |
 | C10 | Internal substeps reduce the two-day temperature peak from about 358 K to 324 K. All six full-model restart tests pass. | Complete the ten-day climate comparison. |
 
 ## Run

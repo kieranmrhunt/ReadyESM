@@ -10,13 +10,13 @@ Main now includes the accepted [snow-accounting update](validation-snow-accounti
 | Track | Status | Result or next test |
 | --- | --- | --- |
 | C01: mixed-layer parcel launch | Closed | The stronger launch reduces tropical deep-convection area too much. |
-| C02: depth-limited shallow adjustment | Active | All nine January runs and the complete-run reader pass. The ERA5 scorer is tested and awaits its queued reference files. The 0.8 setting is closed. |
+| C02: depth-limited shallow adjustment | Active | January ERA5 scores improve moisture and rain but worsen temperature. A weaker setting is the next screening option. The 0.8 setting is closed. |
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
 | C06: rain evaporation and cold pools | Active | The rainfall-diagnostic correction passes 13 component tests and all three coupled pilots. Ten-day climate runs have started. The active dry-parcel screening flag remains failed. |
-| C07: convective momentum transport | Active | All 15 January runs and their complete-run reader pass. ERA5 wind data have arrived. Combined scoring awaits temperature data. |
-| C08: deterministic multi-plume convection | Active | All 84 parameter-grid runs, 12 selected January runs and four coupled pilots pass. A clean host adapter passes 1,740 exact comparisons. |
+| C07: convective momentum transport | Active | January ERA5 scores show global wind improvements at all three levels. Tropical gains come with smaller extratropical losses. |
+| C08: deterministic multi-plume convection | Active | Case 12 improves moisture and temperature errors relative to the original setting. The clean host adapter and full CPU suite pass. Coupled integration and restart tests continue. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
 | C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests, six full-model pilots and six coupled restart tests pass. Ten-day climate tests are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
@@ -39,12 +39,11 @@ states and 2,976 precipitation intervals.
 All nine 31-day runs pass: native, zero limit and 0.7 for three matched seeds.
 Their complete-run reader verifies every day and exact native/zero agreement.
 The active setting reduces mean column water by 1.79–1.82 kg/m² and raises
-precipitation by 0.054–0.069 mm/day. These changes need observational scoring.
-The scorer passes eight metric tests and independent checks of all nine files.
-ERA5 surface and precipitation files have arrived. Temperature retrieval
-continues. Water, precipitation and temperature use common masks and area weights. These
-atmospheric tests use prescribed seasonal SST and simple radiation. Coupled
-assessment follows if the combined observed response supports it.
+precipitation by 0.054–0.069 mm/day. January ERA5 comparisons reduce column-water
+RMSE by 0.820–0.870 kg/m² and precipitation RMSE by 0.036–0.078 mm/day.
+Temperature RMSE increases by 0.274–0.296 K at 200 hPa, 1.197–1.255 K at 500 hPa
+and 0.548–0.623 K at 850 hPa. Keep this setting separate from production.
+Any weaker-setting screen must retain the temperature comparisons.
 
 ### C06
 
@@ -124,12 +123,23 @@ controls. Lower rain conversion and greater condensate retention improve water
 and temperature relative to the centre case. Four selected settings also pass
 two-hour coupled tests. Their maximum relative host-water residual is 1.94e-7.
 All 12 selected January runs pass, with exact 30-day prefixes and centre controls.
-Their observed skill awaits the temperature reference.
+Their January ERA5 scores now favour case 12 as the next coupled parameter test.
+Against the original C08 setting, it reduces column-water RMSE by about
+0.927 kg/m², 500 hPa temperature RMSE by 0.119–0.131 K and 850 hPa temperature
+RMSE by 0.087–0.090 K. Rainfall RMSE improves by 0.001–0.004 mm/day.
+The 200 hPa temperature RMSE increases slightly, by 0.002–0.009 K.
+Case 12 halves precipitation conversion and doubles the condensate threshold,
+while retaining the two-hour relaxation. Keep the one-hour case 3 as a warmer
+contrast. The four-hour case 21 has larger temperature errors.
+
+Against native convection, case 12 still increases column-water RMSE by
+0.375–0.383 kg/m² and 500 hPa temperature RMSE by 1.295–1.312 K. Rainfall RMSE
+falls by 0.793–0.804 mm/day. Longer coupled tests must assess these trade-offs.
 
 The clean C08 package removes the experimental source wrappers. It passes 4,350
 solver comparisons and 1,740 host comparisons exactly. This CPU-only option uses
-the normal model configuration and leaves native defaults unchanged. Full CPU, coupled and
-fresh-process restart checks are in progress.
+the normal model configuration and leaves native defaults unchanged. The full
+CPU suite passes. Coupled and fresh-process restart checks are in progress.
 
 All six combined C07/C08 cases pass their physical checks. Days 10–30 mean
 column water is 16.535 and 16.440 kg/m² for the centre and faster settings,
@@ -146,8 +156,21 @@ All 15 January runs compare native, C08 and C07 across three seeds and pass
 the complete-run checks. Their reader initially loaded a shared helper into
 the wrong Julia module. The repaired reader passes without rerunning the models.
 Wind output at 200, 500 and 850 hPa and the ERA5 wind reference are ready.
-Both the 15-member wind scorer and 33-member parameter scorer pass input checks.
-Combined scoring awaits the ERA5 temperature file.
+Both the 15-member wind scorer and 33-member parameter scorer have completed.
+Independent interpolation and weighted sums reproduce all 1,692 score rows and
+1,872 paired differences, including every common mask.
+
+C07 centre reduces global wind-vector RMSE relative to C08 centre by
+0.539–0.544 m/s at 200 hPa, 0.227–0.236 m/s at 500 hPa and 0.220–0.234 m/s at
+850 hPa. Temperature RMSE improves at all three levels. Column-water RMSE rises
+by 0.072–0.074 kg/m² and rainfall RMSE by 0.037–0.039 mm/day.
+Tropical 850 hPa wind improves by 1.037–1.046 m/s, while extratropical wind
+worsens by 0.150–0.163 m/s. Tropical 500 hPa temperature RMSE rises by 0.326 K.
+Test momentum transport with the improved moisture parameters next.
+
+All observed-skill ranges above cover three perturbed initial states for January
+1993, with prescribed seasonal SST and simple radiation. Selected parameters
+need a separate validation period. Production defaults remain unchanged.
 
 ### C10
 
