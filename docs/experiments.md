@@ -38,8 +38,18 @@ prescribed seasonal SST and simple radiation. Seven configurations cross
 three perturbed initial states for 30 days. The original-C08 controls finish
 their trajectories but fail rare column enthalpy checks. Their maximum
 relative residuals are 0.023–0.031%, above the existing 0.02% limit. The
-comparison retains these failure flags. The revised-closure cases are still
-running. Wind profiles will be compared with ERA5 January climatology.
+comparison retains these failure flags.
+
+All nine revised-closure cases have now finished. The centre setting at seed
+707 passes every check. The other eight have rare enthalpy failures. The
+faster setting at seed 808 also has one host-water failure. All closure-search
+checks pass, with zero rejected probes. These residuals concern the returned
+exchange and its host representation. Their absolute budget effect is under
+investigation. Passive column traces require exact reproduction of each
+reference report and daily map. The acceptance limits remain unchanged.
+
+The six combined C07/C08 cases are running. Wind profiles will be compared
+with ERA5 January climatology.
 
 ### C10
 
@@ -62,7 +72,9 @@ and times can differ. Global means use 24 hourly samples from the second day.
 The native control reaches 327.43 K. These tests measure numerical behaviour
 and model sensitivity. Observational climate skill remains to assess.
 
-The 16- and 32-substep tests are running. Six ten-day follow-ups will check
+Both 16-substep cases also pass. Their maxima are 324.18 K at area fraction
+0.04 and 324.33 K at 0.08, close to the eight-substep results.
+The 32-substep tests are running. Six ten-day follow-ups will check
 persistence, global moisture and rain, and sensitivity to the internal step.
 Each longer run must reproduce its two-day history and daily maps.
 
@@ -79,6 +91,8 @@ These job identifiers locate the evidence in that archive.
 | Combined C07/C08 coupled pilots | 60614913 |
 | Thirty-day ERA5-start screen | 60585172 |
 | Complete-run comparison with safety flags | 60616516 |
+| C08 passive trace pilot and full replays | 60626405, 60626411 |
+| C08 exact-column and high-precision ledger readout | 60627161 |
 | C10 exact hot-spot replays and readout | 60603150, 60605096 |
 | C10 column substeps and stored-flux tests | 60606681, 60607862 |
 | C10 two-day substep screen | 60607957 |

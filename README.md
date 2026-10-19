@@ -58,10 +58,10 @@ Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
-| C06 | Rain evaporation and cold-pool memory pass the ten-day atmosphere screen. | Run the queued full-ESM GPU pilots. |
+| C06 | Rain evaporation and cold-pool memory pass the ten-day atmosphere screen. All five full-ESM GPU pilots are running. | Assess the coupled results. |
 | C07 | Conservative momentum transport and heat return pass component and atmosphere tests. | Complete four full-ESM pilots and the 30-day ERA5-start comparisons. |
-| C08 | The revised finite-response closure passes its eight-step full-ESM pilot, including convective snow. | Complete the full-state restart tests, one-day coupled run and 30-day atmosphere screen. |
-| C10 | Eight internal transport steps remove the severe two-day hot spots in both tested high-area settings. | Complete the 8/16/32-step comparison and six ten-day follow-ups. |
+| C08 | The revised closure passes its eight-step full-ESM pilot. Thirty-day runs expose rare energy residuals and one host-water residual. | Trace the returned exchange and complete coupled restart and day-one tests. |
+| C10 | Eight and sixteen internal transport steps remove the severe two-day hot spots in both tested high-area settings. | Complete the 32-step comparison and six ten-day follow-ups. |
 
 ## Run
 
