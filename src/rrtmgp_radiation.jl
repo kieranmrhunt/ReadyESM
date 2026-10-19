@@ -289,6 +289,7 @@ Base.@kwdef mutable struct GlobalAtmosphereDiagnosticsCallback{NF, W, Z, A, R, L
     time_days::Vector{NF} = NF[]
     rainfall_flux::Vector{NF} = NF[]
     convective_rainfall_flux::Vector{NF} = NF[]
+    convective_snowfall_flux::Vector{NF} = NF[]
     large_scale_rainfall_flux::Vector{NF} = NF[]
     large_scale_snowfall_flux::Vector{NF} = NF[]
     snowfall_flux::Vector{NF} = NF[]
@@ -634,6 +635,8 @@ function _sample_global_atmosphere!(callback, vars, model; precipitation = true)
     Ts = vars.parameterizations.surface_air_temperature.data
     rain = vars.parameterizations.rain_rate.data
     convective_rain = vars.parameterizations.rain_rate_convection.data
+    convective_snow = haskey(vars.parameterizations, :snow_rate_convection) ?
+        vars.parameterizations.snow_rate_convection.data : nothing
     large_scale_rain = vars.parameterizations.rain_rate_large_scale.data
     large_scale_snow = vars.parameterizations.snow_rate_large_scale.data
     snow = vars.parameterizations.snow_rate.data
@@ -668,6 +671,10 @@ function _sample_global_atmosphere!(callback, vars, model; precipitation = true)
     push!(callback.convective_rainfall_flux,
           precipitation ? NF(_FRESHWATER_DENSITY_KG_M3 *
                              _global_grid_mean(convective_rain, weights)) : NF(NaN))
+    push!(callback.convective_snowfall_flux,
+          precipitation ? (isnothing(convective_snow) ? zero(NF) :
+              NF(_FRESHWATER_DENSITY_KG_M3 *
+                 _global_grid_mean(convective_snow, weights))) : NF(NaN))
     push!(callback.large_scale_rainfall_flux,
           precipitation ? NF(_FRESHWATER_DENSITY_KG_M3 *
                              _global_grid_mean(large_scale_rain, weights)) : NF(NaN))
@@ -889,6 +896,7 @@ function SpeedyWeather.initialize!(
         :time_days,
         :rainfall_flux,
         :convective_rainfall_flux,
+        :convective_snowfall_flux,
         :large_scale_rainfall_flux,
         :large_scale_snowfall_flux,
         :snowfall_flux,

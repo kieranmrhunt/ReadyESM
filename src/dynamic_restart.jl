@@ -1025,6 +1025,7 @@ const _ATMOSPHERE_HISTORY_FIELDS = (
     :time_days,
     :rainfall_flux,
     :convective_rainfall_flux,
+    :convective_snowfall_flux,
     :large_scale_rainfall_flux,
     :large_scale_snowfall_flux,
     :snowfall_flux,
@@ -1139,6 +1140,12 @@ function _restore_atmosphere_diagnostics_callback!(callback, state)
                 eltype(getproperty(callback, name)),
                 length(state.histories.time_days),
             )
+        elseif name == :convective_snowfall_flux
+            # Old histories retained total and large-scale snow separately.
+            # Their difference reconstructs the missing process component,
+            # including the missing initial sample.
+            state.histories.snowfall_flux .-
+                state.histories.large_scale_snowfall_flux
         elseif name == :total_water_budget_residual
             copy(state.histories.water_budget_residual)
         else

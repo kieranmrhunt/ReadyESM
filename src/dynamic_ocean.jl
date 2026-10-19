@@ -2984,6 +2984,11 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         _FRESHWATER_DENSITY_KG_M3 .* Float64.(Array(
             atmosphere.variables.parameterizations.rain_rate_convection.data,
         ))
+    atmosphere_convective_snowfall_flux =
+        haskey(atmosphere.variables.parameterizations, :snow_rate_convection) ?
+        _FRESHWATER_DENSITY_KG_M3 .* Float64.(Array(
+            atmosphere.variables.parameterizations.snow_rate_convection.data,
+        )) : zero.(atmosphere_convective_rainfall_flux)
     atmosphere_convective_precipitation_mass_correction_flux =
         _FRESHWATER_DENSITY_KG_M3 .* Float64.(Array(
             atmosphere.variables.parameterizations.convective_precipitation_mass_correction.data,
@@ -3103,6 +3108,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         atmosphere_column_water_vapor,
         atmosphere_rainfall_flux,
         atmosphere_convective_rainfall_flux,
+        atmosphere_convective_snowfall_flux,
         atmosphere_convective_precipitation_mass_correction_flux,
         atmosphere_convective_precipitation_surface_pressure,
         atmosphere_large_scale_rainfall_flux,
@@ -3128,6 +3134,9 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
         global_rainfall_flux = Float64.(atmosphere_budget.rainfall_flux),
         global_convective_rainfall_flux = Float64.(
             atmosphere_budget.convective_rainfall_flux,
+        ),
+        global_convective_snowfall_flux = Float64.(
+            atmosphere_budget.convective_snowfall_flux,
         ),
         global_large_scale_rainfall_flux = Float64.(
             atmosphere_budget.large_scale_rainfall_flux,
@@ -3722,6 +3731,7 @@ function validate_dynamic_diagnostics(diagnostics)
         :atmosphere_column_water_vapor,
         :atmosphere_rainfall_flux,
         :atmosphere_convective_rainfall_flux,
+        :atmosphere_convective_snowfall_flux,
         :atmosphere_convective_precipitation_mass_correction_flux,
         :atmosphere_convective_precipitation_surface_pressure,
         :atmosphere_large_scale_rainfall_flux,
@@ -4053,28 +4063,13 @@ function validate_dynamic_diagnostics(diagnostics)
 
     minimum(diagnostics.atmosphere_surface_pressure) > 0 ||
         error("surface pressure is not positive")
-    all(diagnostics.atmosphere_rainfall_flux .>= 0) ||
-        error("rainfall flux is negative")
-    all(diagnostics.atmosphere_convective_rainfall_flux .>= 0) ||
-        error("convective rainfall flux is negative")
-    all(diagnostics.atmosphere_large_scale_rainfall_flux .>= 0) ||
-        error("large-scale rainfall flux is negative")
-    all(diagnostics.atmosphere_large_scale_snowfall_flux .>= 0) ||
-        error("large-scale snowfall flux is negative")
-    all(diagnostics.atmosphere_snowfall_flux .>= 0) ||
-        error("snowfall flux is negative")
-    _precipitation_components_close(
+    _validate_precipitation_phase_components(
         diagnostics.atmosphere_rainfall_flux,
-        diagnostics.atmosphere_convective_rainfall_flux .+
+        diagnostics.atmosphere_convective_rainfall_flux,
         diagnostics.atmosphere_large_scale_rainfall_flux,
-    ) || error(
-        "rainfall flux does not equal convective plus large-scale components",
-    )
-    _precipitation_components_close(
         diagnostics.atmosphere_snowfall_flux,
+        diagnostics.atmosphere_convective_snowfall_flux,
         diagnostics.atmosphere_large_scale_snowfall_flux,
-    ) || error(
-        "snowfall flux does not equal its large-scale component",
     )
     layer_thickness = reshape(
         diagnostics.atmosphere_sigma_layer_thickness,
@@ -4117,9 +4112,10 @@ function validate_dynamic_diagnostics(diagnostics)
        "not_prognostic_diagnostic_cloud_optics_only"
         all(abs.(
             convective_precipitation_from_tendency .-
-            diagnostics.atmosphere_convective_rainfall_flux
+            diagnostics.atmosphere_convective_rainfall_flux .-
+            diagnostics.atmosphere_convective_snowfall_flux
         ) .<= process_precipitation_tolerance) || error(
-            "convective layer humidity tendency does not reproduce surface rain",
+            "convective layer humidity tendency does not reproduce rain plus snow",
         )
     elseif diagnostics.metadata.atmosphere_cloud_condensate_state !=
            "column_local_prognostic_liquid_ice_path_conservative_precipitation_delay_v1"
@@ -4153,6 +4149,7 @@ function validate_dynamic_diagnostics(diagnostics)
     atmosphere_series = (
         diagnostics.global_rainfall_flux,
         diagnostics.global_convective_rainfall_flux,
+        diagnostics.global_convective_snowfall_flux,
         diagnostics.global_large_scale_rainfall_flux,
         diagnostics.global_large_scale_snowfall_flux,
         diagnostics.global_snowfall_flux,
@@ -4190,6 +4187,7 @@ function validate_dynamic_diagnostics(diagnostics)
     precipitation_series = (
         diagnostics.global_rainfall_flux,
         diagnostics.global_convective_rainfall_flux,
+        diagnostics.global_convective_snowfall_flux,
         diagnostics.global_large_scale_rainfall_flux,
         diagnostics.global_large_scale_snowfall_flux,
         diagnostics.global_snowfall_flux,
@@ -4199,18 +4197,13 @@ function validate_dynamic_diagnostics(diagnostics)
     all(isnan(values[1]) && all(isfinite, values[2:end])
         for values in precipitation_series) ||
         error("precipitation series must be NaN initially and finite afterwards")
-    _precipitation_components_close(
+    _validate_precipitation_phase_components(
         diagnostics.global_rainfall_flux[2:end],
-        diagnostics.global_convective_rainfall_flux[2:end] .+
+        diagnostics.global_convective_rainfall_flux[2:end],
         diagnostics.global_large_scale_rainfall_flux[2:end],
-    ) || error(
-        "global rainfall series does not close across process components",
-    )
-    _precipitation_components_close(
         diagnostics.global_snowfall_flux[2:end],
+        diagnostics.global_convective_snowfall_flux[2:end],
         diagnostics.global_large_scale_snowfall_flux[2:end],
-    ) || error(
-        "global snowfall series does not close across process components",
     )
     isnan(diagnostics.global_surface_air_temperature[1]) &&
         all(isfinite, diagnostics.global_surface_air_temperature[2:end]) ||
@@ -4904,6 +4897,11 @@ function _write_dynamic_netcdf(path, diagnostics)
                 "kg/m^2/s",
             ),
             (
+                "atmosphere_convective_snowfall_flux",
+                diagnostics.atmosphere_convective_snowfall_flux,
+                "kg/m^2/s",
+            ),
+            (
                 "atmosphere_convective_precipitation_mass_correction_flux",
                 diagnostics.atmosphere_convective_precipitation_mass_correction_flux,
                 "kg/m^2/s",
@@ -5188,6 +5186,11 @@ function _write_dynamic_netcdf(path, diagnostics)
             (
                 "global_convective_rainfall_flux",
                 diagnostics.global_convective_rainfall_flux,
+                "kg/m^2/s",
+            ),
+            (
+                "global_convective_snowfall_flux",
+                diagnostics.global_convective_snowfall_flux,
                 "kg/m^2/s",
             ),
             (

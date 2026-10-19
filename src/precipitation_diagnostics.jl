@@ -10,3 +10,20 @@ function _precipitation_components_close(total, component_sum)
             isapprox(a, b; atol = 1e-10, rtol = 4eps(Float32))
     end
 end
+
+function _validate_precipitation_phase_components(
+    rain, convective_rain, large_scale_rain,
+    snow, convective_snow, large_scale_snow,
+)
+    for component in (rain, convective_rain, large_scale_rain,
+                      snow, convective_snow, large_scale_snow)
+        axes(component) == axes(rain) || error("precipitation component shapes differ")
+        all(x -> isfinite(x) && x >= 0, component) ||
+            error("precipitation component is negative or nonfinite")
+    end
+    _precipitation_components_close(rain, convective_rain .+ large_scale_rain) ||
+        error("rainfall flux does not equal convective plus large-scale components")
+    _precipitation_components_close(snow, convective_snow .+ large_scale_snow) ||
+        error("snowfall flux does not equal convective plus large-scale components")
+    return nothing
+end

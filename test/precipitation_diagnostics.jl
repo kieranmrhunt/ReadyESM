@@ -25,3 +25,30 @@
         @test !closes(rounded_total .* 1.001, component_sum)
     end
 end
+
+@testset "Rain and snow process ledger" begin
+    validate = ReadyESM._validate_precipitation_phase_components
+    rain = [0.003, 0.0]
+    convective_rain = [0.001, 0.0]
+    large_scale_rain = [0.002, 0.0]
+    snow = [0.002, 0.001]
+    convective_snow = [0.0005, 0.001]
+    large_scale_snow = [0.0015, 0.0]
+    @test isnothing(validate(rain, convective_rain, large_scale_rain,
+                            snow, convective_snow, large_scale_snow))
+    @test isnothing(validate(rain, convective_rain, large_scale_rain,
+                            large_scale_snow, zero.(snow), large_scale_snow))
+    @test_throws ErrorException validate(rain, convective_rain, large_scale_rain,
+                                        snow, zero.(snow), large_scale_snow)
+    @test_throws ErrorException validate(rain, convective_rain, large_scale_rain,
+                                        snow, 2convective_snow, large_scale_snow)
+    @test_throws ErrorException validate(rain, convective_rain, large_scale_rain,
+                                        snow, -convective_snow, large_scale_snow)
+    @test_throws ErrorException validate(rain, convective_rain, large_scale_rain,
+                                        snow, [NaN, 0.0], large_scale_snow)
+    @test_throws ErrorException validate(rain, convective_rain, large_scale_rain,
+                                        snow, [0.0005], large_scale_snow)
+    # Snow in the rain category must fail even when total water still closes.
+    @test_throws ErrorException validate(rain, convective_rain .+ convective_snow,
+                                        large_scale_rain, snow, zero.(snow), large_scale_snow)
+end
