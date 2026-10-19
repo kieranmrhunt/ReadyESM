@@ -285,6 +285,14 @@ function _atmosphere_convection(
     config::ExperimentConfig,
     spectral_grid::SpeedyWeather.SpectralGrid,
 )
+    if config.atmosphere_convection == :finite_multiplume_c08_v1
+        return FiniteMultiPlumeConvection(spectral_grid;
+            saturation_law = config.atmosphere_saturation_law,
+            time_scale_seconds = config.atmosphere_convection_timescale_seconds,
+            entrainment_scale = config.atmosphere_c08_entrainment_scale,
+            precipitation_conversion_m_inv = config.atmosphere_c08_precipitation_conversion_m_inv,
+            condensate_threshold_kg_kg = config.atmosphere_c08_condensate_threshold_kg_kg)
+    end
     convection = if config.atmosphere_convection ==
                     :betts_miller_constant_rh
         SpeedyWeather.BettsMillerConvection(spectral_grid;

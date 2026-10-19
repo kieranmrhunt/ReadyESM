@@ -23,6 +23,7 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.atmosphere_initial_spectral_truncation
 @test !ExperimentConfig().atmosphere_initial_spectral_truncation
 include("convection_timescale.jl")
+include("finite_multiplume_convection.jl")
 @test config.forcing.radiation == :rrtmgp_all_sky
 @test config.forcing.co2_ppm == 420
 @test config.forcing.cloud_liquid_water_path_gm2 == 75

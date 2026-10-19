@@ -38,6 +38,9 @@ Base.@kwdef struct ExperimentConfig
     atmosphere_initial_spectral_truncation::Bool = false
     atmosphere_convection::Symbol = :betts_miller_constant_rh
     atmosphere_convection_timescale_seconds::Int = 14400
+    atmosphere_c08_entrainment_scale::Float64 = 0.75
+    atmosphere_c08_precipitation_conversion_m_inv::Float64 = 0.0015
+    atmosphere_c08_condensate_threshold_kg_kg::Float64 = 0.0005
     atmosphere_convection_upper_relative_humidity::Float64 = 0.5
     atmosphere_convection_lower_relative_humidity::Float64 = 0.7
     atmosphere_convection_transition_top_sigma::Float64 = 0.3
@@ -327,6 +330,15 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 0.5,
             ),
         ),
+        atmosphere_c08_entrainment_scale = Float64(
+            _mapping_value(raw, "atmosphere_c08_entrainment_scale", 0.75),
+        ),
+        atmosphere_c08_precipitation_conversion_m_inv = Float64(
+            _mapping_value(raw, "atmosphere_c08_precipitation_conversion_m_inv", 0.0015),
+        ),
+        atmosphere_c08_condensate_threshold_kg_kg = Float64(
+            _mapping_value(raw, "atmosphere_c08_condensate_threshold_kg_kg", 0.0005),
+        ),
         atmosphere_convection_lower_relative_humidity = Float64(
             _mapping_value(
                 raw,
@@ -552,10 +564,29 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     config.atmosphere_convection in (
         :betts_miller_constant_rh,
         :betts_miller_sigma_rh_v1,
+        :finite_multiplume_c08_v1,
     ) || throw(ArgumentError(
         "atmosphere_convection must be betts_miller_constant_rh or " *
-        "betts_miller_sigma_rh_v1",
+        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1",
     ))
+    if config.atmosphere_convection == :finite_multiplume_c08_v1
+        config.device == :cpu || throw(ArgumentError(
+            "finite_multiplume_c08_v1 requires device=cpu",
+        ))
+        config.forcing.cloud_scheme != :prognostic_condensate || throw(ArgumentError(
+            "finite_multiplume_c08_v1 uses local condensate re-evaporation and requires a diagnostic cloud scheme",
+        ))
+        for name in (
+            :atmosphere_c08_entrainment_scale,
+            :atmosphere_c08_precipitation_conversion_m_inv,
+            :atmosphere_c08_condensate_threshold_kg_kg,
+        )
+            value = getproperty(config, name)
+            isfinite(value) && value >= 0 || throw(ArgumentError(
+                "$name must be non-negative and finite",
+            ))
+        end
+    end
     config.atmosphere_convection_timescale_seconds > 0 || throw(ArgumentError(
         "atmosphere_convection_timescale_seconds must be positive",
     ))

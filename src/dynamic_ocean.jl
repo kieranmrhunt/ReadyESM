@@ -3402,19 +3402,26 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             atmosphere_humidity_nonnegative_scheme =
                 "Gaussian-area layer-mean conservative rescaling",
             atmosphere_convective_precipitation_scheme =
+                config.atmosphere_convection == :finite_multiplume_c08_v1 ?
+                "finite multi-plume rain and snow fluxes" :
                 "Betts-Miller net column humidity drying",
             _atmosphere_saturation_provenance(config)...,
+            _finite_multiplume_metadata(config)...,
             atmosphere_convection = String(config.atmosphere_convection),
             atmosphere_convection_reference_humidity_profile =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 "piecewise_linear_upper_to_lower_physical_sigma_v1" :
+                config.atmosphere_convection == :finite_multiplume_c08_v1 ?
+                "not_applicable" :
                 "constant_relative_humidity_0.7",
             atmosphere_convection_upper_relative_humidity =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
-                config.atmosphere_convection_upper_relative_humidity : 0.7,
+                config.atmosphere_convection_upper_relative_humidity :
+                config.atmosphere_convection == :finite_multiplume_c08_v1 ? NaN : 0.7,
             atmosphere_convection_lower_relative_humidity =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
-                config.atmosphere_convection_lower_relative_humidity : 0.7,
+                config.atmosphere_convection_lower_relative_humidity :
+                config.atmosphere_convection == :finite_multiplume_c08_v1 ? NaN : 0.7,
             atmosphere_convection_transition_top_sigma =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_transition_top_sigma : NaN,
