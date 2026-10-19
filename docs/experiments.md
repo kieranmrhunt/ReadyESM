@@ -3,6 +3,7 @@
 Updated 19 October 2026. Production is v0.1.10. Research candidates stay in
 separate source snapshots until their results support a model update.
 The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
+Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
 
 ## Convection portfolio
 
@@ -14,10 +15,10 @@ The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
 | C06: rain evaporation and cold pools | Active | The rainfall-diagnostic correction passes 13 component tests and all three coupled pilots. Ten-day climate runs have started. The active dry-parcel screening flag remains failed. |
-| C07: convective momentum transport | Active | Four coupled pilots pass. Both momentum-plus-heat settings pass all three 30-day repeats, but retain large cold and dry differences from native convection. |
-| C08: deterministic multi-plume convection | Active | The energy residual comes from rounding in plume and exchange calculations. A mixed-precision prototype passes component and two-day host tests. Twelve thirty-day comparisons are running. |
+| C07: convective momentum transport | Active | Eight repaired mixed-precision and control pilots pass. Fifteen January comparisons are submitted for wind scoring. |
+| C08: deterministic multi-plume convection | Active | All nine mixed-precision 30-day runs pass. January scoring and a three-seed parameter grid are in progress. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests and six full-model pilots pass. Ten-day climate tests and coupled restart tests are running. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests, six full-model pilots and six coupled restart tests pass. Ten-day climate tests are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -79,8 +80,9 @@ disabled version reproduces the original C08 endpoint exactly. The active
 case completes 101,396 closure evaluations with zero rejected probes.
 
 Packed spectral arrays required a repair to the restart checker. Its 22
-regression checks pass. Four full-state restart tests and an active one-day
-coupled run are running. Four full-ESM pilots pass for finite C08,
+regression checks pass. Four full-state restart tests pass, with exact
+checkpoint and continued states. A day-one restart extension and an active
+one-day coupled run are running. Four full-ESM pilots pass for finite C08,
 zero-strength C07, momentum transport, and momentum transport with heat return.
 
 The atmosphere screen starts from ERA5 on 1 January 1993. It uses T31/L27,
@@ -109,18 +111,25 @@ temperature by -0.000116 K. It takes 233 seconds versus 259 seconds for the
 existing solver in this single matched host test. The earlier selected-column
 benchmark cost 3.42 times as much, so retain both timing results.
 
-Twelve thirty-day runs compare three active settings and a fresh Float32
-centre control across three seeds. All twelve are running after the passive-
-capture pilot reproduced its qualified reports and maps exactly. The capture
-saves the full column input for any core or host budget
-failure, including host-only water failures. The reader retains failed science
-flags and compares each setting with its frozen Float32 reference.
+All nine mixed-precision thirty-day runs pass, with zero captured water or
+energy failures. Three fresh Float32 controls reproduce the earlier reports,
+maps and failure flags exactly. The precision change has little effect on
+global means. Large cold and dry differences from native convection remain.
+January comparisons and a 27-setting, three-seed parameter grid are running.
 
 All six combined C07/C08 cases pass their physical checks. Days 10–30 mean
 column water is 16.535 and 16.440 kg/m² for the centre and faster settings,
 versus 22.996 for native convection. Mean atmospheric temperature is 249.240
 and 249.362 K, versus 251.256 K. These large differences need observation-based
 assessment. The completed comparison retains every earlier failure flag.
+
+The first mixed-precision C07 pilots exposed a profile mismatch. C08 selected
+plumes in Float64, while C07 rebuilt them in Float32. Two exact failure replays
+show one-versus-two and two-versus-three active plumes. Both the momentum and
+heat paths now use C08's selection precision. The component test passes 6,961
+checks and all eight paired two-day pilots pass, including exact controls.
+Fifteen January runs compare native, C08 and C07 across three seeds. Passive
+wind output at 200, 500 and 850 hPa will support comparison with ERA5.
 
 ### C10
 
@@ -153,9 +162,10 @@ persistence, global moisture and rain, and sensitivity to the internal step.
 Each longer run must reproduce its two-day history and daily maps.
 All six eight-step full-model pilots pass. These retain the actual ocean and
 land surface fluxes. Disabled prognostic fields, surface memories and scientific
-arrays match native exactly. Six fresh-process restart tests now check the
-complete coupled state and all three forcing memories at step four, then
-compare every continued step through step eight.
+arrays match native exactly. All six fresh-process restart tests pass.
+The complete coupled state and all three forcing memories match at step four
+and each continued step through step eight. Native has 1,681 compared entries,
+and each experimental arm has 1,771. Active cases have zero physical failures.
 
 ### BS08 runoff and heat
 
@@ -166,11 +176,17 @@ with exact permutation p=395/462. Independent arithmetic reproduces the result.
 This qualifies option-off compatibility for the tested configuration. The
 earlier failed five-plus-five comparison remains archived.
 
-The device-kernel test is eligible and awaits GPU priority. The coupled-cost
-and restart test follows it. Their original cost limits remain 25% for the
-kernel test and 3% for the coupled test.
+The device-kernel test passes its physical checks and exact repeats, but its
+34.0% cost increase exceeds the 25% limit. The dependent coupled test cancels.
+A separate unchanged-model profile tests the suspected synchronization cost.
+The coupled test retains its 3% limit.
 
 ### BS10 carbon inventory
+
+Both compact CPU fresh-process restarts pass. Live-carbon and zero-exchange
+runs reproduce all 1,548 state entries at the checkpoint and four continued
+steps. Maximum relative inventory errors are 2.93e-8 and 2.90e-8. The first
+production-grid GPU member is running, with the second waiting for priority.
 
 The apparent GPU carbon loss came from its inventory calculation. Copying the
 grid to the CPU reconstructed reference coordinates and lost changing cell

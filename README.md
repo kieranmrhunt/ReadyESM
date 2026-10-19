@@ -47,12 +47,12 @@ The tables below track research candidates. See the
 | BS02 | Prognostic clouds | Transport, water storage and restart components pass. The tested cloud closure worsens radiation. | Replace cloud fraction and overlap before another screen. |
 | BS03 | Virtual vertical layers | The partial-layer follow-up failed its registered effect tests. This form is closed. | Reopen with a clear observational benefit. |
 | BS04 | Balanced initialisation | Accepted in v0.1.10. Three matched pairs improve early SST error, with mixed Antarctic ice results. | Extend the accepted launch beyond 30 days. |
-| BS05 | Parameter calibration | Column screens establish parameter sensitivity. | Select the coupled parameter set after convection and cloud structure tests. |
+| BS05 | Parameter calibration | The C08 short screen passes all 27 parameter settings and its native control. | Complete the three-seed, 30-day parameter grid. |
 | BS06 | Sea-ice thickness distribution | The tested pressure hybrid is closed. Category transport and restart tools are retained. | Reopen after a defined coastal-growth or thickness trigger. |
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
-| BS08 | Runoff storage and heat | Component and restart tests pass. The six-release/six-candidate GPU compatibility test also passes. | Complete the queued device-kernel, cost and coupled tests. |
+| BS08 | Runoff storage and heat | GPU compatibility and physical checks pass. The kernel costs 34% more, above its 25% limit. | Profile and reduce the added cost before the coupled test. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | Preserving changing cell volumes cuts the matched GPU carbon-inventory error by 554 times. All 1,416 grid checks and the compact GPU test pass. | Complete the queued production-mesh pair. |
+| BS10 | Carbon, aerosols and emissions | The inventory repair passes GPU checks. Compact live-carbon and zero-exchange restarts match exactly. | Complete the production-mesh GPU pair. |
 
 Current convection work:
 
@@ -60,9 +60,9 @@ Current convection work:
 | --- | --- | --- |
 | C02 | All nine January runs pass physical checks. Native and disabled reports, maps and monthly fields match exactly for each seed. | Score the completed runs against date-matched ERA5 when its queued reference arrives. |
 | C06 | The rainfall diagnostic correction passes all three coupled pilots. The active dry-parcel screening flag remains failed. | Complete six ten-day repeats and assess moisture, rain and source coverage. |
-| C07 | Four coupled pilots and six combined C07/C08 thirty-day cases pass physical checks. Cold and dry differences from native convection remain large. | Assess climate skill against observations. |
-| C08 | Wider arithmetic removes the sampled energy error. All six two-day host pilots pass, with exact disabled agreement. | Complete the running thirty-day comparison and coupled restart tests. |
-| C10 | Internal substeps reduce peak temperatures from about 358 K to 324 K. All six full-model pilots pass. | Complete ten-day climate tests and six fresh-process coupled restart tests. |
+| C07 | Matching plume-selection precision repairs the combined C07/C08 pilots. Eight paired two-day runs pass. | Complete 15 January runs and score winds against ERA5. |
+| C08 | All nine mixed-precision 30-day runs pass their conservation checks. Cold and dry differences remain. | Complete January scoring, the parameter sweep and longer coupled tests. |
+| C10 | Internal substeps reduce the two-day temperature peak from about 358 K to 324 K. All six full-model restart tests pass. | Complete the ten-day climate comparison. |
 
 ## Run
 

@@ -5,6 +5,18 @@ experiments that shaped them. The internal labbook retains the job-by-job
 record, including failed commands, frozen-source hashes and diagnostic
 artefacts.
 
+## Main branch after 0.1.10
+
+### 2026-10-19
+
+- Track convective snowfall separately in output and diagnostic history.
+- Check liquid and frozen precipitation budgets separately. Reconstruct the
+  added history when loading older checkpoints.
+- Keep dynamics, forcing and surface fluxes unchanged. Full CPU tests pass.
+  Matched eight-step production-grid runs preserve all 1,643 existing state
+  fields and all 208 existing output variables exactly. See the
+  [validation record](docs/validation-snow-accounting.md).
+
 ## Releases
 
 ### 0.1.10 — 2026-10-17
