@@ -13,11 +13,11 @@ The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | All 33 ten-day screen members pass safety checks. Five full-ESM GPU pilots are queued. |
+| C06: rain evaporation and cold pools | Active | All 33 ten-day screen members pass safety checks. Five full-ESM GPU pilots are running. Six repeated ten-day runs depend on their passing readout. |
 | C07: convective momentum transport | Active | A translating-frame calculation removes a small spurious wind force. A conservative heat-return option now runs in full-ESM pilots. |
 | C08: deterministic multi-plume convection | Active | A finite-response closure replaces invalid trial columns in the original search. Coupled and climate tests are in progress. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Shorter internal transport steps remove the severe hot spots in the two-day tests. Longer tests are queued. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests pass. Six ten-day tests and six full-model pilots are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -59,12 +59,13 @@ convection increments as large as 77.6 K in one effective step.
 
 Recomputing transport over shorter internal steps reduces those increments.
 The host receives the divergence of the time-averaged water and energy fluxes.
-Both eight-substep host cases pass the original state and conservation checks.
+All nine host cases and their comparison pass the original state and
+conservation checks. The native and single-step controls reproduce earlier runs.
 
-| Updraft area fraction | One-step maximum | Eight-substep maximum | Change in second-day global mean temperature |
-| --- | ---: | ---: | ---: |
-| 0.04 | 358.50 K | 324.16 K | −0.0018 K |
-| 0.08 | 358.43 K | 324.28 K | −0.0069 K |
+| Updraft area fraction | One-step maximum | Eight-substep maximum | Sixteen-substep maximum | Thirty-two-substep maximum |
+| --- | ---: | ---: | ---: | ---: |
+| 0.04 | 358.50 K | 324.16 K | 324.18 K | 324.22 K |
+| 0.08 | 358.43 K | 324.28 K | 324.33 K | 324.36 K |
 
 Both cases use 1000 m entrainment length and buoyancy-defined plume height.
 The maxima cover all grid points, layers and completed steps. Their locations
@@ -72,11 +73,15 @@ and times can differ. Global means use 24 hourly samples from the second day.
 The native control reaches 327.43 K. These tests measure numerical behaviour
 and model sensitivity. Observational climate skill remains to assess.
 
-Both 16-substep cases also pass. Their maxima are 324.18 K at area fraction
-0.04 and 324.33 K at 0.08, close to the eight-substep results.
-The 32-substep tests are running. Six ten-day follow-ups will check
+Eight substeps change second-day global mean temperature by −0.0018 K at
+area fraction 0.04 and −0.0069 K at 0.08 relative to one step. Rainfall shows
+more internal-step sensitivity than the temperature maximum.
+
+Six ten-day follow-ups are running to check
 persistence, global moisture and rain, and sensitivity to the internal step.
 Each longer run must reproduce its two-day history and daily maps.
+Six eight-step full-model pilots are also running. These retain the actual
+ocean and land surface fluxes and include native and disabled controls.
 
 ## Evidence record
 
@@ -97,6 +102,8 @@ These job identifiers locate the evidence in that archive.
 | C10 column substeps and stored-flux tests | 60606681, 60607862 |
 | C10 two-day substep screen | 60607957 |
 | C10 ten-day follow-up | 60618862 |
+| C10 full-model pilots | 60632808 |
+| C06 conditional ten-day coupled comparison | 60637064, 60637070 |
 
 Model releases use the combined climate response, conservation, stability,
 restart behaviour and cost. Each experiment keeps its stated comparison
