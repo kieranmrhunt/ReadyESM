@@ -52,7 +52,7 @@ The tables below track research candidates. See the
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
 | BS08 | Runoff storage and heat | Component and restart tests pass. A new six-release/six-candidate GPU repeat test is running. | Complete the repeatability, cost and coupled tests. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | The live carbon adapter works on CPU and GPU. A longer GPU case fails its inventory check. CPU diagnostic repeats pass. | Diagnose the running GPU repeats with gas exchange on and off. |
+| BS10 | Carbon, aerosols and emissions | A host-grid copy lost changing cell volumes. Preserving them cuts the GPU carbon-inventory error by 554 times, with unchanged tracer states and air–sea uptake. | Test the committed repair across grid types and on the full production mesh. |
 
 Current convection work:
 
