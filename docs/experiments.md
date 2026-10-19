@@ -9,7 +9,7 @@ The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 | Track | Status | Result or next test |
 | --- | --- | --- |
 | C01: mixed-layer parcel launch | Closed | The stronger launch reduces tropical deep-convection area too much. |
-| C02: depth-limited shallow adjustment | Active | Current-model and passive monthly-capture pilots pass. Nine January runs compare native, zero limit and 0.7 against date-matched ERA5. The 0.8 setting is closed. |
+| C02: depth-limited shallow adjustment | Active | All nine January runs and the complete-run reader pass. The ERA5 scorer is tested and awaits its queued reference files. The 0.8 setting is closed. |
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
@@ -35,9 +35,13 @@ states, integrates rain plus snow over every step, and excludes unbracketed
 pressure-level temperatures. Complete January coverage requires 744 hourly
 states and 2,976 precipitation intervals.
 
-Nine 31-day runs are now running: native, zero limit and 0.7 for three matched
-seeds. They include launch adjustment. Water, precipitation and temperature
-will be compared with January-1993 ERA5 using common terrain masks. These
+All nine 31-day runs pass: native, zero limit and 0.7 for three matched seeds.
+Their complete-run reader verifies every day and exact native/zero agreement.
+The active setting reduces mean column water by 1.79–1.82 kg/m² and raises
+precipitation by 0.054–0.069 mm/day. These changes need observational scoring.
+The scorer passes eight metric tests and independent checks of all nine files.
+ERA5's server confirms the reference request is queued. Water, precipitation
+and temperature will use common masks and area weights. These
 atmospheric tests use prescribed seasonal SST and simple radiation. Coupled
 assessment follows if the combined observed response supports it.
 
@@ -153,6 +157,19 @@ arrays match native exactly. Six fresh-process restart tests now check the
 complete coupled state and all three forcing memories at step four, then
 compare every continued step through step eight.
 
+### BS08 runoff and heat
+
+The twelve-process test on one A100 passes its registered compatibility rule.
+Construction and initialization match exactly across 443 stored state fields. At
+step two, the repeat-variation statistic is 0.22222 against a limit of 1,
+with exact permutation p=395/462. Independent arithmetic reproduces the result.
+This qualifies option-off compatibility for the tested configuration. The
+earlier failed five-plus-five comparison remains archived.
+
+The device-kernel test is eligible and awaits GPU priority. The coupled-cost
+and restart test follows it. Their original cost limits remain 25% for the
+kernel test and 3% for the coupled test.
+
 ### BS10 carbon inventory
 
 The apparent GPU carbon loss came from its inventory calculation. Copying the
@@ -168,8 +185,9 @@ The committed repair has tests for CPU/GPU, both precisions, three grid types
 and immersed boundaries. The first gate passed 552 assertions but hit 144
 offset-array conversion errors in its test comparisons. The corrected test
 compares offset axes and parent storage. All 1,416 geometry assertions now
-pass. The compact GPU host test is running, with two production-tripolar pilots
-queued behind it. They retain the real land, ice, radiation and ERA5/ECCO launch.
+pass. The compact GPU host test also passes, with relative inventory error
+6.58e-9 and exact saved carbon-controller state. Two production-tripolar pilots
+await GPU priority. They retain the real land, ice, radiation and ERA5/ECCO launch.
 A queued reader checks all inventory samples and preserves failed outcomes.
 Longer response and restart tests follow.
 
@@ -182,7 +200,7 @@ These job identifiers locate the evidence in that archive.
 | --- | --- |
 | C02 current-model columns and ERA5 host pilots | 60681564, 60683567, 60683670 |
 | C02 passive monthly capture and reader | 60691659, 60691662 |
-| C02 nine-member January assessment | 60692616 |
+| C02 nine-member January assessment and complete-run reader | 60692616, 60694629 |
 | Finite-C08 coupled pilot and readout | 60575928, 60575955 |
 | Full-state coupled restart | 60652124, 60652400, 60652401 |
 | Active finite-C08 coupled day | 60610464 |
@@ -203,6 +221,7 @@ These job identifiers locate the evidence in that archive.
 | C06 saved rainfall reconciliation | 60651213 |
 | C06 corrected diagnostic pilots | 60654516 |
 | C06 separate ten-day coupled assessment | 60656531, 60656533 |
+| BS08 six-plus-six GPU comparison and next tests | 60506397, 60508170, 60508197 |
 | BS10 matched inventory diagnosis | 60542721, 60542722, 60649076, 60649077 |
 | BS10 original grid regression and cancelled pilots | 60661629, 60662199 |
 | BS10 corrected grid regression, production pilots and reader | 60668131, 60668383, 60690215 |

@@ -50,15 +50,15 @@ The tables below track research candidates. See the
 | BS05 | Parameter calibration | Column screens establish parameter sensitivity. | Select the coupled parameter set after convection and cloud structure tests. |
 | BS06 | Sea-ice thickness distribution | The tested pressure hybrid is closed. Category transport and restart tools are retained. | Reopen after a defined coastal-growth or thickness trigger. |
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
-| BS08 | Runoff storage and heat | Component and restart tests pass. A new six-release/six-candidate GPU repeat test is running. | Complete the repeatability, cost and coupled tests. |
+| BS08 | Runoff storage and heat | Component and restart tests pass. The six-release/six-candidate GPU compatibility test also passes. | Complete the queued device-kernel, cost and coupled tests. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | Preserving changing cell volumes cuts the matched GPU carbon-inventory error by 554 times. All 1,416 grid-geometry checks pass. | Finish the compact GPU test, then the queued production-mesh pair. |
+| BS10 | Carbon, aerosols and emissions | Preserving changing cell volumes cuts the matched GPU carbon-inventory error by 554 times. All 1,416 grid checks and the compact GPU test pass. | Complete the queued production-mesh pair. |
 
 Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
-| C02 | The 0.7 shallow-depth setting passes current-model conservation and disabled checks. Monthly diagnostics preserve the original trajectories exactly. | Complete nine January runs and compare with date-matched ERA5. |
+| C02 | All nine January runs pass physical checks. Native and disabled reports, maps and monthly fields match exactly for each seed. | Score the completed runs against date-matched ERA5 when its queued reference arrives. |
 | C06 | The rainfall diagnostic correction passes all three coupled pilots. The active dry-parcel screening flag remains failed. | Complete six ten-day repeats and assess moisture, rain and source coverage. |
 | C07 | Four coupled pilots and six combined C07/C08 thirty-day cases pass physical checks. Cold and dry differences from native convection remain large. | Assess climate skill against observations. |
 | C08 | Wider arithmetic removes the sampled energy error. All six two-day host pilots pass, with exact disabled agreement. | Complete the running thirty-day comparison and coupled restart tests. |
