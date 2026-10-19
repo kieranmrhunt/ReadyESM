@@ -58,10 +58,10 @@ Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
-| C06 | Rain evaporation and cold-pool memory pass the ten-day atmosphere screen. All five full-ESM GPU pilots are running. | Assess the coupled results, then run the queued ten-day repeats. |
-| C07 | Conservative momentum transport and heat return pass component and atmosphere tests. | Complete four full-ESM pilots and the 30-day ERA5-start comparisons. |
-| C08 | The revised closure passes its eight-step full-ESM pilot. Thirty-day runs expose rare energy residuals and one host-water residual. | Trace the returned exchange and complete coupled restart and day-one tests. |
-| C10 | All nine two-day tests pass. Eight to thirty-two internal steps reduce peak temperatures from about 358 K to 324 K. | Complete the six running ten-day tests and six full-model pilots. |
+| C06 | Coupled runs exposed a rainfall diagnostic that omitted C06's humidity tendency. The correction passes component tests and its native coupled pilot. | Finish active and disabled pilots, then run the queued ten-day repeats. |
+| C07 | Four coupled pilots and six combined C07/C08 thirty-day cases pass physical checks. Cold and dry differences from native convection remain large. | Assess climate skill against observations. |
+| C08 | Wider arithmetic removes the sampled energy error. All six two-day host pilots pass, with exact disabled agreement. | Complete the queued thirty-day comparison and coupled restart tests. |
+| C10 | Internal substeps reduce peak temperatures from about 358 K to 324 K. All six full-model pilots pass. | Complete ten-day climate tests and six fresh-process coupled restart tests. |
 
 ## Run
 
