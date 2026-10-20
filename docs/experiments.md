@@ -433,10 +433,15 @@ Float64 endpoint errors by less than 0.122%. The T31 15-second rotating
 case changes from −0.0421167 to −0.0420756 kg/m². The nearly linear
 timestep dependence remains. Keep the production filter.
 
-The next test compares centered and explicit time steps with the default
-backward-weighted implicit solver. It retains both pressure mean-mode
-corrections and the default time filter. Full-physics and operational
-timestep tests still follow these dynamics-only experiments.
+The implicit-time sweep now passes all 216 trajectories and exact
+restarts. Centered stepping reduces mass error by 99.14–99.84% in all
+36 moving-flow Float64 cases. The worst error falls from 0.3313 to
+0.00283 kg/m². Explicit stepping also improves all 36 cases.
+
+Float32 behaves differently: 26 of 36 moving cases improve, ten worsen,
+and the worst error rises from 1.11394 to 1.14887 kg/m². Keep the
+production setting. The next test isolates pressure-storage precision
+before testing L27, operational timesteps and full physics.
 
 ### BS08 runoff and heat
 
