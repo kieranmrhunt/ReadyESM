@@ -21,7 +21,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport now includes phase exchange and heating. Float64 owned storage reduces the worst heat residual in Float32-launched tests to 0.0000444 J/m². Native pressure and time levels are the next interface. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Float64 owned storage reduces heat-budget error. Removing two pressure mean-mode assignments reduces mass error in all 72 moving-flow comparisons over six hours. Precision and timestep residuals remain. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -257,8 +257,12 @@ Temperature at 200 and 850 hPa also improves. Against native convection,
 combined case 12 still has worse moisture and upper/mid-level temperature
 errors, despite better rainfall and wind scores. Extratropical 200 hPa wind
 worsens against C08. Case 12 remains the preferred coupled test, with case 3
-as contrast. Six one-day coupled cases are running, including native, plain
-C08 and zero-strength C07 controls.
+as contrast. All six one-day coupled cases and their reader now pass,
+including native, plain C08 and zero-strength C07 controls. Every case
+reproduces its qualified eight-step prefix. Zero-strength C07 matches
+plain C08 in all 1816 state entries at three saved boundaries and all
+210 output variables. The preferred case 12 has no failed closure,
+momentum or energy-return checks.
 
 ### C10
 
@@ -378,15 +382,36 @@ case, mean air mass rises by 0.989901 kg/m² over 3840 seconds while mean log
 pressure changes by only 3.20e-14. Float32 exponentiation rounding is too
 small to explain the gain. Resting Float64 controls remain steady to rounding.
 
-The pinned core zeros the mean log-pressure tendency in two places. An
-eight-member experiment tests these operations separately and together,
-with unchanged controls in both precisions. These short, initially unbalanced
-flows establish the interface behaviour. Longer tests will assess its
-effect on the coupled model.
+The pinned core zeros the mean log-pressure tendency in two places.
+The eight-member attribution test completes all 96 trajectories and exact
+restarts. Removing either assignment alone leaves the diagnostic reports
+unchanged. Removing both reduces absolute mass change in every moving-flow
+case: by 99.607–99.985% in Float64 and 14.658–99.687% in Float32. In the
+Float64 T7 rotating case, +0.989901 kg/m² becomes −0.000483958 kg/m².
+Float32 retains a larger residual.
 
 Four members stopped before construction because Julia dedented the method
 lookup string. The repaired lookup passes seven regression assertions.
 Only those four members were resubmitted.
+
+A 36-member follow-up completes six hours at T7/T15/T31 and three timestep
+settings in both precisions. All 216 trajectories and exact halfway restarts
+pass. Compatible cases reproduce the earlier 64-step records. Removing
+both assignments reduces mass error in all 72 moving-flow comparisons:
+by 93.08–99.98% in Float32 and 96.78–99.83% in Float64. At T31 and a
+15-second timestep, the Float64 rotating case changes from +16.0725 to
+−0.0421167 kg/m².
+
+The Float32 readouts initially failed on constant-field pressure means
+that differed from identical extrema by up to 1.31e-10 Pa. A separate
+reader uses the existing arithmetic tolerance for constant fields only.
+All other checks remain. It recovers those 18 members and reproduces all
+18 passing Float64 summaries exactly. An independent raw-record calculation
+reproduces all 108 paired mass comparisons. No models were rerun.
+
+Float64 residuals are roughly proportional to timestep. Float32 adds a
+larger, less regular error. The next tests separate time filtering from
+precision loss and assess full-physics operation. Production is unchanged.
 
 ### BS08 runoff and heat
 
@@ -494,6 +519,7 @@ These job identifiers locate the evidence in that archive.
 | Grid-water baseline and limited-flux comparison | 60826008, 60830217 |
 | Moving-cloud phase/source test and owned precision | 60831748, 60835591 |
 | Native pressure continuity and zero-mode attribution | 60840424, 60841330, 60841567 |
+| Six-hour pressure sweep, original reader and arithmetic recovery | 60845375, 60846103, 60846859 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
 | C06 30-day persistence test | 60781768, 60781800 |
