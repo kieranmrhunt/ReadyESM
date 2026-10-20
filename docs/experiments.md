@@ -17,11 +17,11 @@ Production keeps its current Betts–Miller scheme.
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | The first 30-day pair retains moistening and reduced net downward radiation. Source-placement flags remain. The repeat pair is running. |
+| C06: rain evaporation and cold pools | Active | Both 30-day pairs retain moistening and reduced net downward radiation. The current-main candidate passes the full CPU suite. Coupled restart and observed skill are next. |
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Cloud-bearing source and restart tests pass. Spectral projection and the time filter produce negative phase values. A global smoothing fix was rejected. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Smooth-cloud tests preserve cloud and budgets. Cloud edges regain negative phases after the final spectral transform. The time filter also needs consistent phase histories. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -92,11 +92,18 @@ Independent checks cover 84 output histories and 28 paired metrics. Over days
 Clear-sky net downward radiation rises by 0.0972 and 0.0805 W/m². Source-coverage
 flags remain failed. Matched 30-day runs will test persistence.
 
-The first 30-day pair now passes physical checks and production diagnostics.
-Over days 20–30, the candidate increases column water by 0.0462 kg/m² and
-reduces net downward radiation by 0.6271 W/m² against native. Clear-sky net
-downward radiation increases by 0.0672 W/m². Source placement still fails.
-The second pair is running.
+Both 30-day pairs pass physical checks and production diagnostics. The reader
+verifies all 56 output histories and the paired initial atmosphere/ocean-tracer
+hashes. Over days 20–30, column water rises by 0.0462 and 0.1177 kg/m².
+Net downward TOA radiation falls by 0.6271 and 0.9743 W/m² against native.
+Clear-sky net downward radiation rises by 0.0672 and 0.0284 W/m².
+Both aggregate dry-parcel fractions are below 1.25%. Source placement still
+fails, and unmapped rain passes through unchanged.
+
+The current-main candidate passes 141 focused assertions and the full CPU
+suite. New checks reject unsupported C06/C07/C08 combinations and invalid
+parameters. Coupled source comparisons and fresh-process restarts are running.
+Separate sampler pilots prepare the monthly ERA5 comparison.
 
 ### C08 and C07
 
@@ -110,6 +117,12 @@ regression checks pass. Four full-state restart tests pass, with exact
 checkpoint and continued states. The active one-day coupled run also passes.
 Day-one restart extensions remain running. Four full-ESM pilots pass for finite C08,
 zero-strength C07, momentum transport, and momentum transport with heat return.
+
+The clean native, C08 centre, case 3 and case 12 runs now complete one coupled
+day. All four reproduce their qualified short-run prefixes. State bounds,
+closure checks, snow histories and production diagnostics pass. A fresh
+reader run reproduces every saved report value. The two day-one restart
+checks and six current-main C07/C08 parameter comparisons continue.
 
 The atmosphere screen starts from ERA5 on 1 January 1993. It uses T31/L27,
 prescribed seasonal SST and simple radiation. Seven configurations cross
@@ -283,6 +296,23 @@ precisions. With the filter off, this effect disappears but negative grid
 water remains. The next prototype must handle phase exchange and time history
 together, while conserving total water and energy.
 
+A joint spectral-water projection passes 12 of 16 saved-state cases.
+Four dry Float64 cases reach the iteration limit with tiny negative phases.
+All cases pass water and energy checks. The 12 passing states also pass
+physical phase equilibrium, which evaporates their warm, undersaturated cloud.
+
+A separate balanced-cloud screen tests both precisions, three temperatures
+and smooth or cloud-edge fields. Smooth Float32 clouds retain 99.9877–99.9974%
+of condensate. At cloud edges, the final spectral transform creates negative
+phases again. Water and energy budgets still close.
+
+The diagnostic audit accounts for temperature and pressure roundoff in
+saturation humidity. All six smooth-cloud cases now pass. Every physical
+summary and equilibrium residual matches the original test exactly.
+All six cloud-edge cases still fail. The archive keeps both sets of verdicts.
+Cloud-edge positivity and consistent live time histories remain the next
+physical tasks.
+
 ### BS08 runoff and heat
 
 The twelve-process test on one A100 passes its registered compatibility rule.
@@ -300,8 +330,15 @@ The coupled test retains its 3% limit.
 The completed profile gives three ABBA ratios of 1.235, 1.346 and 1.382.
 All 3,600 raw substep samples and repeat hashes verify. Reducing the partition
 flag through its field interface takes 91.433 μs, versus 38.909 μs on the
-stored interior. A one-line candidate now tests the latter route. It must
-retain error detection, exact final states and the existing cost limits.
+stored interior. The one-line candidate now passes physical checks, exact
+old-source state comparisons and invalid-flag tests. Its three ABBA ratios
+are 1.162, 1.288 and 1.270. Two still exceed the retained 1.25 local cost limit.
+
+A separate full-coupled diagnostic runs off/on/on/off on one A100, then
+checks a fresh-process restart. It retains the routing, heat, freshwater,
+correction-count and state checks. All cost ratios will be reported against
+the existing 1.03 whole-coupled criterion. The earlier local cost failure
+remains recorded.
 
 ### BS10 carbon inventory
 
@@ -340,8 +377,19 @@ GPU emissions host tests pass all 27 saved samples. All 56 carbon-history
 rows from four GPU restart cases pass the ledger checks, with maximum relative
 inventory error 2.956e-8. Two cases reproduce the full state exactly after
 restart. Two first differ in ocean fields after exact restored boundaries.
-Numeric repeats will measure those differences. The dependent full-grid
-emissions batch cancelled before allocation.
+The dependent full-grid emissions batch cancelled before allocation.
+
+The compact numeric repeats now show that the second live run and both
+restores match exactly. Only the first live run differs after their common
+boundary. Ocean T, S, DIC and TA and atmospheric prognostic arrays remain
+exact. The mismatch can therefore occur without a restart.
+
+An isolated test of pinned Oceananigans 0.110.15 finds a grid-update defect.
+The native kernel writes sea-surface height and immediately interpolates
+neighbouring heights. It can mix old and new values. Separate copy and
+scaling kernels pass 472 checks, including repeatability and a CPU reference.
+Coupled replays now test this change. Package and production files stay fixed
+until those results establish its model-level effect.
 
 ## Evidence record
 
@@ -353,6 +401,12 @@ These job identifiers locate the evidence in that archive.
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
 | C06 30-day persistence test | 60781768, 60781800 |
+| C06 current-main CPU tests, coupled compatibility and skill samplers | 60813131, 60815837, 60809445, 60809446 |
+| Clean C08 one-day parameter runs and reader | 60782349, 60782351 |
+| C10 joint projection, physical phases and balanced clouds | 60809034, 60811701, 60818123 |
+| C10 diagnostic roundoff audit | 60818202 |
+| BS08 full-coupled cost diagnostic | 60818157 |
+| Ocean grid-ordering witness and coupled replay | 60815972, 60817815, 60817817 |
 | C10 live cloud phase, rejected spectral bound and filter witness | 60800258, 60801160, 60804150 |
 | BS08 completed cost profile and reduction candidate | 60783921, 60803170 |
 | BS10 GPU emissions restart and numeric repeats | 60775069, 60775070, 60800419, 60800421 |

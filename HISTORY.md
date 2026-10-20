@@ -9,6 +9,11 @@ artefacts.
 
 ### 2026-10-20
 
+- Complete both C06 30-day research pairs and four clean C08 one-day coupled
+  cases. Keep production convection unchanged while restart and skill tests run.
+- Reproduce stale neighbour heights in the pinned ocean grid-update kernel.
+  A two-kernel fix passes the isolated test and enters coupled replay.
+- Record the remaining C10 cloud-edge failure and the BS08 cost reduction.
 - Allow land-free atmosphere tests through the timestep wrapper and the
   Terrarium initialization callback. Keep coupled land physics unchanged.
 - Verify July convection skill across 21 runs. Retain case 12 for coupled

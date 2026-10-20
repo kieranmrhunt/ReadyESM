@@ -50,19 +50,19 @@ The tables below track research candidates. See the
 | BS05 | Parameter calibration | January and July support case 12's moisture gain. C07 improves July global winds and temperature against matched C08. | Compare six configurations in one-day coupled runs. |
 | BS06 | Sea-ice thickness distribution | The tested pressure hybrid is closed. Category transport and restart tools are retained. | Reopen after a defined coastal-growth or thickness trigger. |
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
-| BS08 | Runoff storage and heat | Physical checks pass. Repeated timing still exceeds the 25% limit. A validation reduction is a measured cost. | Test a faster reduction with unchanged physics and exact state comparisons. |
+| BS08 | Runoff storage and heat | A faster check preserves the original states exactly. Two timing blocks still exceed the 25% land-substep cost limit. | Measure full-coupled cost and test routing and restart. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | Full-grid day-one budgets and the CO2/alkalinity sweep pass. GPU emissions budgets pass, while two restart cases differ in ocean fields. | Measure restart differences against run-to-run variation. |
+| BS10 | Carbon, aerosols and emissions | Carbon budgets pass. Repeated live runs reproduce the restart discrepancy. An isolated test finds stale neighbour heights in the ocean grid update. | Test ordered grid updates in coupled restarts. |
 
 Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
 | C02 | Closed in its uniform-cutoff form. Four settings improve moisture but worsen temperature at all three tested levels. | Reopen for a regime-dependent or resolution-based mechanism. |
-| C06 | All six ten-day runs pass physical checks. The stronger setting reduces late net downward radiation by about 0.7 W/m². Source-coverage flags remain. | Run the matched 30-day comparison. |
-| C07 | January scores improve global winds. All six clean C07/C08 coupled pilots pass, including exact zero-strength controls. | Complete clean restarts and separate July validation. |
-| C08 | Case 12 improves moisture and temperature relative to the original setting. Clean coupled controls and research day-one restarts pass. | Complete clean restarts and longer coupled parameter tests. |
-| C10 | Ten-day runs pass physical checks but reach about 339 K. Increasing from 8 to 32 substeps changes the peak by less than 0.26 K. | Trace the local heating before another parameter sweep. |
+| C06 | Both 30-day pairs retain moistening and reduce late net downward radiation by 0.63–0.97 W/m². Source-coverage flags remain. | Complete current-main coupled restarts and ERA5 skill tests. |
+| C07 | Optional CPU code is on main. January and July improve global winds against matched C08, with regional trade-offs. | Complete the six one-day coupled parameter comparisons. |
+| C08 | Optional CPU code is on main. Four one-day coupled cases pass and reproduce their short-run prefixes. | Complete day-one restart and longer parameter tests. |
+| C10 | Smooth Float32 clouds retain over 99.98% of condensate. Cloud edges regain negative values after the spectral transform. | Repair cloud-edge representation and stored time levels. |
 
 ## Run
 
