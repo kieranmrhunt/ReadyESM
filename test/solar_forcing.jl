@@ -67,6 +67,18 @@ end
         @test radiation.call_counter == before
     end
     @test_throws ArgumentError R._validate_solar_restart(rad,(;solar_distance_correction=0))
+    # The outer coupled and standalone entry points use this preflight before copying state.
+    for (radiation,state) in ((on,legacy),(on,saved),(rad,active))
+        simulation = (;model=(;longwave_radiation=radiation))
+        before = R._rrtmgp_radiation_state(radiation)
+        @test_throws ArgumentError R._validate_atmosphere_radiation_restart(
+            simulation,(;radiation=merge(state,(;call_counter=99))))
+        @test isequal(R._rrtmgp_radiation_state(radiation),before)
+    end
+    for (radiation,state) in ((on,active),(rad,legacy),(rad,saved))
+        @test isnothing(R._validate_atmosphere_radiation_restart(
+            (;model=(;longwave_radiation=radiation)),(;radiation=state)))
+    end
     config = R.ExperimentConfig(forcing=R.ForcingConfig(radiation=:rrtmgp_clear_sky,solar_distance_correction=true))
     info = R._forcing_provenance(on,config)
     @test info.requested_solar_distance_correction

@@ -869,7 +869,7 @@ function Oceananigans.restore_prognostic_state!(
         model,
         hasproperty(state, :carbon) ? state.carbon : nothing,
     )
-    _validate_atmosphere_trace_gas_restart(model.atmosphere, state.atmosphere)
+    _validate_atmosphere_radiation_restart(model.atmosphere, state.atmosphere)
     invoke(
         Oceananigans.restore_prognostic_state!,
         Tuple{NumericalEarth.EarthSystemModel, Any},
@@ -1384,7 +1384,7 @@ function Oceananigans.restore_prognostic_state!(
     simulation::SpeedyWeather.Simulation,
     state,
 )
-    _validate_atmosphere_trace_gas_restart(simulation, state)
+    _validate_atmosphere_radiation_restart(simulation, state)
     # JLD2 reconstructs the checkpointed Variables tree on the CPU.
     # SpeedyWeather's alias-aware copy handles ordinary host-to-device arrays.
     # The narrowly typed lower-triangular, RingGrids.Field, and ScratchMemory
@@ -1418,11 +1418,13 @@ Oceananigans.restore_prognostic_state!(
     ::Nothing,
 ) = simulation
 
-# Check the optional CH4/N2O record before any atmosphere, ocean or land state is overwritten.
-function _validate_atmosphere_trace_gas_restart(simulation, state)
+# Check forcing options before any atmosphere, ocean or land state is overwritten.
+function _validate_atmosphere_radiation_restart(simulation, state)
     radiation = simulation.model.longwave_radiation
-    radiation isa RRTMGPRadiation && hasproperty(state, :radiation) &&
+    if radiation isa RRTMGPRadiation && hasproperty(state, :radiation)
         _validate_trace_gas_restart(radiation, state.radiation)
+        _validate_solar_restart(radiation, state.radiation)
+    end
     return nothing
 end
 
