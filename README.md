@@ -37,7 +37,7 @@ ice pile-up and whole-system energy closure.
 
 ## Experimental roadmap
 
-Snapshot: **19 October 2026**. Production remains at v0.1.10.
+Snapshot: **20 October 2026**. Production remains at v0.1.10.
 The tables below track research candidates. See the
 [experiment notes](docs/experiments.md) for the convection portfolio and test scope.
 
@@ -52,17 +52,17 @@ The tables below track research candidates. See the
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
 | BS08 | Runoff storage and heat | GPU compatibility and physical checks pass. The kernel costs 34% more, above its 25% limit. | Profile and reduce the added cost before the coupled test. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | The full-grid GPU pair passes carbon conservation. Compact restarts match exactly. | Complete full-grid restarts, one-day budgets and the CO2/alkalinity sweep. |
+| BS10 | Carbon, aerosols and emissions | The full-grid GPU pair passes carbon conservation. The live-carbon run also passes one full day. | Complete full-grid restarts, the zero-exchange day and the CO2/alkalinity sweep. |
 
 Current convection work:
 
 | Track | Progress | Next step |
 | --- | --- | --- |
-| C02 | January ERA5 scores improve moisture and rainfall but worsen temperature at all three tested levels. | Assess a weaker setting before a coupled test. |
-| C06 | The rainfall diagnostic correction passes all three coupled pilots. The active dry-parcel screening flag remains failed. | Complete six ten-day repeats and assess moisture, rain and source coverage. |
-| C07 | January scores show better global winds at all three levels. Tropical gains exceed the smaller extratropical losses. | Test the improved C08 moisture parameters with matched momentum-transport controls. |
-| C08 | Case 12 reduces moisture and temperature error relative to the original setting. Cold and dry biases remain against ERA5. | Complete clean integration and restart checks, then longer coupled tests. |
-| C10 | Internal substeps reduce the two-day temperature peak from about 358 K to 324 K. All six full-model restart tests pass. | Complete the ten-day climate comparison. |
+| C02 | Closed in its uniform-cutoff form. Four settings improve moisture but worsen temperature at all three tested levels. | Reopen for a regime-dependent or resolution-based mechanism. |
+| C06 | All six ten-day runs pass physical checks. The stronger setting reduces late net downward radiation by about 0.7 W/m². Source-coverage flags remain. | Run the matched 30-day comparison. |
+| C07 | January scores improve global winds. All six clean C07/C08 coupled pilots pass, including exact zero-strength controls. | Complete clean restarts and separate July validation. |
+| C08 | Case 12 improves moisture and temperature relative to the original setting. Clean coupled controls and research day-one restarts pass. | Complete clean restarts and longer coupled parameter tests. |
+| C10 | Ten-day runs pass physical checks but reach about 339 K. Increasing from 8 to 32 substeps changes the peak by less than 0.26 K. | Trace the local heating before another parameter sweep. |
 
 ## Run
 

@@ -1,6 +1,6 @@
 # Experiment notes
 
-Updated 19 October 2026. Production is v0.1.10. Research candidates stay in
+Updated 20 October 2026. Production is v0.1.10. Research candidates stay in
 separate source snapshots until their results support a model update.
 The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
@@ -10,15 +10,15 @@ Main now includes the accepted [snow-accounting update](validation-snow-accounti
 | Track | Status | Result or next test |
 | --- | --- | --- |
 | C01: mixed-layer parcel launch | Closed | The stronger launch reduces tropical deep-convection area too much. |
-| C02: depth-limited shallow adjustment | Active | January ERA5 scores improve moisture and rain but worsen temperature. A weaker setting is the next screening option. The 0.8 setting is closed. |
+| C02: depth-limited shallow adjustment | Closed, uniform cutoff | Four cutoffs improve moisture but worsen temperature at every tested level and seed. Reopen for a regime-dependent or resolution-based mechanism. |
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | The rainfall-diagnostic correction passes 13 component tests and all three coupled pilots. Ten-day climate runs have started. The active dry-parcel screening flag remains failed. |
+| C06: rain evaporation and cold pools | Active | All six ten-day runs pass physical checks. The stronger setting reduces late net downward radiation by about 0.7 W/m². Source-coverage flags remain. Thirty-day tests are queued. |
 | C07: convective momentum transport | Active | January ERA5 scores show global wind improvements at all three levels. Tropical gains come with smaller extratropical losses. |
-| C08: deterministic multi-plume convection | Active | Case 12 improves moisture and temperature errors relative to the original setting. The clean host adapter and full CPU suite pass. Coupled integration and restart tests continue. |
+| C08: deterministic multi-plume convection | Active | Case 12 improves moisture and temperature errors relative to the original setting. Clean coupled controls pass. Fresh-process clean restarts are running. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | All nine two-day tests, six full-model pilots and six coupled restart tests pass. Ten-day climate tests are running. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Ten-day tests pass physical checks but reach about 339 K. Extra substeps give little further reduction. Local heating traces are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -43,7 +43,17 @@ precipitation by 0.054–0.069 mm/day. January ERA5 comparisons reduce column-wa
 RMSE by 0.820–0.870 kg/m² and precipitation RMSE by 0.036–0.078 mm/day.
 Temperature RMSE increases by 0.274–0.296 K at 200 hPa, 1.197–1.255 K at 500 hPa
 and 0.548–0.623 K at 850 hPa. Keep this setting separate from production.
-Any weaker-setting screen must retain the temperature comparisons.
+The weaker-cutoff sweep has now completed. All fifteen new runs pass, and
+the repeated off/0.7 controls match their archived fields. Independent checks
+reproduce 432 scores, 360 paired differences and every common mask.
+
+Cutoffs 0.4, 0.5, 0.6 and 0.7 worsen global temperature RMSE at 200, 500 and
+850 hPa in all three seeds. All twelve moisture comparisons improve. Rain
+error rises at 0.4 and 0.5, has mixed signs at 0.6, and falls at 0.7. The weaker
+settings reduce the mid-level temperature penalty but lose the consistent rain
+gain. Close this uniform-cutoff form for the current T31 setup. Keep the source
+and results. Reopen for a physical change to the depth rule or new evidence at
+another resolution.
 
 ### C06
 
@@ -72,8 +82,12 @@ strongest settings with two repeats each. The diagnostic pilots have passed
 and the ten-day runs have started. The first two attempts reached day ten but
 their report builder rejected missing launch diagnostics. A separate repair
 keeps those values in NetCDF and checks every later sample. The replacement
-native control now passes, including its report and restart file. Active
-settings and the second repeat remain in progress.
+assessment now passes in all six members, including reports and restart files.
+Independent checks cover 84 output histories and 28 paired metrics. Over days
+5–10, the stronger setting reduces all-sky net downward radiation by 0.684 and
+0.708 W/m² in the two repeats. Column water rises by 0.0665 and 0.0703 kg/m².
+Clear-sky net downward radiation rises by 0.0972 and 0.0805 W/m². Source-coverage
+flags remain failed. Matched 30-day runs will test persistence.
 
 ### C08 and C07
 
@@ -139,7 +153,16 @@ falls by 0.793–0.804 mm/day. Longer coupled tests must assess these trade-offs
 The clean C08 package removes the experimental source wrappers. It passes 4,350
 solver comparisons and 1,740 host comparisons exactly. This CPU-only option uses
 the normal model configuration and leaves native defaults unchanged. The full
-CPU suite passes. Coupled and fresh-process restart checks are in progress.
+CPU suite passes. All six clean coupled pilots now pass for native, C08,
+zero-strength C07 and active C07 at three settings. Native and C08 reproduce
+their reference states and all 210 output variables. Zero-strength C07 matches
+all 1,816 common state entries at six saved stages. Active C07 passes its
+water, energy, momentum and snow checks. Fresh-process clean restarts are running.
+
+All four research day-one restarts also pass. Their complete states match
+at the checkpoint and four following steps. These compare 1,654–1,816 entries
+per member. The clean optional schemes remain separate from GitHub main until
+their own restart checks finish.
 
 All six combined C07/C08 cases pass their physical checks. Days 10–30 mean
 column water is 16.535 and 16.440 kg/m² for the centre and faster settings,
@@ -198,9 +221,13 @@ Eight substeps change second-day global mean temperature by −0.0018 K at
 area fraction 0.04 and −0.0069 K at 0.08 relative to one step. Rainfall shows
 more internal-step sensitivity than the temperature maximum.
 
-Six ten-day follow-ups are running to check
-persistence, global moisture and rain, and sensitivity to the internal step.
-Each longer run must reproduce its two-day history and daily maps.
+All six ten-day follow-ups pass and reproduce their two-day prefixes. The
+temperature peak reaches 338.62–339.05 K. Within each updraft-area setting,
+the range across 8, 16 and 32 substeps is less than 0.26 K. Over days 5–10,
+mean temperature is 1.55–1.60 K colder than native and column water is
+0.88–1.06 kg/m² lower. These are differences from the native model. The peak
+is at 131.25°E, 20.41°S in the lowest layer. Passive replays will separate the
+local convection, surface-flux and other atmospheric contributions.
 All six eight-step full-model pilots pass. These retain the actual ocean and
 land surface fluxes. Disabled prognostic fields, surface memories and scientific
 arrays match native exactly. All six fresh-process restart tests pass.
@@ -226,8 +253,7 @@ The coupled test retains its 3% limit.
 
 Both compact CPU fresh-process restarts pass. Live-carbon and zero-exchange
 runs reproduce all 1,548 state entries at the checkpoint and four continued
-steps. Maximum relative inventory errors are 2.93e-8 and 2.90e-8. The first
-production-grid GPU member is running, with the second waiting for priority.
+steps. Maximum relative inventory errors are 2.93e-8 and 2.90e-8.
 
 The apparent GPU carbon loss came from its inventory calculation. Copying the
 grid to the CPU reconstructed reference coordinates and lost changing cell
@@ -247,10 +273,13 @@ pass. The compact GPU host test also passes, with relative inventory error
 and their reader now pass. They retain real land, ice, radiation and ERA5/ECCO
 launch states. Maximum relative carbon-inventory errors are 1.37e-9 with live
 exchange and 1.38e-9 with zero exchange, below the unchanged 2e-6 limit.
-Full-grid GPU restarts and one-day budgets are queued. A nine-case sweep crosses
+The live-exchange production-grid GPU run now passes a full day. All 97
+inventory samples verify, with maximum relative error 5.51e-9 against the 2e-6
+limit. The zero-exchange day and full-grid restart tests are running.
+A nine-case sweep crosses
 three prescribed CO2 levels with three alkalinity settings. It resumes the test
-stopped by the earlier inventory bug and checks every step. Emissions-driven
-full-model coupling remains to implement.
+stopped by the earlier inventory bug and checks every step. The emissions-driven
+candidate passes its compact CPU restart checks. GPU tests are queued.
 
 ## Evidence record
 
@@ -262,6 +291,10 @@ These job identifiers locate the evidence in that archive.
 | C02 current-model columns and ERA5 host pilots | 60681564, 60683567, 60683670 |
 | C02 passive monthly capture and reader | 60691659, 60691662 |
 | C02 nine-member January assessment and complete-run reader | 60692616, 60694629 |
+| C02 weaker-cutoff sweep and ERA5 scores | 60772893, 60772921 |
+| Clean C07/C08 coupled pilots and reader | 60776941, 60776959 |
+| Research day-one restarts and reader | 60710185, 60710248 |
+| BS10 live-carbon production day | 60720035_0 |
 | Finite-C08 coupled pilot and readout | 60575928, 60575955 |
 | Full-state coupled restart | 60652124, 60652400, 60652401 |
 | Active finite-C08 coupled day | 60610464 |
