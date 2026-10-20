@@ -24,6 +24,7 @@ Two fresh processes each timed three model days after warm-up.
 | --- | --- | ---: | ---: |
 | T15, 27 levels | 180×90×60 | 15.1 | 45–52 min |
 | T15, 27 levels | 360×180×60 | 11.1 | 45–51 min |
+| T31, 27 levels | 180×90×60 | 8.2 | 45–52 min |
 
 The rate covers integration with daily budget diagnostics. Start-up includes
 loading, model construction, initialization and warm-up.

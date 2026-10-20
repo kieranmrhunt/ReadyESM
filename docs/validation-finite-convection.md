@@ -54,6 +54,15 @@ Earlier eight-thread failures remain in the labbook. They first diverged
 in ocean and coupling fields at step five. The ordering repair removes the
 observed restart and repeat differences in this test.
 
+## Thread-count comparison
+
+One-thread runs of native convection and C07 case 12 match both eight-thread
+repeats on `e9e50b4`. Each comparison covers the initial state, steps four
+through seven and the final state after eight full-grid coupled steps.
+All 1,645 native entries, 1,987 C07 entries and 210 output variables match
+exactly. The reader and result receipt pass. Thread count remains fixed
+within each longer experiment.
+
 ## Evidence record
 
 | Check | Slurm jobs |
@@ -63,6 +72,7 @@ observed restart and repeat differences in this test.
 | Fresh-process restarts and reader | 60782476 tasks 0–5, 60782673 |
 | Eight-thread pilots and reader | 60786590 tasks 0–5, 60786591 |
 | Eight-thread restarts and repeats after ocean fix | 60876558 tasks 0–5, 60876559 |
+| One-thread against eight-thread comparison | 60896182 tasks 0–1, 60896186 |
 
 The labbook retains frozen inputs, file receipts, detailed checks and failed
 development attempts. Experimental runners and outputs stay outside this repo.
