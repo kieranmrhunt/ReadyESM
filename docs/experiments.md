@@ -479,6 +479,10 @@ Centering supplies most of the gain at these larger timesteps.
 Wet-physics pilots now use January ERA5, T31/L27, RRTMGP, Betts–Miller
 and Terrarium, with a slab ocean. Eight-step restart checks precede five
 one-day comparisons. These include an independent native repeat.
+The first pilots stopped before construction because the slab configuration
+retained an ECCO input directory. Replacement pilots clear that setting and
+validate all configurations before integration. The failed attempts remain
+archived.
 Production pressure dynamics remain unchanged.
 
 ### BS08 runoff and heat
@@ -613,7 +617,8 @@ These job identifiers locate the evidence in that archive.
 | Matched pressure-rounding probe, sweep and audit | 60884700, 60884701, 60884702 |
 | Pressure layer/timestep follow-up and audit | 60886934, 60886935 |
 | Pressure short-record recovery | 60888879 |
-| Wet-physics pressure pilots, one-day comparisons and readers | 60895412, 60895413, 60895414, 60895415 |
+| Wet-physics pressure pilots, one-day comparisons and readers | 60898300, 60898301, 60898302, 60898303 |
+| Wet-pressure configuration failure and cancelled follow-ups | 60895412, 60895413, 60895414, 60895415 |
 | Packaged ocean-update GPU dispatch | 60896206 |
 | Eight-thread convection on ordered ocean main | 60876558, 60876559 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
