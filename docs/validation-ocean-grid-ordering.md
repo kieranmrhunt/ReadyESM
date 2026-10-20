@@ -22,6 +22,7 @@ The checkpoint format and configuration stay the same.
 | --- | --- |
 | Isolated GPU ordering test | All 472 assertions pass |
 | Package regression test | All 377 assertions pass |
+| Direct packaged GPU methods | All 385 assertions pass, with 48 device-method checks |
 | Full CPU suite | Passes, with the existing expected-broken spectral test |
 | Compact coupled restart and repeat tests | All 20 comparisons match across 425 numeric arrays |
 | Full-grid coupled restart tests | Four members match all 1680 state entries at five saved points |
@@ -36,13 +37,15 @@ Both uninterrupted and restored repeats match exactly.
 Independent checks reproduce all 40 full-grid comparisons, covering
 67,200 state-entry comparisons. Input and result checksums verify.
 The accepted package source and tests match the qualified CPU candidate.
+Direct GPU job 60896206 also verifies dispatch to the packaged ordered update
+for both precisions and two grid patterns. Device repeats match exactly.
 
 The first CPU test attempt stopped at an outdated model-constructor call.
 Passing `grid` positionally fixed the test. The kernel code was unchanged.
 
 The development records are GPU test 60815972, compact runs 60817815 and
 reader 60817817, CPU tests 60835380, and full-grid runs 60821733 with
-reader 60821734.
+reader 60821734, plus packaged GPU test 60896206.
 
 ## Reproduce the package tests
 

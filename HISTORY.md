@@ -8,6 +8,15 @@ records are in the development labbook.
 
 ### 2026-10-20
 
+Completed four January C06 comparisons. Rain evaporation and downdrafts gave
+small precipitation and upper-temperature gains, with moisture and wind
+penalties. A 20-member screen now separates their parameter effects.
+The carbon extension passed compact GPU restarts, CPU output comparisons
+and its combined CPU suite. Full-grid and GPU output tests continue.
+The runoff-heat extension passed its whole-model cost comparison and
+ordered-main CPU checks. These options remain under assessment.
+See the [experiment notes](docs/experiments.md).
+
 Fixed standalone atmosphere checkpoints so they restore both transform-column
 work arrays. The coupled restart path already copied these arrays. The new
 regression, full CPU suite and two ERA5 restore probes pass. The same

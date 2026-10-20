@@ -18,11 +18,11 @@ Production keeps its current Betts–Miller scheme.
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | Both 30-day pairs retain moistening and reduced net downward radiation. Coupled source and restart comparisons pass. Four January skill runs are submitted. Integration with the latest ocean fix is under test. |
+| C06: rain evaporation and cold pools | Active | Four January runs show small precipitation and upper-temperature gains, with moisture and wind penalties. Twenty new runs separate evaporation and downdraft strength on the ordered ocean. |
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Pressure mean-mode, centering and precision changes reduce the largest dynamics-only mass error from 14.65 to 0.15 kg/m² at larger timesteps. Private observer scratch passes. A standalone restart repair is under test before wet pilots resume. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport preserves water and heat. The standalone restart repair is on main. Five wet one-day pressure tests pass exact restarts. Their mass gains come with larger water residuals. Ten-day tests are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -126,11 +126,30 @@ units, dimensions and data types. All 1,645 native state entries and all
 all state entries and all 214 output variables in both cases.
 The original failures remain in the run records.
 
-Four replacement 31-day native/strong runs will compare January ERA5 skill
-and execution-repeat spread. They retain the frozen C06 candidate.
+All four replacement 31-day native/strong runs pass. Independent interpolation
+and weighted sums reproduce 240 January ERA5 scores and 120 paired changes.
+The two repeats use identical launches and measure execution variation.
+
+| Global monthly RMSE change, C06 minus native | Repeat 1 | Repeat 2 |
+| --- | ---: | ---: |
+| Precipitation (mm/day) | −0.00689 | −0.00562 |
+| Column water (kg/m²) | +0.0147 | +0.0243 |
+| Temperature at 200 hPa (K) | −0.0337 | −0.0228 |
+| Vector wind at 500 hPa (m/s) | +0.0620 | +0.1138 |
+
+The 500 hPa wind penalty occurs in every latitude band in both pairs.
+Globally, it is 1.07 and 1.96 times the larger within-arm repeat spread.
+These ratios describe execution variation. Days 20–30 net downward TOA
+improves by 0.24–0.39 W/m², while clear-sky TOA worsens by 0.10–0.16 W/m².
+Source-placement flags remain failed, with unmapped rain preserved.
+Keep the strong setting experimental.
+
 A separate candidate applies the same C06 code to the latest main branch,
 including the accepted ocean-ordering fix. Its 518 focused CPU assertions
 and full CPU suite pass. Coupled compatibility and restart tests are running.
+A 20-member January screen is queued after that qualification. It crosses
+evaporation coefficients 0.25/0.5/1.0 with downdraft factors 0/100/200,
+plus native, with two repeats of every case.
 
 ### C08 and C07
 
@@ -485,9 +504,21 @@ validate all configurations before integration. They build successfully but
 stop at the launch observer-passivity check. Both probes identify four shared
 transform scratch arrays. Private work arrays preserve the complete saved
 state and give identical pressure records. The probes also expose two column
-work arrays omitted by standalone restoration. Candidate `1d7188a` adds the
-existing coupled-path copy helper to standalone restoration and is under test.
+work arrays omitted by standalone restoration. The repair now passes its
+regression, full CPU suite and ERA5 restore probes, and is included on main.
 The failed attempts remain archived.
+
+All five wet one-day cases pass exact fresh-process restarts. The native
+repeat matches exactly. Removing both mean-mode assignments reduces air-mass
+change from −4.41871 to −0.20355 kg/m². Adding time centering gives −0.10822.
+Wider pressure storage adds no further benefit in this one-day test.
+Every modified arm increases the magnitude of the water-budget residual.
+
+Ten-day follow-ups keep all five arms and a day-five fresh-process restart.
+The first batch stopped because its comparison code confused saved history
+length with allocated capacity. The corrected batch checks both separately.
+All five corrected runs reproduce day one exactly, apart from three expected
+forecast-length metadata fields.
 Production pressure dynamics remain unchanged.
 
 ### BS08 runoff and heat
@@ -520,8 +551,16 @@ remains recorded.
 The first full-coupled attempt completed its off member, then failed in a
 test snapshot. The TKE boundary flux is a function, while the snapshot
 assumed every flux entry owned an array. The repaired harness passes 15
-regression checks. A fresh four-member comparison is running with unchanged
-model code and thresholds.
+regression checks. The four-member comparison now passes all physical checks
+and the exact restart-boundary check. Its mean on/off step-time ratio is
+1.0044. Both on-block ratios, 0.9860 and 1.0228, meet the existing 1.03
+whole-model criterion. The earlier local cost-screen failure remains recorded.
+
+On the ordered-ocean main branch, the inherited checks, full CPU suite and
+compact option-off comparison pass. Default mode matches all 1,629 saved
+state entries and makes zero BS08 calls. Full coupled GPU and option-off
+comparisons are submitted. Output and restart-history support are being
+added in a separate publication candidate.
 
 ### BS10 carbon inventory
 
@@ -592,7 +631,9 @@ candidate. All 6,710 focused CPU assertions pass, including the ordered ocean
 update and changing-volume inventory checks. The full CPU suite also passes,
 with the existing expected-broken initial truncation test.
 
-Four compact GPU tests will repeat the emissions restarts on this source.
+All four compact GPU emissions tests now pass on this source. Each restart
+matches all 1,552 saved entries at the boundary and four continued steps.
+The maximum relative inventory error is about 3e-8, within the 2e-6 bound.
 A separate CPU comparison passes. Carbon-off matches main across all 431
 common state entries at construction, initialization and step two.
 Passive carbon tracers preserve those entries exactly. Both auxiliary
@@ -602,6 +643,17 @@ follow the compact restart reader: prescribed 420 ppm, interactive CO2 with
 zero emissions, and 10 PgC/year with live or zero ocean exchange. Each runs
 for one model day and checks all 97 carbon-ledger boundaries. These tests
 retain the earlier tolerances and exact restart comparisons.
+
+The output extension adds physical DIC and alkalinity maps, carbon ledgers
+and restartable diagnostic histories. Its component tests, fresh-process
+history tests and full CPU suite pass. All five compact CPU output cases
+also pass independent saved-state and raw-NetCDF comparisons. The 193
+existing output variables remain unchanged. Passive tracers add two fields.
+Carbon-exchange modes add 13 variables. Restored outputs match exactly.
+
+The combined publication candidate passes the full CPU suite. Full-grid
+carbon days and four supported GPU output comparisons remain in progress.
+Production keeps carbon off while these tests finish.
 
 ## Evidence record
 
@@ -613,6 +665,8 @@ These job identifiers locate the evidence in that archive.
 | Carbon on ordered main, CPU tests and option-off comparison | 60869035, 60874069 |
 | Ordered-main emissions GPU restarts and reader | 60870291, 60870410 |
 | Ordered-main full-grid emissions tests | 60874070 |
+| Carbon output CPU tests, coupled comparisons and publication suite | 60925029, 60928226, 60956342 |
+| Carbon GPU output comparisons and reader | 60942296, 60945298 |
 | Ordered ocean repeats and numeric comparison | 60817815, 60817817 |
 | Full-grid ocean follow-up and current-main CPU tests | 60821733, 60830346, 60835380 |
 | Grid-water baseline and limited-flux comparison | 60826008, 60830217 |
@@ -628,6 +682,8 @@ These job identifiers locate the evidence in that archive.
 | Wet-physics pressure pilots, one-day comparisons and readers | 60898300, 60898301, 60898302, 60898303 |
 | Wet-pressure configuration failure and cancelled follow-ups | 60895412, 60895413, 60895414, 60895415 |
 | Wet-pressure observer passivity probe | 60901498 |
+| Wet-pressure one-day tests and reader | 60931189, 60931190 |
+| Failed ten-day comparison guard and corrected follow-up | 60952544, 60952546, 60963393, 60963394 |
 | Standalone atmosphere restore regression, full suite and old-source check | 60906292 |
 | Packaged ocean-update GPU dispatch | 60896206 |
 | Eight-thread convection on ordered ocean main | 60876558, 60876559 |
@@ -636,11 +692,13 @@ These job identifiers locate the evidence in that archive.
 | C06 30-day persistence test | 60781768, 60781800 |
 | C06 current-main CPU tests, coupled compatibility and skill samplers | 60813131, 60815837, 60809445, 60809446 |
 | C06 repaired coupled comparisons, January skill and latest-main tests | 60824167, 60858832, 60859107 |
+| C06 January skill readout and ordered-main parameter screen | 60859047, 60969931, 60969932 |
 | Clean C08 one-day parameter runs and reader | 60782349, 60782351 |
 | C10 joint projection, physical phases and balanced clouds | 60809034, 60811701, 60818123 |
 | C10 diagnostic roundoff audit | 60818202 |
 | C10 conserved-variable representation | 60819225 |
 | BS08 full-coupled cost diagnostic and repaired harness | 60818157, 60835381 |
+| BS08 ordered-main tests and full-grid GPU follow-up | 60928269, 60969745, 60969746 |
 | Ocean grid-ordering witness and coupled replay | 60815972, 60817815, 60817817 |
 | C10 live cloud phase, rejected spectral bound and filter witness | 60800258, 60801160, 60804150 |
 | BS08 completed cost profile and reduction candidate | 60783921, 60803170 |
