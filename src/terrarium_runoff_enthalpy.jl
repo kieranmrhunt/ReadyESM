@@ -208,7 +208,7 @@ function _bs08_partition!(state, model)
     )
     Terrarium.launch!(grid, Terrarium.XY, _bs08_partition_kernel!, out, fields,
         surface_hydrology.canopy_interception, surface_hydrology.surface_runoff)
-    minimum(state.bs08_partition_consistent) == 1 || error(
+    minimum(Oceananigans.interior(state.bs08_partition_consistent)) == 1 || error(
         "BS08: an unclassified surface water source; the host partition is not the native DirectSurfaceRunoff law")
     _bs08_probe(:partition, :after, state, model)
     return nothing
