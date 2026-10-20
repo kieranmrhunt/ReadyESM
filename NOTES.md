@@ -16,6 +16,8 @@
 - Oceananigans on a 360 x 180 x 60 tripolar grid. v0.1.10 initializes
   ocean fields halfway between the December 1992 and January 1993 ECCO V4r4
   monthly means. Sea ice uses the January state.
+  Main now separates the surface-height and grid-scale updates to fix stale
+  neighbouring reads. See the [ordering tests](docs/validation-ocean-grid-ordering.md).
 - ClimaSeaIce dynamics and thermodynamics. Ice and snow volume are advected
   directly and conservatively. Velocity and tracer halos are refreshed first.
 - Terrarium 0.1.6 `LandModel` with 16 soil layers and prescribed vegetation.
@@ -28,6 +30,7 @@
 
 ReadyESM carries small patches to Terrarium, SpeedyTransforms and ClimaSeaIce.
 Their source and licences are included under `vendor/`.
+The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
 
 ## Main known limitations
 
@@ -35,8 +38,8 @@ Their source and licences are included under `vendor/`.
   sea-ice stepping. v0.1.6 and the v0.1.7 convection branch subsequently passed
   through day120 with native Float64 land and exact restored
   states. The GPU and driver also changed between failed and successful
-  attempts. General restart reliability and patch-only causality need more
-  evidence. See the [v0.1.5 record](docs/validation-v0.1.5.md) and
+  attempts. The cause of those illegal-access failures remains unresolved.
+  See the [v0.1.5 record](docs/validation-v0.1.5.md) and
   [v0.1.7 record](docs/validation-v0.1.7.md).
 - Initial ice-surface/radiation reconciliation can give excessively cold
   surface temperatures. Production keeps the qualified startup while a new
@@ -54,7 +57,9 @@ Their source and licences are included under `vendor/`.
   fixed-column comparison gives about 460 DU versus 245–378 DU in the sampled
   ERA5 columns. Its upper-tropospheric radiative effect needs validation.
   v0.1.10 keeps the analytic ozone profile.
-- GPU trajectory uncertainty is unmeasured. The long D run has one trajectory.
+- Long-run GPU trajectory spread is unmeasured. The long D run has one
+  trajectory. Short full-grid repeats with the ordered ocean update match
+  exactly.
 - Clouds are diagnosed from humidity. A prognostic system would carry cloud
   liquid, ice and overlap.
 - Arctic ice can still converge into coastal cells. Direct volume transport

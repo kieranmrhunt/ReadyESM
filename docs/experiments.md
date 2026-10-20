@@ -6,6 +6,7 @@ This page tracks the convection and blue-sky experiments.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
 It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
 The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
+Main also includes the [ordered ocean grid update](validation-ocean-grid-ordering.md).
 Production keeps its current Betts–Miller scheme.
 
 ## Convection portfolio
@@ -499,13 +500,16 @@ and four following steps. Carbon relative error stays below 2.957e-8.
 The numeric reader verifies all 20 restart/repeat comparisons across 425
 arrays each, including halos. Every difference is zero.
 
-Four full-grid tests are running, with live and zero carbon exchange repeated
-twice. All require the compact numeric comparisons to match before starting.
+Four full-grid tests pass, with live and zero carbon exchange repeated twice.
+All 1680 state entries match at the restored boundary and four following steps.
+All 20 cross-repeat comparisons also match exactly. An independent check
+reproduces all 40 restart and repeat comparisons.
 A current-main candidate adds the fix as a package include. The first CPU
 tests stopped at an outdated constructor call in the test. With that call
 repaired, all 377 focused assertions pass. The full CPU suite also passes,
 with the existing expected-broken truncation test. Both receipts verify.
-Full-grid comparisons continue. Public production remains unchanged.
+The ordered update is now included on main. The carbon extension remains
+under development.
 
 ## Evidence record
 

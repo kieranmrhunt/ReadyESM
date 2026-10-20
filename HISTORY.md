@@ -8,6 +8,13 @@ records are in the development labbook.
 
 ### 2026-10-20
 
+Fixed an ordering error in the Oceananigans z-star grid update. Surface heights
+are now copied before neighbouring grid scales are calculated. The scaling
+formula and launch bounds are unchanged. Four full-grid GPU restarts and
+their independent repeats match all 1680 state entries at five saved points.
+The package regression test and full CPU suite pass. See the
+[validation record](docs/validation-ocean-grid-ordering.md).
+
 Added optional CPU multi-plume convection and convective momentum transport.
 The schemes use Float64 plume calculations with Float32 atmospheric storage.
 Momentum mixing returns dissipated kinetic energy as heat. Rain and snow are
@@ -27,12 +34,10 @@ moisture and upper- and mid-level temperature errors remained larger.
 Regional wind results were mixed. Two 30-day rain-evaporation and downdraft comparisons
 reduced late net downward radiation by 0.63–0.97 W/m².
 
-An ocean grid-update test reproduced reads of stale neighbouring heights.
-Separate height-copy and scaling kernels gave exact agreement across 425
-arrays at five saved states in both compact restarts and both repeat
-comparisons. Full-grid tests followed. A cloud-transport prototype increased
+The ocean fix first passed compact comparisons across 425 arrays before
+the full-grid tests above. A cloud-transport prototype increased
 sharp-cloud peak retention from 56–57% to 87–88% after a T15 rotation.
-These prototypes remained in research branches. Their results are recorded
+The cloud prototype remained in a research branch. Its results are recorded
 in the [experiment notes](docs/experiments.md).
 
 The uniform convection-depth cutoff was closed after all four tested settings

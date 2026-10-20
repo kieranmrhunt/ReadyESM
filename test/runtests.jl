@@ -1,6 +1,8 @@
 using ReadyESM
 using Test
 
+include("ordered_ocean_grid.jl")
+
 config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
     check_input_files = false)
 
