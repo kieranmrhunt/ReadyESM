@@ -34,7 +34,7 @@ and applied gas provenance before accepting it as a continuation.
 | Full CPU suite with ERA5 inputs | 44 testsets, including 97 spectral-initialisation checks, no failures or skips | 61065689 |
 | Combined readout | 39 checks pass with corrected state-derived attribute comparison | 61087310 |
 | Full-grid A100, both options | Eight steps, valid gas values and runoff ledger, arrays on GPU | 61070683 |
-| Device-probe positive and negative controls | Pending | 61073955 |
+| Device-probe positive and negative controls | Seven checks pass across host arrays, views, wrappers, errors and GPU storage | 61073955 |
 
 The compact comparison uses T7/L8 and a 32×16×4 ocean. The GPU test uses
 the production T31/L27 atmosphere and 360×180×60 ocean. Its routed-enthalpy
