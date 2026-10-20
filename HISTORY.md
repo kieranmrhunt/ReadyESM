@@ -9,6 +9,12 @@ artefacts.
 
 ### 2026-10-20
 
+- Complete the first ordered ocean replay with exact agreement through restart
+  and four further steps. Queue full-grid repeats.
+- Test C10 grid-water storage for 32 cycles. All-water storage passes all
+  16 cases. Native vapour transport remains the next interface to replace.
+- Repair C06's report builder and reuse its verified reference output.
+  Queue four 31-day coupled runs for January ERA5 skill comparisons.
 - Complete both C08 day-one restarts. Verify the older native wrapper's
   unused zero snow field in a separate schema audit.
 - Qualify C06's coupled skill sampler. Test C10 conserved-water and energy

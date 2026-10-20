@@ -107,7 +107,15 @@ Both two-day sampler pilots complete. Their first reader rejects the
 Float32 model weights against a Float64 sum tolerance. An independent
 quadrature reconstruction matches every saved weight exactly. Explicit
 reader-only normalization then passes all original coverage, units, masks,
-precipitation and input-passivity checks. The monthly ERA5 comparison is next.
+precipitation and input-passivity checks.
+
+The current-main native reference finishes eight steps, then its report
+builder fails because a snow-history variable hides a Julia function.
+A corrected runner reuses both verified reference integrations. The native
+report is explicitly recovered from execution evidence. The strong reference
+report is unchanged. Twelve report-fragment tests pass. Candidate integrations
+and restarts are running. Four 31-day native/strong runs wait for these checks,
+then compare January ERA5 skill and execution-repeat spread.
 
 ### C08 and C07
 
@@ -331,6 +339,17 @@ temperature/vapour handoff passes nine cases. All 12 cloud-edge handoffs fail,
 with local total-water changes up to 2.15e-6 kg/kg. The next adapter must
 preserve local water and energy through that handoff and both stored time levels.
 
+A separate grid-storage test now passes 28 of 32 cases. Keeping vapour,
+liquid and ice on the grid passes all 16 cases for 32 cycles, with positive
+owned water and conserved phase-exchange and layer budgets. Saturated Float32
+clouds retain at least 99.857% of their initial mass.
+
+Cloud-only grid storage passes 12 of 16 cases. Four dry cloud-edge cases
+develop negative vapour after the native spectral transform. The projected
+vapour also remains negative in the all-water arm, while its owned water
+stays positive. The next prototype needs conservative grid-water transport,
+consistent stored time levels and restart support.
+
 ### BS08 runoff and heat
 
 The twelve-process test on one A100 passes its registered compatibility rule.
@@ -406,8 +425,14 @@ An isolated test of pinned Oceananigans 0.110.15 finds a grid-update defect.
 The native kernel writes sea-surface height and immediately interpolates
 neighbouring heights. It can mix old and new values. Separate copy and
 scaling kernels pass 472 checks, including repeatability and a CPU reference.
-Coupled replays now test this change. Package and production files stay fixed
-until those results establish its model-level effect.
+The first coupled replay matches all 1,550 state entries at the restored
+boundary and four following steps. Carbon relative error stays below
+2.957e-8. The second repeat is running. A numeric reader will compare 425
+arrays, including halos, across both repeats.
+
+Four full-grid tests are queued, with live and zero carbon exchange repeated
+twice. They require all 20 compact numeric comparisons to match exactly
+before starting. Package and production files remain unchanged.
 
 ## Evidence record
 

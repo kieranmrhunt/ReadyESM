@@ -52,7 +52,7 @@ The tables below track research candidates. See the
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
 | BS08 | Runoff storage and heat | A faster check preserves the original states exactly. Two timing blocks still exceed the 25% land-substep cost limit. | Measure full-coupled cost and test routing and restart. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | Carbon budgets pass. Repeated live runs reproduce the restart discrepancy. An isolated test finds stale neighbour heights in the ocean grid update. | Test ordered grid updates in coupled restarts. |
+| BS10 | Carbon, aerosols and emissions | Separate ocean height-copy and scaling steps remove stale neighbour reads in isolated tests. The first coupled replay matches all 1,550 state entries through restart. | Complete the second repeat and full-grid tests. |
 
 Current convection work:
 
@@ -62,7 +62,7 @@ Current convection work:
 | C06 | Both 30-day pairs retain moistening and reduce late net downward radiation by 0.63–0.97 W/m². Source-coverage flags remain. | Complete current-main coupled restarts and ERA5 skill tests. |
 | C07 | Optional CPU code is on main. January and July improve global winds against matched C08, with regional trade-offs. | Complete the six one-day coupled parameter comparisons. |
 | C08 | Optional CPU code is on main. Four one-day cases and both day-one restarts pass. The native reference needs a verified zero-field schema mapping. | Complete combined C07/C08 parameter tests. |
-| C10 | Conserved-water and energy storage gives positive, balanced phases in 24 tests. The native temperature/vapour handoff passes nine. | Repair the thermodynamic handoff and stored time levels. |
+| C10 | Grid storage of all water phases passes 16 offline cases for 32 cycles. Cloud-only storage passes 12 of 16. Native vapour projection still produces negative values at sharp edges. | Add conservative grid-water transport and test stored time levels. |
 
 ## Run
 
