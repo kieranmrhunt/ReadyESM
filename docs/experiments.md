@@ -502,11 +502,10 @@ launch states. Maximum relative carbon-inventory errors are 1.37e-9 with live
 exchange and 1.38e-9 with zero exchange, below the unchanged 2e-6 limit.
 The live-exchange production-grid GPU run now passes a full day. All 97
 inventory samples verify, with maximum relative error 5.51e-9 against the 2e-6
-limit. The zero-exchange day and full-grid restart tests are running.
-A nine-case sweep crosses
+limit. A nine-case sweep crosses
 three prescribed CO2 levels with three alkalinity settings. It resumes the test
 stopped by the earlier inventory bug and checks every step. The emissions-driven
-candidate passes its compact CPU restart checks. GPU tests are queued.
+candidate passes its compact CPU restart checks.
 
 The full-grid zero-exchange day and all nine CO2/alkalinity cases now pass.
 GPU emissions host tests pass all 27 saved samples. All 56 carbon-history
@@ -540,6 +539,19 @@ with the existing expected-broken truncation test. Both receipts verify.
 The ordered update is now included on main. The carbon extension remains
 under development.
 
+Candidate `68988e3` combines the carbon extension with current main. Its three
+carbon modules and five dedicated test files match the earlier emissions
+candidate. All 6,710 focused CPU assertions pass, including the ordered ocean
+update and changing-volume inventory checks. The full CPU suite is running.
+
+Four compact GPU tests will repeat the emissions restarts on this source.
+A separate CPU comparison checks that carbon-off matches main and that passive
+carbon tracers leave the common model state unchanged. Four full-grid runs
+follow the compact restart reader: prescribed 420 ppm, interactive CO2 with
+zero emissions, and 10 PgC/year with live or zero ocean exchange. Each runs
+for one model day and checks all 97 carbon-ledger boundaries. These tests
+retain the earlier tolerances and exact restart comparisons.
+
 ## Evidence record
 
 The development labbook retains source hashes, reports and failed attempts.
@@ -547,6 +559,9 @@ These job identifiers locate the evidence in that archive.
 
 | Evidence | Jobs |
 | --- | --- |
+| Carbon on ordered main, CPU tests and option-off comparison | 60869035, 60874069 |
+| Ordered-main emissions GPU restarts and reader | 60870291, 60870410 |
+| Ordered-main full-grid emissions tests | 60874070 |
 | Ordered ocean repeats and numeric comparison | 60817815, 60817817 |
 | Full-grid ocean follow-up and current-main CPU tests | 60821733, 60830346, 60835380 |
 | Grid-water baseline and limited-flux comparison | 60826008, 60830217 |
