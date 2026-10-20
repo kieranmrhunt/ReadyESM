@@ -22,7 +22,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Pressure mean-mode, centering and precision changes reduce the largest dynamics-only mass error from 14.65 to 0.15 kg/m² at larger timesteps. Wet-physics pilots are running. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Pressure mean-mode, centering and precision changes reduce the largest dynamics-only mass error from 14.65 to 0.15 kg/m² at larger timesteps. Wet pilots build, then stop at an observer-passivity check. A separate scratch-storage probe and corrected pilots are queued. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -481,8 +481,10 @@ and Terrarium, with a slab ocean. Eight-step restart checks precede five
 one-day comparisons. These include an independent native repeat.
 The first pilots stopped before construction because the slab configuration
 retained an ECCO input directory. Replacement pilots clear that setting and
-validate all configurations before integration. The failed attempts remain
-archived.
+validate all configurations before integration. They build successfully but
+stop at the launch observer-passivity check. A separate probe checks whether
+shared transform scratch accounts for the difference and tests private
+observer work arrays. Both failed attempts remain archived.
 Production pressure dynamics remain unchanged.
 
 ### BS08 runoff and heat
@@ -588,8 +590,11 @@ update and changing-volume inventory checks. The full CPU suite also passes,
 with the existing expected-broken initial truncation test.
 
 Four compact GPU tests will repeat the emissions restarts on this source.
-A separate CPU comparison checks that carbon-off matches main and that passive
-carbon tracers leave the common model state unchanged. Four full-grid runs
+A separate CPU comparison passes. Carbon-off matches main across all 431
+common state entries at construction, initialization and step two.
+Passive carbon tracers preserve those entries exactly. Both auxiliary
+constructor entries and all 13 freshwater/tracer checks also pass.
+Four full-grid runs
 follow the compact restart reader: prescribed 420 ppm, interactive CO2 with
 zero emissions, and 10 PgC/year with live or zero ocean exchange. Each runs
 for one model day and checks all 97 carbon-ledger boundaries. These tests
@@ -619,6 +624,7 @@ These job identifiers locate the evidence in that archive.
 | Pressure short-record recovery | 60888879 |
 | Wet-physics pressure pilots, one-day comparisons and readers | 60898300, 60898301, 60898302, 60898303 |
 | Wet-pressure configuration failure and cancelled follow-ups | 60895412, 60895413, 60895414, 60895415 |
+| Wet-pressure observer passivity probe | 60901498 |
 | Packaged ocean-update GPU dispatch | 60896206 |
 | Eight-thread convection on ordered ocean main | 60876558, 60876559 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |

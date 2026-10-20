@@ -15,6 +15,20 @@ and land state. ECCO supplies the ocean and sea ice.
 A 390-day initialised run, using v0.1.8 physics from day 90.
 [Figure details](docs/readiesm-v0.1.8-snapshot.json).
 
+## Speed
+
+Measured on JASMIN with one NVIDIA A100 40 GB and four CPU threads.
+Two fresh processes each timed three model days after warm-up.
+
+| Atmosphere | Ocean cells | Simulated years per day | Start-up |
+| --- | --- | ---: | ---: |
+| T15, 27 levels | 180×90×60 | 15.1 | 45–52 min |
+| T15, 27 levels | 360×180×60 | 11.1 | 45–51 min |
+
+The rate covers integration with daily budget diagnostics. Start-up includes
+loading, model construction, initialization and warm-up.
+[Timing details](docs/performance.md).
+
 ## Run
 
 Use Julia 1.12 and Python 3. The standard configuration uses an NVIDIA GPU
