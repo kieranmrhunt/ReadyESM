@@ -841,13 +841,18 @@ function Oceananigans.prognostic_state(
         model,
     )
     ocean = _augment_ocean_restart_state(model.ocean, state.ocean)
+    extensions = (
+        ; ocean,
+        interfaces = _component_interfaces_restart_state(model.interfaces),
+        balanced_launch = _balanced_launch_restart_state(model),
+    )
+    carbon = _carbon_restart_state(model)
+    if !isnothing(carbon)
+        extensions = merge(extensions, (; carbon))
+    end
     return merge(
         state,
-        (
-            ; ocean,
-            interfaces = _component_interfaces_restart_state(model.interfaces),
-            balanced_launch = _balanced_launch_restart_state(model),
-        ),
+        extensions,
     )
 end
 
@@ -855,6 +860,10 @@ function Oceananigans.restore_prognostic_state!(
     model::_ReadyESMRadiativeSpeedyEarthSystem,
     state,
 )
+    _validate_carbon_restart_compatibility(
+        model,
+        hasproperty(state, :carbon) ? state.carbon : nothing,
+    )
     invoke(
         Oceananigans.restore_prognostic_state!,
         Tuple{NumericalEarth.EarthSystemModel, Any},
@@ -871,6 +880,10 @@ function Oceananigans.restore_prognostic_state!(
     _restore_balanced_launch_restart_state!(
         model,
         hasproperty(state, :balanced_launch) ? state.balanced_launch : nothing,
+    )
+    _restore_carbon_restart_state!(
+        model,
+        hasproperty(state, :carbon) ? state.carbon : nothing,
     )
     # Ocean and sea ice are nested Oceananigans `Simulation`s. Upstream's
     # Simulation checkpoint state deliberately omits the lifecycle flag
@@ -904,7 +917,10 @@ function NumericalEarth.EarthSystemModels.update_state!(
         callbacks,
     )
     pending = _take_pending_dynamic_restart_state!(model)
-    isnothing(pending) && return nothing
+    if isnothing(pending)
+        _update_carbon_air_sea_boundary!(model)
+        return nothing
+    end
 
     # `update_state!` is mandatory in Oceananigans' pickup initialization, but
     # for this coupled model it is not an idempotent halo-only operation. It
@@ -926,6 +942,10 @@ function NumericalEarth.EarthSystemModels.update_state!(
     _restore_atmosphere_transform_column_storage!(
         model.atmosphere,
         pending.atmosphere,
+    )
+    _restore_carbon_restart_state!(
+        model,
+        hasproperty(pending, :carbon) ? pending.carbon : nothing,
     )
     _mark_restored_component_simulations_initialized!(model)
     _restore_component_interfaces_state!(model.interfaces, pending.interfaces)

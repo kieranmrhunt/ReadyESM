@@ -12,6 +12,15 @@ Base.@kwdef struct ForcingConfig
     cloud_condensate_residence_time_hours::Float64 = 6.0
 end
 
+Base.@kwdef struct CarbonConfig
+    mode::Symbol = :off
+    atmospheric_co2_ppm::Float64 = 420.0
+    ocean_equilibrium_co2_ppm::Float64 = 280.0
+    alkalinity_at_salinity_35_umol_kg::Float64 = 2300.0
+    chemistry_salinity_floor::Float64 = 5.0
+    emissions_pgc_per_year::Float64 = 0.0
+end
+
 Base.@kwdef struct ExperimentConfig
     name::String = "baseline"
     device::Symbol = :cpu
@@ -101,6 +110,7 @@ Base.@kwdef struct ExperimentConfig
     terrarium_precision::Symbol = :float32
     output_dir::String = joinpath(PROJECT_ROOT, "artifacts", "baseline")
     forcing::ForcingConfig = ForcingConfig()
+    carbon::CarbonConfig = CarbonConfig()
 end
 
 const _LOCALIZED_ESTUARY_MIXING_MODES = (
@@ -238,6 +248,34 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "cloud_condensate_residence_time_hours",
                 6.0,
             ),
+        ),
+    )
+    carbon_raw = _mapping_value(raw, "carbon", Dict{String, Any}())
+    _validate_mapping_keys(
+        carbon_raw,
+        fieldnames(CarbonConfig),
+        "carbon configuration",
+    )
+    carbon = CarbonConfig(
+        mode = Symbol(_mapping_value(carbon_raw, "mode", "off")),
+        atmospheric_co2_ppm = Float64(
+            _mapping_value(carbon_raw, "atmospheric_co2_ppm", 420.0),
+        ),
+        ocean_equilibrium_co2_ppm = Float64(
+            _mapping_value(carbon_raw, "ocean_equilibrium_co2_ppm", 280.0),
+        ),
+        alkalinity_at_salinity_35_umol_kg = Float64(
+            _mapping_value(
+                carbon_raw,
+                "alkalinity_at_salinity_35_umol_kg",
+                2300.0,
+            ),
+        ),
+        chemistry_salinity_floor = Float64(
+            _mapping_value(carbon_raw, "chemistry_salinity_floor", 5.0),
+        ),
+        emissions_pgc_per_year = Float64(
+            _mapping_value(carbon_raw, "emissions_pgc_per_year", 0.0),
         ),
     )
 
@@ -527,6 +565,7 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         terrarium_precision = Symbol(_mapping_value(raw, "terrarium_precision", "float32")),
         output_dir = output_dir,
         forcing = forcing,
+        carbon = carbon,
     )
     validate(config; check_input_files)
     return config
@@ -535,6 +574,7 @@ end
 function validate(config::ExperimentConfig; check_input_files::Bool = true)
     _validate_finite_float_fields(config, "experiment configuration")
     _validate_finite_float_fields(config.forcing, "forcing configuration")
+    _validate_finite_float_fields(config.carbon, "carbon configuration")
     config.device in (:cpu, :gpu) || throw(ArgumentError("device must be cpu or gpu"))
     config.truncation >= 7 || throw(ArgumentError("truncation must be at least 7"))
     config.nlayers >= 2 || throw(ArgumentError("nlayers must be at least 2"))
@@ -959,6 +999,57 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         :rrtmgp_clear_sky,
         :rrtmgp_all_sky,
     )
+    config.carbon.mode in (:off, :tracer_only, :prescribed, :emissions_driven) || throw(ArgumentError(
+        "carbon mode must be off, tracer_only, prescribed, or emissions_driven",
+    ))
+    isfinite(config.carbon.emissions_pgc_per_year) &&
+        config.carbon.emissions_pgc_per_year >= 0 || throw(ArgumentError(
+        "carbon emissions must be finite and nonnegative",
+    ))
+    config.carbon.mode == :emissions_driven ||
+        iszero(config.carbon.emissions_pgc_per_year) || throw(ArgumentError(
+        "nonzero carbon emissions require emissions_driven mode",
+    ))
+    config.carbon.atmospheric_co2_ppm > 0 || throw(ArgumentError(
+        "carbon atmospheric CO2 must be positive",
+    ))
+    config.carbon.ocean_equilibrium_co2_ppm > 0 || throw(ArgumentError(
+        "carbon ocean-equilibrium CO2 must be positive",
+    ))
+    config.carbon.alkalinity_at_salinity_35_umol_kg > 0 || throw(
+        ArgumentError("carbon alkalinity must be positive"),
+    )
+    config.carbon.chemistry_salinity_floor > 0 || throw(ArgumentError(
+        "carbon chemistry salinity floor must be positive",
+    ))
+    if config.carbon.mode == :off
+        config.carbon == CarbonConfig() || throw(ArgumentError(
+            "nondefault carbon settings require an active carbon mode",
+        ))
+    else
+        config.carbon.mode != :tracer_only || config.device == :cpu || throw(ArgumentError(
+            "carbon mode=tracer_only is CPU-only in Stage 0a",
+        ))
+        config.ocean_model == :oceananigans || throw(ArgumentError(
+            "active carbon modes require ocean_model=oceananigans",
+        ))
+        rrtmgp_active || throw(ArgumentError(
+            "active carbon modes require RRTMGP radiation",
+        ))
+        config.forcing.co2_ppm == config.carbon.atmospheric_co2_ppm || throw(
+            ArgumentError(
+                "forcing CO2 must equal the carbon controller CO2",
+            ),
+        )
+        config.ocean_river_mouth_mixing in (
+            :localized_estuary_v3,
+            :localized_estuary_v4,
+            :localized_estuary_v5,
+        ) && throw(ArgumentError(
+            "active carbon modes do not yet support salinity-only " *
+            "localized-estuary mixing",
+        ))
+    end
     if !rrtmgp_active && config.forcing.co2_ppm != 420
         throw(ArgumentError(
             "CO2 perturbations require radiation=rrtmgp_clear_sky or rrtmgp_all_sky; " *

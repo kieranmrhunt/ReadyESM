@@ -31,6 +31,10 @@ include("spectral_truncation.jl")
 include("era5_initial_conditions.jl")
 include("deterministic_cloud_sampling.jl")
 include("rrtmgp_radiation.jl")
+include("carbon_coupling.jl")
+include("carbon_stage0b.jl")
+include("carbon_emissions.jl")
+include("carbon_diagnostics.jl")
 include("conservative_atmosphere_humidity.jl")
 include("finite_multiplume_convection.jl")
 include("convective_momentum_transport.jl")
@@ -63,6 +67,7 @@ include("dynamic_restart.jl")
 
 export ExperimentConfig,
     ForcingConfig,
+    CarbonConfig,
     build_baseline,
     build_dynamic_esm,
     build_rrtmgp,

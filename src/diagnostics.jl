@@ -139,7 +139,8 @@ function _forcing_provenance(radiation, config::ExperimentConfig)
         requested_co2_ppm = config.forcing.co2_ppm,
         applied_co2_ppm = rrtmgp_active ? Float64(radiation.co2_ppm) : NaN,
         co2_forcing_active = rrtmgp_active,
-        co2_forcing_mode = rrtmgp_active ?
+        co2_forcing_mode = config.carbon.mode == :emissions_driven ?
+            "emissions_driven_well_mixed_atmosphere" : rrtmgp_active ?
             "prescribed_well_mixed_volume_mixing_ratio" :
             "not_applied_by_speedy_simplified_radiation",
         requested_aerosol_optical_depth_550nm =
@@ -154,8 +155,10 @@ function _forcing_provenance(radiation, config::ExperimentConfig)
         aerosol_vertical_profile = aerosol_active ?
             "fixed_log_pressure_gaussian_center_150hPa_width_0.8" :
             "none",
-        forcing_time_dependence = "constant_for_entire_integration",
-        interactive_carbon_cycle = false,
+        forcing_time_dependence = config.carbon.mode == :emissions_driven ?
+            "CO2_updated_each_coupling_step_from_emissions_and_air_sea_exchange" :
+            "constant_for_entire_integration",
+        interactive_carbon_cycle = config.carbon.mode == :emissions_driven,
         interactive_aerosol_chemistry = false,
         aerosol_emissions = false,
         radiation_every_n_steps = config.forcing.radiation_every_n_steps,

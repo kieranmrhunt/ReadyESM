@@ -1122,6 +1122,7 @@ function _build_ocean(
 )
     arch = _ocean_architecture(config)
     FT = Float32
+    carbon_kwargs = _carbon_ocean_kwargs(config)
     if config.ocean_grid == :tripolar_1degree
         config.ocean_dynamics || throw(
             ArgumentError("the one-degree tripolar ocean requires ocean_dynamics=true"),
@@ -1227,6 +1228,11 @@ function _build_ocean(
             grid,
             bottom_height,
         )
+        carbon_surface_kwargs = _carbon_surface_ocean_kwargs(
+            config,
+            grid,
+            free_surface,
+        )
         ocean = ClimaOcean.ocean_simulation(
             grid;
             momentum_advection,
@@ -1235,7 +1241,10 @@ function _build_ocean(
             closure,
             radiative_forcing,
             bottom_drag_coefficient = FT(0.003),
+            carbon_kwargs...,
+            carbon_surface_kwargs...,
         )
+        _bind_carbon_freshwater_exchange!(ocean, config)
         if config.ocean_river_mouth_mixing in (
             :localized_estuary_v3,
             :localized_estuary_v4,
@@ -1302,6 +1311,7 @@ function _build_ocean(
             grid,
             bottom_height,
         )
+        carbon_surface_kwargs = _carbon_surface_ocean_kwargs(config, grid)
         ocean = ClimaOcean.ocean_simulation(
             grid;
             momentum_advection,
@@ -1314,7 +1324,10 @@ function _build_ocean(
                 scheme = Oceananigans.EnstrophyConserving(FT),
             ),
             bottom_drag_coefficient = FT(0.003),
+            carbon_kwargs...,
+            carbon_surface_kwargs...,
         )
+        _bind_carbon_freshwater_exchange!(ocean, config)
         return _ocean_build_result(ocean, nothing, Val(return_auxiliary))
     end
 
@@ -1340,6 +1353,7 @@ function _build_ocean(
         ))),
     )
     if config.ocean_dynamics
+        carbon_surface_kwargs = _carbon_surface_ocean_kwargs(config, grid)
         ocean = ClimaOcean.ocean_simulation(
             grid;
             momentum_advection,
@@ -1350,16 +1364,23 @@ function _build_ocean(
                 scheme = Oceananigans.EnstrophyConserving(FT),
             ),
             bottom_drag_coefficient = FT(0.003),
+            carbon_kwargs...,
+            carbon_surface_kwargs...,
         )
+        _bind_carbon_freshwater_exchange!(ocean, config)
         return _ocean_build_result(ocean, nothing, Val(return_auxiliary))
     end
+    carbon_surface_kwargs = _carbon_surface_ocean_kwargs(config, grid)
     ocean = ClimaOcean.ocean_simulation(
         grid;
         momentum_advection = nothing,
         tracer_advection = nothing,
         closure = nothing,
         coriolis = nothing,
+        carbon_kwargs...,
+        carbon_surface_kwargs...,
     )
+    _bind_carbon_freshwater_exchange!(ocean, config)
     return _ocean_build_result(ocean, nothing, Val(return_auxiliary))
 end
 
@@ -2394,6 +2415,7 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
     ocean = ocean_build.ocean
     sea_ice = _build_sea_ice(config, ocean)
     _set_ocean_ice_initial_conditions!(ocean, sea_ice, config)
+    _initialize_carbon_tracers!(ocean, config)
     _mask_inactive_sea_ice_surface_cells!(sea_ice)
     _complete_ocean_initialization!(ocean)
     land = config.land_model == :terrarium ?
@@ -2421,6 +2443,7 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
         ocean,
     )
     Δt = eltype(ocean.model.grid)(atmosphere_Δt)
+    _install_carbon_controller!(earth_model, config, Δt)
     simulation = if isnothing(steps)
         Oceananigans.Simulation(
             earth_model;
@@ -2451,6 +2474,14 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
         Oceananigans.IterationInterval(1);
         name = :global_coupled_budgets,
     )
+    if config.carbon.mode in (:prescribed, :emissions_driven)
+        Oceananigans.add_callback!(
+            simulation,
+            CarbonLedgerCallback(earth_model),
+            Oceananigans.IterationInterval(1);
+            name = :carbon_ledger,
+        )
+    end
     return simulation
 end
 
@@ -3025,7 +3056,8 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             atmosphere.variables.parameterizations.vertical_diffusion_cfl_scale.data,
         )) : ones(Float64, length(atmosphere_longitude))
 
-    return (
+    return (;
+        _carbon_diagnostic_fields(earth, config)...,
         ocean_longitude = longitude,
         ocean_latitude = latitude,
         ocean_layer_depth,
@@ -3699,6 +3731,7 @@ end
 
 """Validate finite-state and physical-bound invariants for dynamic-stack output."""
 function validate_dynamic_diagnostics(diagnostics)
+    _validate_carbon_diagnostics(diagnostics)
     finite_fields = (
         :ocean_surface_temperature,
         :ocean_surface_salinity,
@@ -5412,6 +5445,7 @@ function _write_dynamic_netcdf(path, diagnostics)
             # NetCDF attributes have no native boolean type.
             dataset.attrib[String(key)] = _netcdf_attribute_value(value)
         end
+        _write_carbon_diagnostics!(dataset, diagnostics, ocean_dimensions, time_origin)
         dataset.attrib["created_at_utc"] = string(now(UTC))
     end
     return path

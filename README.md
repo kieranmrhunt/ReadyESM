@@ -91,8 +91,9 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Prescribed sulfate aerosol optical depth. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
 
-The model uses prescribed CO2 and aerosol forcing. Land vegetation is
-prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
+The standard setup uses prescribed CO2 and aerosol forcing. Optional
+[carbon exchange and emissions](docs/carbon.md) can update CO2.
+Land vegetation is prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
 has separate configuration instructions.
 
 See [setup and tests](docs/running.md), [known limitations](NOTES.md) and

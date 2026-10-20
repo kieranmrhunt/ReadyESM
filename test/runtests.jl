@@ -3,6 +3,12 @@ using Test
 
 include("ordered_ocean_grid.jl")
 include("standalone_atmosphere_restart.jl")
+include("carbon_stage0a.jl")
+include("carbon_stage0b.jl")
+include("carbon_stage0c.jl")
+include("carbon_emissions.jl")
+include("carbon_diagnostics.jl")
+include("carbon_inventory_geometry.jl")
 
 config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
     check_input_files = false)
