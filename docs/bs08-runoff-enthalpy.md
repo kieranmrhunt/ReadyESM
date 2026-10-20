@@ -55,6 +55,15 @@ older file stops at its first diagnostic sample.
 
 ## Qualification
 
-The CPU and A100 qualification gates are in the development records. They check that the option-off model is
-unchanged, that water and enthalpy are conserved through the routing, and that restarts are exact. A separate
-whole-model timing test found no measurable cost. The decision about the cost criterion for a release is open.
+CPU comparisons check unchanged off-mode behaviour, routed water and heat,
+output histories and exact restarts. The full-grid A100 test checks the
+active energy ledger and GPU storage. The joint test also enables prescribed
+methane and nitrous oxide. See the [validation record](validation-runoff-trace-gases.md).
+
+An earlier four-block coupled timing test measured a mean on/off ratio of
+1.0044. A later short coupled pair measured 1.076. The land-only kernel test
+exceeded its 1.25 limit. These tests used different harnesses and source
+revisions. Allow for extra runtime when enabling the option.
+
+The option is provided for controlled runs. A matched monthly comparison is
+measuring its effect on coastal temperature, salinity and the coupled climate.

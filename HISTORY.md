@@ -8,6 +8,16 @@ records are in the development labbook.
 
 ### 2026-10-20
 
+Added optional runoff-heat routing. Water now carries its land-derived heat
+through the runoff store to the ocean when `terrarium_runoff_enthalpy` is on.
+The model records the transferred heat, storage and energy in transit, and
+restores these quantities from checkpoints. Production keeps the option off.
+
+Added prescribed methane and nitrous oxide concentrations for RRTMGP through
+`forcing.ch4_ppb` and `forcing.n2o_ppb`. Omitted values retain 1900 and 340 ppb.
+The two extensions have joint CPU restart and full-grid A100 tests. See the
+[validation record](docs/validation-runoff-trace-gases.md).
+
 Added optional ocean carbon exchange and emissions-driven atmospheric CO2.
 The model writes DIC, alkalinity and carbon-budget histories and restores
 them from checkpoints. Four full-grid GPU days, CPU and GPU output/restart
@@ -22,8 +32,10 @@ of start-up. See the [timing details](docs/performance.md).
 Completed four January C06 comparisons. Rain evaporation and downdrafts gave
 small precipitation and upper-temperature gains, with moisture and wind
 penalties. A 20-member screen now separates their parameter effects.
-The runoff-heat extension passed its whole-model cost comparison and
-ordered-main CPU checks. The convection and runoff options remain under assessment.
+The runoff-heat extension passed its earlier whole-model cost comparison,
+while its land-only timing exceeded the local limit. A later short coupled
+pair measured 7.6% overhead. It is available as an option, with its monthly
+climate comparison still running. The convection settings remain under assessment.
 See the [experiment notes](docs/experiments.md).
 
 Fixed standalone atmosphere checkpoints so they restore both transform-column

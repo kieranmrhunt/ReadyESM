@@ -532,6 +532,14 @@ Production pressure dynamics remain unchanged.
 
 ### BS08 runoff and heat
 
+The optional runoff-enthalpy implementation now has joint CPU and A100
+qualification with prescribed methane and nitrous oxide. Off mode preserves
+main's state and output. The active CPU restart is exact, and the GPU energy
+ledger closes. Production keeps the option off. Four monthly coupled runs
+will assess coastal temperature, salinity and atmospheric effects. See the
+[validation record](validation-runoff-trace-gases.md) and
+[configuration guide](bs08-runoff-enthalpy.md).
+
 The twelve-process test on one A100 passes its registered compatibility rule.
 Construction and initialization match exactly across 443 stored state fields. At
 step two, the repeat-variation statistic is 0.22222 against a limit of 1,
