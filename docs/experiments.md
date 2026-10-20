@@ -129,8 +129,8 @@ The original failures remain in the run records.
 Four replacement 31-day native/strong runs will compare January ERA5 skill
 and execution-repeat spread. They retain the frozen C06 candidate.
 A separate candidate applies the same C06 code to the latest main branch,
-including the accepted ocean-ordering fix. Its focused and full CPU tests
-are running.
+including the accepted ocean-ordering fix. Its 518 focused CPU assertions
+and full CPU suite pass. Coupled compatibility and restart tests are running.
 
 ### C08 and C07
 
@@ -440,8 +440,16 @@ restarts. Centered stepping reduces mass error by 99.14–99.84% in all
 
 Float32 behaves differently: 26 of 36 moving cases improve, ten worsen,
 and the worst error rises from 1.11394 to 1.14887 kg/m². Keep the
-production setting. The next test isolates pressure-storage precision
-before testing L27, operational timesteps and full physics.
+production setting.
+
+A pressure-storage probe passes 123 ownership, copy and short-evolution checks.
+It widens only the pressure coefficients, or pressure coefficients and their
+tendencies, while retaining the Float32 3-D atmosphere and transform buffers.
+A 27-member sweep now tests these two settings against native storage at
+T7/T15/T31 and three timesteps. Each member has six flow/pressure cases and
+an exact halfway restart. Native controls must reproduce the earlier centered
+Float32 records. Initial grid-pressure changes are reported separately.
+L27, operational timesteps and full-physics tests remain later stages.
 
 ### BS08 runoff and heat
 
@@ -570,6 +578,8 @@ These job identifiers locate the evidence in that archive.
 | Six-hour pressure sweep, original reader and arithmetic recovery | 60845375, 60846103, 60846859 |
 | Pressure time-filter isolation | 60850042 |
 | Implicit time-centering sweep | 60861271 |
+| Pressure-storage probe, sweep and audit | 60877770, 60878718, 60878998 |
+| Eight-thread convection on ordered ocean main | 60876558, 60876559 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
 | C06 30-day persistence test | 60781768, 60781800 |
