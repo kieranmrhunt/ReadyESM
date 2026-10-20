@@ -78,5 +78,9 @@ convection, case 12 improves rainfall error but retains larger moisture and
 500 hPa temperature errors. C07 improves global wind error relative to C08,
 with mixed regional effects. See [experiment results](experiments.md).
 
-July tests provide a separate seasonal check. Coupled integration, restart
-checks and longer persistence tests are tracked in the same experiment notes.
+All six clean coupled pilots and six fresh-process restarts pass. Restored
+states and four following steps match the uninterrupted runs exactly. See the
+[integration checks](validation-finite-convection.md).
+
+July tests provide a separate seasonal check. Longer coupled tests and
+parameter selection continue in the experiment notes.

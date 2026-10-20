@@ -9,6 +9,13 @@ artefacts.
 
 ### 2026-10-20
 
+- Add optional finite multi-plume C08 convection for CPU runs. Add C07
+  momentum transport with local conversion of dissipated kinetic energy to heat.
+- Expose both schemes through the normal model configuration. Keep Float32
+  storage, Float64 plume calculations and separate rain and snow accounting.
+- Pass the full CPU suite, six coupled pilots and six exact fresh-process
+  restarts. Keep production Betts–Miller and the v0.1.10 configuration.
+  See the [validation record](docs/validation-finite-convection.md).
 - Close the tested uniform C02 depth cutoff after four settings worsen
   temperature skill at all three tested pressure levels.
 - Record completed C06 and C10 ten-day comparisons, clean C07/C08 coupled

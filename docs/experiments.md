@@ -4,6 +4,8 @@ Updated 20 October 2026. Production is v0.1.10. Research candidates stay in
 separate source snapshots until their results support a model update.
 The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
+It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
+Production keeps its current Betts–Miller scheme.
 
 ## Convection portfolio
 
@@ -15,8 +17,8 @@ Main now includes the accepted [snow-accounting update](validation-snow-accounti
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
 | C06: rain evaporation and cold pools | Active | All six ten-day runs pass physical checks. The stronger setting reduces late net downward radiation by about 0.7 W/m². Source-coverage flags remain. Thirty-day tests are queued. |
-| C07: convective momentum transport | Active | January ERA5 scores show global wind improvements at all three levels. Tropical gains come with smaller extratropical losses. |
-| C08: deterministic multi-plume convection | Active | Case 12 improves moisture and temperature errors relative to the original setting. Clean coupled controls pass. Fresh-process clean restarts are running. |
+| C07: convective momentum transport | Integrated option, assessment active | CPU option passes coupled and exact restart tests. January global wind gains come with regional trade-offs. |
+| C08: deterministic multi-plume convection | Integrated option, assessment active | CPU option passes coupled and exact restart tests. Case 12 improves moisture and temperature errors relative to its original setting. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
 | C10: shallow eddy-diffusivity/mass-flux transport | Active | Ten-day tests pass physical checks but reach about 339 K. Extra substeps give little further reduction. Local heating traces are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
@@ -157,12 +159,14 @@ CPU suite passes. All six clean coupled pilots now pass for native, C08,
 zero-strength C07 and active C07 at three settings. Native and C08 reproduce
 their reference states and all 210 output variables. Zero-strength C07 matches
 all 1,816 common state entries at six saved stages. Active C07 passes its
-water, energy, momentum and snow checks. Fresh-process clean restarts are running.
+water, energy, momentum and snow checks. All six fresh-process clean restarts
+now pass. Each restored state and four following steps match the uninterrupted
+run exactly across 1,645–1,987 entries. Both schemes are available on main as
+optional CPU configurations. Production defaults remain unchanged.
 
 All four research day-one restarts also pass. Their complete states match
 at the checkpoint and four following steps. These compare 1,654–1,816 entries
-per member. The clean optional schemes remain separate from GitHub main until
-their own restart checks finish.
+per member. The clean implementations have now passed their own restart tests.
 
 All six combined C07/C08 cases pass their physical checks. Days 10–30 mean
 column water is 16.535 and 16.440 kg/m² for the centre and faster settings,
