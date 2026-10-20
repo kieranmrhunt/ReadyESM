@@ -181,7 +181,7 @@ a short validation snapshot; it replaces the older v0.1.1 illustration.
 
 ## Scope and reproduction
 
-The [README test commands](../README.md#test) reproduce the CPU tests, coupled
+The [test commands](running.md#tests) reproduce the CPU tests, coupled
 smoke, fresh-process continuation and restored-boundary comparison. Production
 checks require the ERA5/ECCO input files and a CUDA device. Model construction
 and the first GPU step can take hours.

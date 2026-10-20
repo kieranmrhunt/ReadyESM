@@ -2,7 +2,7 @@
 
 Updated 20 October 2026. Production is v0.1.10. Research candidates stay in
 separate source snapshots until their results support a model update.
-The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
+This page tracks the convection and blue-sky experiments.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
 It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
 The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
