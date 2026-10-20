@@ -21,7 +21,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Smooth-cloud tests preserve cloud and budgets. Cloud edges regain negative phases after the final spectral transform. The time filter also needs consistent phase histories. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport now includes phase exchange and heating. Float64 owned storage reduces the worst heat residual in Float32-launched tests to 0.0000444 J/m². Native pressure and time levels are the next interface. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -358,8 +358,35 @@ RK2 in all 16 full-rotation cases. Both new 32-case arms preserve nonnegative
 water, conserved inventories and temperature bounds. All 64 restarts match
 exactly. At T15, sharp-cloud peak retention rises from 56–57% to 87–88%,
 and relative return error falls from 63–64% to 14–15%. Smooth-cloud peaks
-retain about 98.9%. Next test phase/source exchange, native mass continuity
-and stored time levels.
+retain about 98.9%.
+
+The moving-cloud test adds phase equilibrium and prescribed heating or cooling.
+All 128 cases and their fresh-process restarts pass the numerical checks.
+Float32 storage still leaves a heat residual of 6498.5 J/m² in the worst
+case. A matched repeat promotes the original extensive values to Float64
+before stepping. Its largest heat residual among Float32-launched cases is
+0.0000444 J/m². All 64 Float64 controls remain exact, as do all 128 restarts.
+
+Read-only Float32 atmospheric views have up to 126.34 J/m² instantaneous
+energy quantization error. These views never overwrite the owned state in
+the test.
+
+The native-dynamics sweep completes 24 cases and exact halfway restarts.
+It checks pressure-derived air mass and both stored time levels. The diagnostic
+leaves the selected state arrays unchanged. In the Float64 T7 rotating-flow
+case, mean air mass rises by 0.989901 kg/m² over 3840 seconds while mean log
+pressure changes by only 3.20e-14. Float32 exponentiation rounding is too
+small to explain the gain. Resting Float64 controls remain steady to rounding.
+
+The pinned core zeros the mean log-pressure tendency in two places. An
+eight-member experiment tests these operations separately and together,
+with unchanged controls in both precisions. These short, initially unbalanced
+flows establish the interface behaviour. Longer tests will assess its
+effect on the coupled model.
+
+Four members stopped before construction because Julia dedented the method
+lookup string. The repaired lookup passes seven regression assertions.
+Only those four members were resubmitted.
 
 ### BS08 runoff and heat
 
@@ -387,6 +414,12 @@ checks a fresh-process restart. It retains the routing, heat, freshwater,
 correction-count and state checks. All cost ratios will be reported against
 the existing 1.03 whole-coupled criterion. The earlier local cost failure
 remains recorded.
+
+The first full-coupled attempt completed its off member, then failed in a
+test snapshot. The TKE boundary flux is a function, while the snapshot
+assumed every flux entry owned an array. The repaired harness passes 15
+regression checks. A fresh four-member comparison is running with unchanged
+model code and thresholds.
 
 ### BS10 carbon inventory
 
@@ -443,8 +476,11 @@ arrays each, including halos. Every difference is zero.
 
 Four full-grid tests are running, with live and zero carbon exchange repeated
 twice. All require the compact numeric comparisons to match before starting.
-A current-main candidate adds the fix as a package include. Its focused and
-full CPU tests are running. Public production remains unchanged.
+A current-main candidate adds the fix as a package include. The first CPU
+tests stopped at an outdated constructor call in the test. With that call
+repaired, all 377 focused assertions pass. The full CPU suite also passes,
+with the existing expected-broken truncation test. Both receipts verify.
+Full-grid comparisons continue. Public production remains unchanged.
 
 ## Evidence record
 
@@ -454,8 +490,10 @@ These job identifiers locate the evidence in that archive.
 | Evidence | Jobs |
 | --- | --- |
 | Ordered ocean repeats and numeric comparison | 60817815, 60817817 |
-| Full-grid ocean follow-up and current-main CPU tests | 60821733, 60830346 |
+| Full-grid ocean follow-up and current-main CPU tests | 60821733, 60830346, 60835380 |
 | Grid-water baseline and limited-flux comparison | 60826008, 60830217 |
+| Moving-cloud phase/source test and owned precision | 60831748, 60835591 |
+| Native pressure continuity and zero-mode attribution | 60840424, 60841330, 60841567 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
 | C06 30-day persistence test | 60781768, 60781800 |
@@ -464,7 +502,7 @@ These job identifiers locate the evidence in that archive.
 | C10 joint projection, physical phases and balanced clouds | 60809034, 60811701, 60818123 |
 | C10 diagnostic roundoff audit | 60818202 |
 | C10 conserved-variable representation | 60819225 |
-| BS08 full-coupled cost diagnostic | 60818157 |
+| BS08 full-coupled cost diagnostic and repaired harness | 60818157, 60835381 |
 | Ocean grid-ordering witness and coupled replay | 60815972, 60817815, 60817817 |
 | C10 live cloud phase, rejected spectral bound and filter witness | 60800258, 60801160, 60804150 |
 | BS08 completed cost profile and reduction candidate | 60783921, 60803170 |
