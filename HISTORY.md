@@ -9,6 +9,10 @@ artefacts.
 
 ### 2026-10-20
 
+- Complete both C08 day-one restarts. Verify the older native wrapper's
+  unused zero snow field in a separate schema audit.
+- Qualify C06's coupled skill sampler. Test C10 conserved-water and energy
+  storage and isolate the remaining native thermodynamic handoff error.
 - Complete both C06 30-day research pairs and four clean C08 one-day coupled
   cases. Keep production convection unchanged while restart and skill tests run.
 - Reproduce stale neighbour heights in the pinned ocean grid-update kernel.

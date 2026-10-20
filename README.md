@@ -61,8 +61,8 @@ Current convection work:
 | C02 | Closed in its uniform-cutoff form. Four settings improve moisture but worsen temperature at all three tested levels. | Reopen for a regime-dependent or resolution-based mechanism. |
 | C06 | Both 30-day pairs retain moistening and reduce late net downward radiation by 0.63–0.97 W/m². Source-coverage flags remain. | Complete current-main coupled restarts and ERA5 skill tests. |
 | C07 | Optional CPU code is on main. January and July improve global winds against matched C08, with regional trade-offs. | Complete the six one-day coupled parameter comparisons. |
-| C08 | Optional CPU code is on main. Four one-day coupled cases pass and reproduce their short-run prefixes. | Complete day-one restart and longer parameter tests. |
-| C10 | Smooth Float32 clouds retain over 99.98% of condensate. Cloud edges regain negative values after the spectral transform. | Repair cloud-edge representation and stored time levels. |
+| C08 | Optional CPU code is on main. Four one-day cases and both day-one restarts pass. The native reference needs a verified zero-field schema mapping. | Complete combined C07/C08 parameter tests. |
+| C10 | Conserved-water and energy storage gives positive, balanced phases in 24 tests. The native temperature/vapour handoff passes nine. | Repair the thermodynamic handoff and stored time levels. |
 
 ## Run
 

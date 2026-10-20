@@ -103,7 +103,11 @@ fails, and unmapped rain passes through unchanged.
 The current-main candidate passes 141 focused assertions and the full CPU
 suite. New checks reject unsupported C06/C07/C08 combinations and invalid
 parameters. Coupled source comparisons and fresh-process restarts are running.
-Separate sampler pilots prepare the monthly ERA5 comparison.
+Both two-day sampler pilots complete. Their first reader rejects the
+Float32 model weights against a Float64 sum tolerance. An independent
+quadrature reconstruction matches every saved weight exactly. Explicit
+reader-only normalization then passes all original coverage, units, masks,
+precipitation and input-passivity checks. The monthly ERA5 comparison is next.
 
 ### C08 and C07
 
@@ -121,8 +125,15 @@ zero-strength C07, momentum transport, and momentum transport with heat return.
 The clean native, C08 centre, case 3 and case 12 runs now complete one coupled
 day. All four reproduce their qualified short-run prefixes. State bounds,
 closure checks, snow histories and production diagnostics pass. A fresh
-reader run reproduces every saved report value. The two day-one restart
-checks and six current-main C07/C08 parameter comparisons continue.
+reader run reproduces every saved report value.
+
+Both day-one restart cases reproduce the step-96 checkpoint and steps 97–100
+exactly. C08 also matches all 1,816 entries in the older reference.
+The native reference comparison initially fails because its older wrapper
+contains nine entries for an unused snow diagnostic. A separate audit verifies
+the zero values, shape and grid metadata. All 1,645 shared native entries
+match exactly. The archive retains the original failed readout.
+Six current-main C07/C08 parameter comparisons continue.
 
 The atmosphere screen starts from ERA5 on 1 January 1993. It uses T31/L27,
 prescribed seasonal SST and simple radiation. Seven configurations cross
@@ -313,6 +324,13 @@ All six cloud-edge cases still fail. The archive keeps both sets of verdicts.
 Cloud-edge positivity and consistent live time histories remain the next
 physical tasks.
 
+A conserved-variable prototype now passes projection inventories and grid
+phase diagnosis in all 24 cases. It covers both precisions, three temperatures,
+smooth and edge clouds, and uniform or variable pressure. The required native
+temperature/vapour handoff passes nine cases. All 12 cloud-edge handoffs fail,
+with local total-water changes up to 2.15e-6 kg/kg. The next adapter must
+preserve local water and energy through that handoff and both stored time levels.
+
 ### BS08 runoff and heat
 
 The twelve-process test on one A100 passes its registered compatibility rule.
@@ -405,6 +423,7 @@ These job identifiers locate the evidence in that archive.
 | Clean C08 one-day parameter runs and reader | 60782349, 60782351 |
 | C10 joint projection, physical phases and balanced clouds | 60809034, 60811701, 60818123 |
 | C10 diagnostic roundoff audit | 60818202 |
+| C10 conserved-variable representation | 60819225 |
 | BS08 full-coupled cost diagnostic | 60818157 |
 | Ocean grid-ordering witness and coupled replay | 60815972, 60817815, 60817817 |
 | C10 live cloud phase, rejected spectral bound and filter witness | 60800258, 60801160, 60804150 |
