@@ -203,10 +203,12 @@ const BS08_EXCHANGE_LEGACY_ZERO_INITIALIZATIONS = Ref(0)
 
 function Oceananigans.prognostic_state(land::_BS08RunoffLand)
     ex = land.runoff_exchange
-    return (; schema = "readiesm_native_runoff_exchange_v2",
+    # v3 = v2 plus the host-side BS08 diagnostic history (bs08_diagnostics.jl), or nothing when none is installed.
+    return (; schema = "readiesm_native_runoff_exchange_v3",
             runoff_exchange = _native_runoff_exchange_state(land),
             runoff_enthalpy = (pending_enthalpy_jm2 = Array(ex.pending_enthalpy),
-                               held_enthalpy_rate_wm2 = Array(ex.held_enthalpy_rate)))
+                               held_enthalpy_rate_wm2 = Array(ex.held_enthalpy_rate)),
+            diagnostic_history = _bs08_history_checkpoint(land))
 end
 
 function Oceananigans.restore_prognostic_state!(land::_BS08RunoffLand, state::NamedTuple)
@@ -220,7 +222,8 @@ function Oceananigans.restore_prognostic_state!(land::_BS08RunoffLand, state::Na
         @info "BS08: option-on restore from a runoff exchange without enthalpy; zero-initialised the pending enthalpy and the held enthalpy rate"
         return land
     end
-    state.schema == "readiesm_native_runoff_exchange_v2" || error("unsupported native-runoff checkpoint schema")
+    state.schema in ("readiesm_native_runoff_exchange_v2", "readiesm_native_runoff_exchange_v3") ||
+        error("unsupported native-runoff checkpoint schema")
     pairs = ((ex.pending_enthalpy, state.runoff_enthalpy.pending_enthalpy_jm2),
              (ex.held_enthalpy_rate, state.runoff_enthalpy.held_enthalpy_rate_wm2))
     for (destination, source) in pairs                 # validate everything before any array changes
@@ -232,9 +235,16 @@ function Oceananigans.restore_prognostic_state!(land::_BS08RunoffLand, state::Na
     size(depth) == size(ex.pending_enthalpy) || throw(DimensionMismatch("runoff exchange checkpoint shape differs"))
     any(c -> iszero(depth[c]) && !iszero(state.runoff_enthalpy.pending_enthalpy_jm2[c]), eachindex(depth)) && error(
         "runoff enthalpy checkpoint has pending enthalpy without pending water")
+    # A v2 checkpoint, or a v3 one saved without history, leaves an installed history at launch state. The history
+    # then refuses its first sample unless the run is at launch (documented launch-only legacy policy).
+    history = _bs08_diagnostic_history(land)
+    saved_history = state.schema == "readiesm_native_runoff_exchange_v3" ? state.diagnostic_history : nothing
+    restore_history = !isnothing(history) && !isnothing(saved_history)
+    restore_history && _validate_bs08_history_checkpoint(history, saved_history)
     _restore_native_runoff_exchange!(land, state.runoff_exchange)
     for (destination, source) in pairs
         copyto!(destination, source)
     end
+    restore_history && _restore_bs08_history!(history, saved_history)
     return land
 end

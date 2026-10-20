@@ -2459,17 +2459,18 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
         ClimaOcean.Progress(),
         Oceananigans.TimeInterval(86_400),
     )
+    budget_sample_every_n_steps = if !isnothing(steps) &&
+                                     steps <= round(Int, 86_400 / Float64(Δt))
+        1
+    else
+        max(1, round(Int, 86_400 / Float64(Δt)))
+    end
     Oceananigans.add_callback!(
         simulation,
         GlobalCoupledBudgetCallback(
             earth_model,
             Δt;
-            sample_every_n_steps = if !isnothing(steps) &&
-                                      steps <= round(Int, 86_400 / Float64(Δt))
-                1
-            else
-                max(1, round(Int, 86_400 / Float64(Δt)))
-            end,
+            sample_every_n_steps = budget_sample_every_n_steps,
         ),
         Oceananigans.IterationInterval(1);
         name = :global_coupled_budgets,
@@ -2480,6 +2481,16 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
             CarbonLedgerCallback(earth_model),
             Oceananigans.IterationInterval(1);
             name = :carbon_ledger,
+        )
+    end
+    # BS08 diagnostics exist only with the option on; the option-off build is unchanged.
+    if earth_model.land isa _BS08RunoffLand
+        _install_bs08_diagnostic_history!(earth_model, budget_sample_every_n_steps)
+        Oceananigans.add_callback!(
+            simulation,
+            BS08DiagnosticsCallback(),
+            Oceananigans.IterationInterval(1);
+            name = :bs08_diagnostics,
         )
     end
     return simulation
@@ -3058,6 +3069,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
 
     return (;
         _carbon_diagnostic_fields(earth, config)...,
+        _bs08_diagnostic_fields(earth)...,
         ocean_longitude = longitude,
         ocean_latitude = latitude,
         ocean_layer_depth,
@@ -3732,6 +3744,7 @@ end
 """Validate finite-state and physical-bound invariants for dynamic-stack output."""
 function validate_dynamic_diagnostics(diagnostics)
     _validate_carbon_diagnostics(diagnostics)
+    _validate_bs08_diagnostics(diagnostics)
     finite_fields = (
         :ocean_surface_temperature,
         :ocean_surface_salinity,
@@ -5446,6 +5459,7 @@ function _write_dynamic_netcdf(path, diagnostics)
             dataset.attrib[String(key)] = _netcdf_attribute_value(value)
         end
         _write_carbon_diagnostics!(dataset, diagnostics, ocean_dimensions, time_origin)
+        _write_bs08_diagnostics!(dataset, diagnostics, ocean_dimensions, time_origin)
         dataset.attrib["created_at_utc"] = string(now(UTC))
     end
     return path
