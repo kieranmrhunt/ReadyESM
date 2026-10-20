@@ -17,11 +17,12 @@ floating-point type. Omitted values leave RRTMGP's 1900 ppb methane and
 values. These controls prescribe concentrations, without adding gas chemistry
 or an emissions cycle for either gas.
 
-For an unchanged continuation, keep the same CH4 and N2O settings in the
-restart configuration. These values are currently read from the new run's
-configuration, without a checkpoint mismatch check. The exact restart tests
-use matching gas settings. For chained runs, compare each segment's requested
-and applied gas provenance before accepting it as a continuation.
+Checkpoints record the CH4 and N2O settings. A restart whose configuration
+differs from the checkpoint stops with an error before it changes any
+atmosphere, ocean or land state. A checkpoint written before this record has
+no gas settings, so it restores only into a configuration without
+`forcing.ch4_ppb` and `forcing.n2o_ppb`. For chained runs, keep comparing each
+segment's requested and applied gas provenance as a second check.
 
 ## Checks
 

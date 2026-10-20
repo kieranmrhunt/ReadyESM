@@ -1135,6 +1135,26 @@ function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}
     return vmr
 end
 
+"""
+Reject a checkpoint whose optional CH4/N2O settings differ from the reconstructed radiation, before any state is
+changed. A checkpoint written before these options existed has no record and implies the RRTMGP standard profile
+(`nothing`), so it restores only into a configuration without `ch4_ppb` and `n2o_ppb`.
+"""
+function _validate_trace_gas_restart(radiation, state)
+    for (label, field) in (("CH4", :ch4_vmr), ("N2O", :n2o_vmr))
+        saved = hasproperty(state, field) ? getproperty(state, field) : nothing
+        current = getproperty(radiation, field)
+        (isnothing(saved) || saved isa AbstractFloat) || throw(ArgumentError(
+            "checkpoint $label mole fraction must be nothing or a floating-point value",
+        ))
+        isnothing(saved) == isnothing(current) && (isnothing(saved) || saved === current) || throw(ArgumentError(
+            "checkpoint and reconstructed radiation use different $label settings " *
+            "(checkpoint $(something(saved, "standard profile")), configuration $(something(current, "standard profile")))",
+        ))
+    end
+    return nothing
+end
+
 function RRTMGPRadiation(
     spectral_grid::SpectralGrid;
     co2_ppm = 420,

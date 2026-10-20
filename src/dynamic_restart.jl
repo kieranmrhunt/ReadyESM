@@ -323,6 +323,8 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
         ) : nothing
     return (
         call_counter = radiation.call_counter,
+        ch4_vmr = radiation.ch4_vmr,
+        n2o_vmr = radiation.n2o_vmr,
         heating_rate = _restart_host_array(radiation.heating_rate),
         applied_heating_rate = _restart_host_array(radiation.applied_heating_rate),
         lw_up = _restart_host_array(RRTMGP.lw_flux_up(solver)),
@@ -342,6 +344,7 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
 end
 
 function _restore_rrtmgp_radiation_state!(radiation::RRTMGPRadiation, state)
+    _validate_trace_gas_restart(radiation, state)
     solver = radiation.solver
     radiation.call_counter = state.call_counter
     _restart_copy_array!(radiation.heating_rate, state.heating_rate, "RRTMGP heating rate")
@@ -864,6 +867,7 @@ function Oceananigans.restore_prognostic_state!(
         model,
         hasproperty(state, :carbon) ? state.carbon : nothing,
     )
+    _validate_atmosphere_trace_gas_restart(model.atmosphere, state.atmosphere)
     invoke(
         Oceananigans.restore_prognostic_state!,
         Tuple{NumericalEarth.EarthSystemModel, Any},
@@ -1378,6 +1382,7 @@ function Oceananigans.restore_prognostic_state!(
     simulation::SpeedyWeather.Simulation,
     state,
 )
+    _validate_atmosphere_trace_gas_restart(simulation, state)
     # JLD2 reconstructs the checkpointed Variables tree on the CPU.
     # SpeedyWeather's alias-aware copy handles ordinary host-to-device arrays.
     # The narrowly typed lower-triangular, RingGrids.Field, and ScratchMemory
@@ -1410,6 +1415,14 @@ Oceananigans.restore_prognostic_state!(
     simulation::SpeedyWeather.Simulation,
     ::Nothing,
 ) = simulation
+
+# Check the optional CH4/N2O record before any atmosphere, ocean or land state is overwritten.
+function _validate_atmosphere_trace_gas_restart(simulation, state)
+    radiation = simulation.model.longwave_radiation
+    radiation isa RRTMGPRadiation && hasproperty(state, :radiation) &&
+        _validate_trace_gas_restart(radiation, state.radiation)
+    return nothing
+end
 
 const _COUPLED_BUDGET_STATIC_FIELDS = (
     :state_integrals,

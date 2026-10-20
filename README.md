@@ -93,7 +93,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
 | `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
-| `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Optional prescribed CH4 and N2O concentrations for RRTMGP. If you do not set them, RRTMGP uses 1900 ppb and 340 ppb. |
+| `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Optional prescribed CH4 and N2O concentrations for RRTMGP. If you do not set them, RRTMGP uses 1900 ppb and 340 ppb. A checkpoint records these settings. A restart with different settings stops before it changes any state. A checkpoint from before this record restores only without these keys. |
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Prescribed sulfate aerosol optical depth. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
 
