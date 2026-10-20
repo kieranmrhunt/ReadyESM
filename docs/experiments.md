@@ -22,7 +22,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Float64 owned storage reduces heat-budget error. Removing two pressure mean-mode assignments reduces mass error in all 72 moving-flow comparisons over six hours. Precision and timestep residuals remain. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Centered stepping and wider pressure coefficients reduce the largest six-hour mass error to 0.00309 kg/m². L27 and production-timestep tests follow. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -445,11 +445,26 @@ production setting.
 A pressure-storage probe passes 123 ownership, copy and short-evolution checks.
 It widens only the pressure coefficients, or pressure coefficients and their
 tendencies, while retaining the Float32 3-D atmosphere and transform buffers.
-A 27-member sweep now tests these two settings against native storage at
-T7/T15/T31 and three timesteps. Each member has six flow/pressure cases and
-an exact halfway restart. Native controls must reproduce the earlier centered
-Float32 records. Initial grid-pressure changes are reported separately.
-L27, operational timesteps and full-physics tests remain later stages.
+A 27-member sweep passes all 162 six-hour trajectories and exact halfway
+restarts at T7/T15/T31 and three timesteps. An independent audit reproduces
+every summary. Native controls match the earlier centered Float32 records.
+Wider pressure coefficients improve all 36 moving cases. The largest
+endpoint mass error falls from 1.148871 to 0.00308867 kg/m². Wider pressure
+tendencies leave this largest error unchanged. Ten endpoints improve and three
+worsen, with a maximum change of 0.000317 kg/m².
+
+The wider type also changes spectral arithmetic, with a maximum initial
+mean-pressure difference of 0.04833 Pa. A matched control keeps that wider
+launch and arithmetic, then rounds the stored pressure through Float32
+after each leapfrog update. All 54 trajectories and exact restarts pass.
+Rounding worsens all 36 moving cases and raises the largest mass error to
+1.144323 kg/m². Initial records match exactly, which supports retained
+pressure precision as the cause of the improvement.
+
+A 30-member follow-up tests 8/27 layers and 300/600/900-second timesteps.
+It separates pressure precision, implicit centering and the mean-mode change,
+with native controls at every setting. All 332 source assertions and five
+reader test groups pass. Full-physics and coupled tests follow this dynamics test.
 
 ### BS08 runoff and heat
 
@@ -550,7 +565,8 @@ under development.
 Candidate `68988e3` combines the carbon extension with current main. Its three
 carbon modules and five dedicated test files match the earlier emissions
 candidate. All 6,710 focused CPU assertions pass, including the ordered ocean
-update and changing-volume inventory checks. The full CPU suite is running.
+update and changing-volume inventory checks. The full CPU suite also passes,
+with the existing expected-broken initial truncation test.
 
 Four compact GPU tests will repeat the emissions restarts on this source.
 A separate CPU comparison checks that carbon-off matches main and that passive
@@ -579,6 +595,8 @@ These job identifiers locate the evidence in that archive.
 | Pressure time-filter isolation | 60850042 |
 | Implicit time-centering sweep | 60861271 |
 | Pressure-storage probe, sweep and audit | 60877770, 60878718, 60878998 |
+| Matched pressure-rounding probe, sweep and audit | 60884700, 60884701, 60884702 |
+| Pressure layer/timestep follow-up and audit | 60886934, 60886935 |
 | Eight-thread convection on ordered ocean main | 60876558, 60876559 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
