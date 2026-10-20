@@ -22,7 +22,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Centered stepping and wider pressure coefficients reduce the largest six-hour mass error to 0.00309 kg/m². L27 and production-timestep tests follow. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Pressure mean-mode, centering and precision changes reduce the largest dynamics-only mass error from 14.65 to 0.15 kg/m² at larger timesteps. Wet-physics pilots are running. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -461,10 +461,25 @@ Rounding worsens all 36 moving cases and raises the largest mass error to
 1.144323 kg/m². Initial records match exactly, which supports retained
 pressure precision as the cause of the improvement.
 
-A 30-member follow-up tests 8/27 layers and 300/600/900-second timesteps.
-It separates pressure precision, implicit centering and the mean-mode change,
-with native controls at every setting. All 332 source assertions and five
-reader test groups pass. Full-physics and coupled tests follow this dynamics test.
+A 30-member follow-up completes all 180 six-hour dynamics trajectories and
+exact restarts at 8/27 layers and 300/600/900-second timesteps. The first
+reader rejects the 24/36-step records. A corrected reader admits those
+planned lengths and retains the physical, coverage and restart checks.
+All ten previously passing summaries reproduce exactly.
+
+| Dynamics setting | Largest mass error (kg/m²) | Moving cases improved against native |
+| --- | ---: | ---: |
+| Native | 14.6532 | — |
+| Mean-mode fix | 2.17067 | 24/24 |
+| Mean-mode fix and centering | 0.154973 | 24/24 |
+| Mean-mode fix and wider pressure | 2.16692 | 24/24 |
+| Mean-mode fix, centering and wider pressure | 0.149607 | 24/24 |
+
+Centering supplies most of the gain at these larger timesteps.
+Wet-physics pilots now use January ERA5, T31/L27, RRTMGP, Betts–Miller
+and Terrarium, with a slab ocean. Eight-step restart checks precede five
+one-day comparisons. These include an independent native repeat.
+Production pressure dynamics remain unchanged.
 
 ### BS08 runoff and heat
 
@@ -597,6 +612,9 @@ These job identifiers locate the evidence in that archive.
 | Pressure-storage probe, sweep and audit | 60877770, 60878718, 60878998 |
 | Matched pressure-rounding probe, sweep and audit | 60884700, 60884701, 60884702 |
 | Pressure layer/timestep follow-up and audit | 60886934, 60886935 |
+| Pressure short-record recovery | 60888879 |
+| Wet-physics pressure pilots, one-day comparisons and readers | 60895412, 60895413, 60895414, 60895415 |
+| Packaged ocean-update GPU dispatch | 60896206 |
 | Eight-thread convection on ordered ocean main | 60876558, 60876559 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
