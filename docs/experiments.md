@@ -7,6 +7,7 @@ Main now includes the accepted [snow-accounting update](validation-snow-accounti
 It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
 The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
 Main also includes the [ordered ocean grid update](validation-ocean-grid-ordering.md).
+BS10 is integrated as an [optional carbon model](validation-carbon.md).
 Production keeps its current Betts–Miller scheme.
 
 ## Convection portfolio
@@ -632,8 +633,7 @@ A current-main candidate adds the fix as a package include. The first CPU
 tests stopped at an outdated constructor call in the test. With that call
 repaired, all 377 focused assertions pass. The full CPU suite also passes,
 with the existing expected-broken truncation test. Both receipts verify.
-The ordered update is now included on main. The carbon extension remains
-under development.
+The ordered update and optional carbon extension are now included on main.
 
 Candidate `68988e3` combines the carbon extension with current main. Its three
 carbon modules and five dedicated test files match the earlier emissions
@@ -661,10 +661,12 @@ also pass independent saved-state and raw-NetCDF comparisons. The 193
 existing output variables remain unchanged. Passive tracers add two fields.
 Carbon-exchange modes add 13 variables. Restored outputs match exactly.
 
-The combined publication candidate passes the full CPU suite. Three
-full-grid carbon cases pass all 97 ledger boundaries. The zero-exchange
-emissions case and four supported GPU output comparisons remain in progress.
-Production keeps carbon off while these tests finish.
+The combined publication candidate passes the full CPU suite. All four
+full-grid carbon cases pass all 97 ledger boundaries. All four supported
+GPU output cases and their independent raw-state and NetCDF audits pass.
+The extension is accepted as an optional component. Production keeps carbon
+off. Long-term uptake and climate-response experiments remain future work.
+See the [validation record](validation-carbon.md).
 
 ## Evidence record
 

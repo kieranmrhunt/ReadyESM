@@ -51,3 +51,6 @@ Carbon histories are included in restart files. Use checkpoints from the
 same carbon-output version. Output reports the final difference between the
 tracer inventory and ocean ledger, using live cell volumes and the model's
 reference density.
+
+See the [validation record](validation-carbon.md) for the tested modes,
+conservation checks and restart comparisons.

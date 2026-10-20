@@ -8,6 +8,13 @@ records are in the development labbook.
 
 ### 2026-10-20
 
+Added optional ocean carbon exchange and emissions-driven atmospheric CO2.
+The model writes DIC, alkalinity and carbon-budget histories and restores
+them from checkpoints. Four full-grid GPU days, CPU and GPU output/restart
+comparisons, and the combined CPU suite pass. Production keeps carbon off.
+See the [carbon guide](docs/carbon.md) and
+[validation record](docs/validation-carbon.md).
+
 Completed the T15 and T31 speed table on one A100. The standard T31 setup
 with the 1° ocean runs at 5.74 simulated years per day, after 46–53 minutes
 of start-up. See the [timing details](docs/performance.md).
@@ -15,10 +22,8 @@ of start-up. See the [timing details](docs/performance.md).
 Completed four January C06 comparisons. Rain evaporation and downdrafts gave
 small precipitation and upper-temperature gains, with moisture and wind
 penalties. A 20-member screen now separates their parameter effects.
-The carbon extension passed compact GPU restarts, CPU output comparisons
-and its combined CPU suite. Full-grid and GPU output tests continue.
 The runoff-heat extension passed its whole-model cost comparison and
-ordered-main CPU checks. These options remain under assessment.
+ordered-main CPU checks. The convection and runoff options remain under assessment.
 See the [experiment notes](docs/experiments.md).
 
 Fixed standalone atmosphere checkpoints so they restore both transform-column
