@@ -34,16 +34,25 @@ energy residuals stay below 2.68e-7 and momentum residuals below 4.05e-7.
 
 ## Climate assessment
 
-January atmosphere-only comparisons favour C08 case 12 for moisture and
+January and July atmosphere-only comparisons favour C08 case 12 for moisture and
 lower-level temperature relative to the original C08 setting. C07 improves
 global wind errors relative to matched C08, with regional trade-offs.
-Production parameters stay unchanged. July and longer coupled comparisons
-continue. [Experiment notes](experiments.md) retain the numerical results.
+Production parameters stay unchanged. Longer coupled comparisons continue.
+[Experiment notes](experiments.md) retain the numerical results.
 
-Eight-thread pilots pass the physical checks but differ between repeated
-processes. Their maximum final surface-ocean temperature differences range
-from 0.00331 to 0.04139 K after eight steps. This integration uses the exact
-one-thread restart evidence. Threaded restart qualification continues.
+## Eight-thread restarts
+
+After the ocean grid-ordering fix, all six eight-thread members pass on
+source `e9e50b4`. Native, C08 and C07 case 12 each run twice for eight coupled
+steps, with a fresh-process restart at step four.
+
+All saved state entries match at restoration and each following step.
+Independent repeats match at all six saved stages and across all 210 output
+variables for each case. Both reviewers verified the reader receipt.
+
+Earlier eight-thread failures remain in the labbook. They first diverged
+in ocean and coupling fields at step five. The ordering repair removes the
+observed restart and repeat differences in this test.
 
 ## Evidence record
 
@@ -53,6 +62,7 @@ one-thread restart evidence. Threaded restart qualification continues.
 | Clean coupled pilots and reader | 60776941 tasks 0–5, 60776959 |
 | Fresh-process restarts and reader | 60782476 tasks 0–5, 60782673 |
 | Eight-thread pilots and reader | 60786590 tasks 0–5, 60786591 |
+| Eight-thread restarts and repeats after ocean fix | 60876558 tasks 0–5, 60876559 |
 
 The labbook retains frozen inputs, file receipts, detailed checks and failed
 development attempts. Experimental runners and outputs stay outside this repo.

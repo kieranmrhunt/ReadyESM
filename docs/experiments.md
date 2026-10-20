@@ -22,7 +22,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Pressure mean-mode, centering and precision changes reduce the largest dynamics-only mass error from 14.65 to 0.15 kg/m² at larger timesteps. Wet pilots build, then stop at an observer-passivity check. A separate scratch-storage probe and corrected pilots are queued. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport includes phase exchange and heating. Wider owned storage reduces heat-budget error. Pressure mean-mode, centering and precision changes reduce the largest dynamics-only mass error from 14.65 to 0.15 kg/m² at larger timesteps. Private observer scratch passes. A standalone restart repair is under test before wet pilots resume. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -482,9 +482,12 @@ one-day comparisons. These include an independent native repeat.
 The first pilots stopped before construction because the slab configuration
 retained an ECCO input directory. Replacement pilots clear that setting and
 validate all configurations before integration. They build successfully but
-stop at the launch observer-passivity check. A separate probe checks whether
-shared transform scratch accounts for the difference and tests private
-observer work arrays. Both failed attempts remain archived.
+stop at the launch observer-passivity check. Both probes identify four shared
+transform scratch arrays. Private work arrays preserve the complete saved
+state and give identical pressure records. The probes also expose two column
+work arrays omitted by standalone restoration. Candidate `1d7188a` adds the
+existing coupled-path copy helper to standalone restoration and is under test.
+The failed attempts remain archived.
 Production pressure dynamics remain unchanged.
 
 ### BS08 runoff and heat
@@ -625,6 +628,7 @@ These job identifiers locate the evidence in that archive.
 | Wet-physics pressure pilots, one-day comparisons and readers | 60898300, 60898301, 60898302, 60898303 |
 | Wet-pressure configuration failure and cancelled follow-ups | 60895412, 60895413, 60895414, 60895415 |
 | Wet-pressure observer passivity probe | 60901498 |
+| Standalone atmosphere restore regression, full suite and old-source check | 60906292 |
 | Packaged ocean-update GPU dispatch | 60896206 |
 | Eight-thread convection on ordered ocean main | 60876558, 60876559 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
