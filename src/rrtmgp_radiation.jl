@@ -118,6 +118,10 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     heating_rate::Heating
     applied_heating_rate::Heating
     co2_ppm::NF
+    # Optional well-mixed CH4 and N2O mole fractions. `nothing` keeps the RRTMGP
+    # standard-profile value and the solver is never written for that gas.
+    ch4_vmr::Union{Nothing, NF}
+    n2o_vmr::Union{Nothing, NF}
     surface_emissivity::NF
     target_aod_550nm::NF
     solve_every_n_steps::Int
@@ -1119,9 +1123,18 @@ function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
     return solver
 end
 
+"""Mole fraction for an optional ppb trace-gas value, or `nothing` to keep the RRTMGP default."""
+function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}
+    isnothing(ppb) && return nothing
+    isfinite(ppb) && ppb > 0 || throw(ArgumentError("$name must be finite and positive"))
+    return NF(Float64(ppb) * 1.0e-9)
+end
+
 function RRTMGPRadiation(
     spectral_grid::SpectralGrid;
     co2_ppm = 420,
+    ch4_ppb = nothing,
+    n2o_ppb = nothing,
     aerosol_optical_depth_550nm = 0,
     surface_emissivity = 0.98,
     solve_every_n_steps = 1,
@@ -1138,6 +1151,10 @@ function RRTMGPRadiation(
     profile = RRTMGP.standard_atmosphere(NF; nlay, ncol)
     profile.lat .= NF.(latitude)
     profile.well_mixed_vmr["co2"] = NF(co2_ppm * 1.0e-6)
+    ch4_vmr = _optional_trace_gas_vmr("ch4_ppb", ch4_ppb, NF)
+    n2o_vmr = _optional_trace_gas_vmr("n2o_ppb", n2o_ppb, NF)
+    isnothing(ch4_vmr) || (profile.well_mixed_vmr["ch4"] = ch4_vmr)
+    isnothing(n2o_vmr) || (profile.well_mixed_vmr["n2o"] = n2o_vmr)
     context = if spectral_grid.architecture isa SpeedyWeather.GPU
         ClimaComms.context(ClimaComms.CUDADevice())
     else
@@ -1191,6 +1208,8 @@ function RRTMGPRadiation(
         heating_rate,
         applied_heating_rate,
         NF(co2_ppm),
+        ch4_vmr,
+        n2o_vmr,
         NF(surface_emissivity),
         NF(aerosol_optical_depth_550nm),
         Int(solve_every_n_steps),
@@ -1767,6 +1786,10 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
     RRTMGP.toa_flux(solver) .= model.planet.solar_constant
     RRTMGP.surface_emissivity(solver) .= radiation.surface_emissivity
     RRTMGP.set_volume_mixing_ratio!(solver, "co2", radiation.co2_ppm * 1.0e-6)
+    isnothing(radiation.ch4_vmr) ||
+        RRTMGP.set_volume_mixing_ratio!(solver, "ch4", radiation.ch4_vmr)
+    isnothing(radiation.n2o_vmr) ||
+        RRTMGP.set_volume_mixing_ratio!(solver, "n2o", radiation.n2o_vmr)
 
     direct_albedo = RRTMGP.direct_sw_surface_albedo(solver)
     diffuse_albedo = RRTMGP.diffuse_sw_surface_albedo(solver)

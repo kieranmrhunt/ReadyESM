@@ -1,5 +1,10 @@
 Base.@kwdef struct ForcingConfig
     co2_ppm::Float64 = 420.0
+    # Optional well-mixed CH4 and N2O for RRTMGP. `nothing` keeps the RRTMGP
+    # standard-profile values (1900 ppb and 340 ppb) and leaves the solver
+    # untouched, so configurations without these keys are unchanged.
+    ch4_ppb::Union{Nothing, Float64} = nothing
+    n2o_ppb::Union{Nothing, Float64} = nothing
     aerosol_optical_depth_550nm::Float64 = 0.0
     aerosol_species::String = "sulfate"
     radiation::Symbol = :speedy_simplified
@@ -150,6 +155,8 @@ function _mapping_value(mapping::AbstractDict, key::AbstractString, default)
     return get(mapping, key, get(mapping, Symbol(key), default))
 end
 
+_optional_float(value) = isnothing(value) ? nothing : Float64(value)
+
 function _validate_mapping_keys(mapping, allowed_keys, label)
     mapping isa AbstractDict || throw(ArgumentError(
         "$label must be a YAML mapping",
@@ -218,6 +225,8 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
     )
     forcing = ForcingConfig(
         co2_ppm = Float64(_mapping_value(forcing_raw, "co2_ppm", 420.0)),
+        ch4_ppb = _optional_float(_mapping_value(forcing_raw, "ch4_ppb", nothing)),
+        n2o_ppb = _optional_float(_mapping_value(forcing_raw, "n2o_ppb", nothing)),
         aerosol_optical_depth_550nm = Float64(
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
@@ -1063,6 +1072,15 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         throw(ArgumentError(
             "CO2 perturbations require radiation=rrtmgp_clear_sky or rrtmgp_all_sky; " *
             "SpeedyWeather's simplified radiation does not consume co2_ppm",
+        ))
+    end
+    for (name, value) in (("ch4_ppb", config.forcing.ch4_ppb), ("n2o_ppb", config.forcing.n2o_ppb))
+        isnothing(value) && continue
+        isfinite(value) && value > 0 ||
+            throw(ArgumentError("$name must be finite and positive"))
+        rrtmgp_active || throw(ArgumentError(
+            "$name requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky; " *
+            "SpeedyWeather's simplified radiation does not consume it",
         ))
     end
     if !rrtmgp_active && config.forcing.aerosol_optical_depth_550nm > 0

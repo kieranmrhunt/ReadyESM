@@ -294,6 +294,8 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
     longwave_radiation = RRTMGPClearSkyRadiation(
         spectral_grid;
         co2_ppm = config.forcing.co2_ppm,
+        ch4_ppb = config.forcing.ch4_ppb,
+        n2o_ppb = config.forcing.n2o_ppb,
         aerosol_optical_depth_550nm = config.forcing.aerosol_optical_depth_550nm,
         surface_emissivity = COUPLED_SURFACE_EMISSIVITY,
         solve_every_n_steps = config.forcing.radiation_every_n_steps,

@@ -88,6 +88,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `atmosphere_convection_timescale_seconds` | `7200` | Betts–Miller adjustment time. |
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
 | `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
+| `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Optional prescribed CH4 and N2O concentrations for RRTMGP. If you do not set them, RRTMGP uses 1900 ppb and 340 ppb. |
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Prescribed sulfate aerosol optical depth. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
 

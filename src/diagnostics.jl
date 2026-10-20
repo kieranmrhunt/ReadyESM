@@ -135,6 +135,32 @@ end
 function _forcing_provenance(radiation, config::ExperimentConfig)
     rrtmgp_active = radiation isa RRTMGPRadiation
     aerosol_active = rrtmgp_active && radiation.target_aod_550nm > 0
+    return (;
+        _base_forcing_provenance(radiation, config, rrtmgp_active, aerosol_active)...,
+        _trace_gas_provenance(radiation, config, rrtmgp_active)...,
+    )
+end
+
+"""
+Provenance for the optional CH4 and N2O overrides. Each gas adds entries only
+when its override is set, so the output of a configuration without overrides
+is unchanged.
+"""
+function _trace_gas_provenance(radiation, config::ExperimentConfig, rrtmgp_active)
+    entries = Pair{Symbol, Any}[]
+    for (gas, requested) in (("ch4", config.forcing.ch4_ppb), ("n2o", config.forcing.n2o_ppb))
+        isnothing(requested) && continue
+        applied = rrtmgp_active ? getproperty(radiation, Symbol(gas, "_vmr")) : nothing
+        push!(entries, Symbol("requested_", gas, "_ppb") => requested)
+        push!(entries, Symbol("applied_", gas, "_ppb") =>
+            isnothing(applied) ? NaN : Float64(applied) * 1.0e9)
+        push!(entries, Symbol(gas, "_forcing_mode") =>
+            "prescribed_well_mixed_volume_mixing_ratio")
+    end
+    return (; entries...)
+end
+
+function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_active, aerosol_active)
     return (
         requested_co2_ppm = config.forcing.co2_ppm,
         applied_co2_ppm = rrtmgp_active ? Float64(radiation.co2_ppm) : NaN,
