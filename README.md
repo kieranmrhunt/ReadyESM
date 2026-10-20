@@ -112,6 +112,13 @@ are planned extensions.
 See [`NOTES.md`](NOTES.md) for the present scientific limitations and
 [`HISTORY.md`](HISTORY.md) for the short model history.
 
+## Optional CPU convection
+
+C08 adds finite multi-plume convection. C07 adds conservative momentum
+transport and local mixing heat. Both use the normal configuration file and
+require a CPU atmosphere with diagnostic clouds. Production keeps Betts–Miller.
+See [configuration and evidence](docs/finite-convection.md).
+
 ## Test
 
 The CPU regression suite uses synthetic initial conditions and requires no
