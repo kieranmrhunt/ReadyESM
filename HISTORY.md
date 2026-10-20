@@ -9,6 +9,8 @@ artefacts.
 
 ### 2026-10-20
 
+- Allow land-free atmosphere tests through the timestep wrapper and the
+  Terrarium initialization callback. Keep coupled land physics unchanged.
 - Add optional finite multi-plume C08 convection for CPU runs. Add C07
   momentum transport with local conversion of dissipated kinetic energy to heat.
 - Expose both schemes through the normal model configuration. Keep Float32

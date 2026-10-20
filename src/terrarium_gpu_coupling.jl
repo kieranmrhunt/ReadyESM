@@ -942,6 +942,7 @@ atmospheric diagnostics callback, whose initialization occurs after the
 simulation-level initial transform and before the first timestep.
 """
 function _initialize_terrarium_temperature_from_atmosphere!(vars, model)
+    haskey(vars.prognostic, :land) || return nothing
     haskey(vars.prognostic.land, :terrarium) || return nothing
     land = model.land
     land isa _ReadyESMAbstractTerrariumLandModel || return nothing
@@ -1252,7 +1253,8 @@ function SpeedyWeather.timestep!(
     lf1::Integer = 2,
     lf2::Integer = 2,
 )
-    has_terrarium = haskey(vars.prognostic.land, :terrarium)
+    has_terrarium = haskey(vars.prognostic, :land) &&
+                   haskey(vars.prognostic.land, :terrarium)
     trace = _trace_speedy_phases(vars) ||
             (has_terrarium &&
              _trace_terrarium_substeps(vars.prognostic.land.terrarium))
