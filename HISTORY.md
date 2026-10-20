@@ -8,6 +8,12 @@ records are in the development labbook.
 
 ### 2026-10-20
 
+Fixed standalone atmosphere checkpoints so they restore both transform-column
+work arrays. The coupled restart path already copied these arrays. The new
+regression, full CPU suite and two ERA5 restore probes pass. The same
+regression exposes the omission on the old source. See the
+[restart checks](docs/validation-atmosphere-restart.md).
+
 Fixed an ordering error in the Oceananigans z-star grid update. Surface heights
 are now copied before neighbouring grid scales are calculated. The scaling
 formula and launch bounds are unchanged. Four full-grid GPU restarts and
