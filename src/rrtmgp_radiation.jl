@@ -1127,7 +1127,12 @@ end
 function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}
     isnothing(ppb) && return nothing
     isfinite(ppb) && ppb > 0 || throw(ArgumentError("$name must be finite and positive"))
-    return NF(Float64(ppb) * 1.0e-9)
+    vmr = NF(Float64(ppb) * 1.0e-9)
+    # A finite positive ppb value can overflow to Inf or underflow to zero in NF.
+    isfinite(vmr) && vmr > 0 || throw(ArgumentError(
+        "$name = $ppb ppb is not a finite positive $NF mole fraction",
+    ))
+    return vmr
 end
 
 function RRTMGPRadiation(

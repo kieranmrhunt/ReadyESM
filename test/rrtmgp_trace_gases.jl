@@ -39,6 +39,13 @@
     @test isnothing(only_ch4.n2o_vmr)
     @test R.RRTMGP.volume_mixing_ratio(only_ch4.solver, "n2o") == 0.34f-6
     @test_throws ArgumentError R.RRTMGPRadiation(grid; ch4_ppb = 0)
+    # Finite positive inputs that overflow or underflow in Float32 (Codex audit).
+    for extreme in (1.0e308, 1.0e-300)
+        @test_throws ArgumentError R._optional_trace_gas_vmr("ch4_ppb", extreme, Float32)
+        @test_throws ArgumentError R.RRTMGPRadiation(grid; ch4_ppb = extreme)
+        @test_throws ArgumentError R.RRTMGPRadiation(grid; n2o_ppb = extreme)
+    end
+    @test R._optional_trace_gas_vmr("ch4_ppb", 1.0e-300, Float64) > 0
     # Same standard profile, lower CH4 and N2O: less longwave absorption, so more outgoing longwave at the top.
     toa_up(radiation) = sum(Array(R.RRTMGP.lw_flux_up(radiation.solver))[end, :])
     @test toa_up(over) > toa_up(base)
