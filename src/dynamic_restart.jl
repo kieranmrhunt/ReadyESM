@@ -1364,6 +1364,7 @@ function Oceananigans.restore_prognostic_state!(
     # methods above supply its unsupported wrapper transfers without applying
     # architecture conversion to the attached Terrarium state.
     copy!(simulation.variables, state.variables)
+    _restore_atmosphere_transform_column_storage!(simulation, state)
     if hasproperty(state, :time_stepping)
         _restore_speedy_time_stepping_restart_state!(
             simulation.model.time_stepping,
