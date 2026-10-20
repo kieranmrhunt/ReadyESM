@@ -13,12 +13,13 @@ at the timing boundaries.
 | T15, 27 levels | 180×90×60 | 30 min | 2 h | 15.100 |
 | T15, 27 levels | 360×180×60 | 30 min | 2 h | 11.134 |
 | T31, 27 levels | 180×90×60 | 15 min | 1 h | 8.175 |
+| T31, 27 levels | 720×360×60 | 15 min | 1 h | 2.380 |
 
 The rate uses total simulated time divided by total wall time across both
 processes for each grid, with 365 days per year. Individual daily windows span
 14.507–16.103 simulated years per day for T15 with the 180×90 ocean,
 10.695–11.579 for T15 with the 360×180 ocean, and 8.154–8.193 for T31
-with the 180×90 ocean.
+with the 180×90 ocean. T31 with the 720×360 ocean spans 2.364–2.394.
 
 The following phase times are for T15.
 
@@ -38,18 +39,18 @@ Each second process reuses the package cache. All processes still construct
 and compile their own model.
 
 For T31 with the 180×90 ocean, start-up takes 52.3 and 45.5 minutes.
-The phase times are:
+With the 720×360 ocean, it takes 53.6 and 48.2 minutes. The phase times are:
 
-| Phase | First process | Second process |
-| --- | ---: | ---: |
-| Package loading | 364.5 s | 14.3 s |
-| Input verification | 6.9 s | 7.1 s |
-| Model construction | 1872.1 s | 1808.6 s |
-| Initialization | 106.2 s | 107.1 s |
-| Eight warm-up steps | 787.4 s | 791.1 s |
-| Three timed model days | 86.9 s | 86.8 s |
-| Final output | 62.4 s | 61.2 s |
+| Phase | 180×90 first | 180×90 second | 720×360 first | 720×360 second |
+| --- | ---: | ---: | ---: | ---: |
+| Package loading | 364.5 s | 14.3 s | 365.0 s | 14.6 s |
+| Input verification | 6.9 s | 7.1 s | 6.9 s | 7.0 s |
+| Model construction | 1872.1 s | 1808.6 s | 1932.8 s | 1955.3 s |
+| Initialization | 106.2 s | 107.1 s | 108.4 s | 108.4 s |
+| Eight warm-up steps | 787.4 s | 791.1 s | 803.5 s | 808.0 s |
+| Three timed model days | 86.9 s | 86.8 s | 299.9 s | 296.9 s |
+| Final output | 62.4 s | 61.2 s | 61.2 s | 62.4 s |
 
-Slurm jobs `60854483_0`, `_1` and `_3` completed with exit code 0. All report
+Slurm jobs `60854483_0`, `_1`, `_3` and `_5` completed with exit code 0. All report
 checks, finite-field checks and result receipts pass. Each pair used one GPU.
 The benchmark covers short January integrations.
