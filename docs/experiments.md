@@ -146,10 +146,18 @@ Keep the strong setting experimental.
 
 A separate candidate applies the same C06 code to the latest main branch,
 including the accepted ocean-ordering fix. Its 518 focused CPU assertions
-and full CPU suite pass. Coupled compatibility and restart tests are running.
-A 20-member January screen is queued after that qualification. It crosses
+and full CPU suite pass. Coupled compatibility and exact restart tests also
+pass. A 20-member January screen is queued for resources. It crosses
 evaporation coefficients 0.25/0.5/1.0 with downdraft factors 0/100/200,
 plus native, with two repeats of every case.
+
+A transport-only C06/C08 prototype now passes 13,824 saved columns. C08
+retains all precipitation and phase changes. The new operator uses its
+evaporation and sublimation to drive conservative air exchange. Native
+rain and snow remain unchanged, with no new negative humidity or
+supersaturated columns. Independent calculations confirm the results.
+Both strong and weak coefficient screens pass. Coupled testing and a
+matched BM source comparison will determine the useful coefficient range.
 
 ### C08 and C07
 
@@ -559,8 +567,10 @@ whole-model criterion. The earlier local cost-screen failure remains recorded.
 On the ordered-ocean main branch, the inherited checks, full CPU suite and
 compact option-off comparison pass. Default mode matches all 1,629 saved
 state entries and makes zero BS08 calls. Full coupled GPU and option-off
-comparisons are submitted. Output and restart-history support are being
-added in a separate publication candidate.
+comparisons are submitted. The output and restart-history candidate exposed
+six validation gaps in an independent audit. Its replacement rejects all
+six, passes 11,141 focused assertions and completes the full CPU suite.
+Coupled output checks continue.
 
 ### BS10 carbon inventory
 
@@ -651,8 +661,9 @@ also pass independent saved-state and raw-NetCDF comparisons. The 193
 existing output variables remain unchanged. Passive tracers add two fields.
 Carbon-exchange modes add 13 variables. Restored outputs match exactly.
 
-The combined publication candidate passes the full CPU suite. Full-grid
-carbon days and four supported GPU output comparisons remain in progress.
+The combined publication candidate passes the full CPU suite. Three
+full-grid carbon cases pass all 97 ledger boundaries. The zero-exchange
+emissions case and four supported GPU output comparisons remain in progress.
 Production keeps carbon off while these tests finish.
 
 ## Evidence record

@@ -12,7 +12,9 @@ at the timing boundaries.
 | --- | --- | ---: | ---: | ---: |
 | T15, 27 levels | 180×90×60 | 30 min | 2 h | 15.100 |
 | T15, 27 levels | 360×180×60 | 30 min | 2 h | 11.134 |
+| T15, 27 levels | 720×360×60 | 30 min | 2 h | 4.537 |
 | T31, 27 levels | 180×90×60 | 15 min | 1 h | 8.175 |
+| T31, 27 levels | 360×180×60 | 15 min | 1 h | 5.742 |
 | T31, 27 levels | 720×360×60 | 15 min | 1 h | 2.380 |
 
 The rate uses total simulated time divided by total wall time across both
@@ -20,6 +22,8 @@ processes for each grid, with 365 days per year. Individual daily windows span
 14.507–16.103 simulated years per day for T15 with the 180×90 ocean,
 10.695–11.579 for T15 with the 360×180 ocean, and 8.154–8.193 for T31
 with the 180×90 ocean. T31 with the 720×360 ocean spans 2.364–2.394.
+T15 with the 720×360 ocean spans 4.516–4.575. The standard T31 setup with
+the 360×180 ocean spans 5.669–5.855.
 
 The following phase times are for T15.
 
@@ -51,6 +55,11 @@ With the 720×360 ocean, it takes 53.6 and 48.2 minutes. The phase times are:
 | Three timed model days | 86.9 s | 86.8 s | 299.9 s | 296.9 s |
 | Final output | 62.4 s | 61.2 s | 61.2 s | 62.4 s |
 
-Slurm jobs `60854483_0`, `_1`, `_3` and `_5` completed with exit code 0. All report
+T15 with the 720×360 ocean takes 53.3 and 47.0 minutes to start. T31 with
+the 360×180 ocean takes 52.5 and 46.1 minutes.
+
+Slurm jobs `60854483_0`, `_1`, `_3`, `_5`, `60886996_2` and `60887888_4`
+completed with exit code 0. All report
 checks, finite-field checks and result receipts pass. Each pair used one GPU.
 The benchmark covers short January integrations.
+T63 measurements await a finer ERA5 land input for small islands.

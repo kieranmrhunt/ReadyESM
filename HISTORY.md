@@ -8,6 +8,10 @@ records are in the development labbook.
 
 ### 2026-10-20
 
+Completed the T15 and T31 speed table on one A100. The standard T31 setup
+with the 1° ocean runs at 5.74 simulated years per day, after 46–53 minutes
+of start-up. See the [timing details](docs/performance.md).
+
 Completed four January C06 comparisons. Rain evaporation and downdrafts gave
 small precipitation and upper-temperature gains, with moisture and wind
 penalties. A 20-member screen now separates their parameter effects.
