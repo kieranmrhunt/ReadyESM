@@ -38,7 +38,7 @@ With the option on, the NetCDF diagnostics contain these variables. Their names 
 | `bs08_cumulative_received_enthalpy_j` | J | Enthalpy applied to the ocean since launch |
 | `bs08_surface_excess_enthalpy_j`, `bs08_pending_runoff_enthalpy_j` | J | Enthalpy in the land surface stores |
 | `bs08_cumulative_clamp_enthalpy_j` | J | Enthalpy given to water that the bottom saturation limit creates |
-| `bs08_partition_inconsistent_columns` | 1 | Land columns where the runoff law is not the default law. It must be 0. |
+| `bs08_partition_inconsistent_columns` | 1 | Land columns where the runoff law is not the default law. It must be 0. The launch row comes before the first land step and shows 0. |
 | `bs08_receiver_enthalpy_flux` | W m⁻² | Final receiver enthalpy flux on the ocean grid |
 
 The time series use the same sample times as the coupled budget series.

@@ -141,6 +141,12 @@ function _validate_bs08_rows(rows)
     return nothing
 end
 
+"""
+Columns whose last land step did not use the native runoff partition. The land model evaluates the partition in
+each land step, so the launch row (iteration 0) comes before the first evaluation and reports 0.
+"""
+_bs08_partition_inconsistent(iteration, flag) = iteration == 0 ? 0 : count(!=(1.0), flag)
+
 function _bs08_diagnostic_row(earth, history, iteration, time_seconds)
     budget = _bs08_routing_budget(earth, history.source_area_m2)
     terrarium = earth.atmosphere.variables.prognostic.land.terrarium
@@ -157,7 +163,7 @@ function _bs08_diagnostic_row(earth, history, iteration, time_seconds)
             cumulative_received_enthalpy_j = history.cumulative_received_enthalpy_j,
             surface_excess_enthalpy_j = sum(area .* surface), pending_runoff_enthalpy_j = sum(area .* pending),
             cumulative_clamp_enthalpy_j = sum(area .* clamp),
-            partition_inconsistent_columns = count(!=(1.0), flag))
+            partition_inconsistent_columns = _bs08_partition_inconsistent(iteration, flag))
 end
 
 """Record one sample. Integrates the completed interval once per iteration advance, then appends a row at launch, on

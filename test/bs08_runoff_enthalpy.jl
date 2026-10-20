@@ -136,6 +136,11 @@ end
             @test_throws ErrorException RB._validate_bs08_diagnostics(bad)
         end
         @test isnothing(RB._validate_bs08_diagnostics((; other = 1)))     # option off: nothing to validate
+        # The launch row precedes the first land partition, whose flag field is still zero (60973054_0).
+        @test RB._bs08_partition_inconsistent(0, zeros(183)) == 0
+        @test RB._bs08_partition_inconsistent(1, ones(183)) == 0
+        @test RB._bs08_partition_inconsistent(1, [1.0, 0.0, 1.0]) == 1
+        @test RB._bs08_partition_inconsistent(4, zeros(5)) == 5
         mktempdir() do directory
             path = joinpath(directory, "bs08.nc")
             RB.NCDatasets.NCDataset(path, "c") do ds
