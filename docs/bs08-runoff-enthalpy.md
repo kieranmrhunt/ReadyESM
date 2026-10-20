@@ -47,6 +47,9 @@ The ocean applies the routed enthalpy one coupled step after the land releases i
 minus the received enthalpy is the enthalpy in transit. The file attribute `bs08_in_transit_enthalpy_j` gives this
 value at the end of the run.
 
+This attribute describes the run's current state. It can differ between
+forcing experiments because the runoff heat changes.
+
 ## Restart
 
 The runoff enthalpy stores and the diagnostic history are in the restart file. A restart continues the history

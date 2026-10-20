@@ -95,6 +95,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 
 The standard setup uses prescribed CO2 and aerosol forcing. Optional
 [carbon exchange and emissions](docs/carbon.md) can update CO2.
+For CH4/N2O restart settings, see the [trace-gas notes](docs/validation-runoff-trace-gases.md#scope).
 Land vegetation is prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
 has separate configuration instructions.
 
