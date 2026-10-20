@@ -347,8 +347,19 @@ clouds retain at least 99.857% of their initial mass.
 Cloud-only grid storage passes 12 of 16 cases. Four dry cloud-edge cases
 develop negative vapour after the native spectral transform. The projected
 vapour also remains negative in the all-water arm, while its owned water
-stays positive. The next prototype needs conservative grid-water transport,
-consistent stored time levels and restart support.
+stays positive.
+
+Shared-mass grid transport now passes 32 prescribed-flow cases and exact
+fresh-process restarts. It moves air, vapour, liquid, ice and thermal content
+through the same faces. The first-order method spreads sharp clouds too much.
+
+Limited flux correction improves return error against donor Euler and donor
+RK2 in all 16 full-rotation cases. Both new 32-case arms preserve nonnegative
+water, conserved inventories and temperature bounds. All 64 restarts match
+exactly. At T15, sharp-cloud peak retention rises from 56–57% to 87–88%,
+and relative return error falls from 63–64% to 14–15%. Smooth-cloud peaks
+retain about 98.9%. Next test phase/source exchange, native mass continuity
+and stored time levels.
 
 ### BS08 runoff and heat
 
@@ -425,14 +436,15 @@ An isolated test of pinned Oceananigans 0.110.15 finds a grid-update defect.
 The native kernel writes sea-surface height and immediately interpolates
 neighbouring heights. It can mix old and new values. Separate copy and
 scaling kernels pass 472 checks, including repeatability and a CPU reference.
-The first coupled replay matches all 1,550 state entries at the restored
-boundary and four following steps. Carbon relative error stays below
-2.957e-8. The second repeat is running. A numeric reader will compare 425
-arrays, including halos, across both repeats.
+Both coupled restarts match all 1,550 state entries at the restored boundary
+and four following steps. Carbon relative error stays below 2.957e-8.
+The numeric reader verifies all 20 restart/repeat comparisons across 425
+arrays each, including halos. Every difference is zero.
 
-Four full-grid tests are queued, with live and zero carbon exchange repeated
-twice. They require all 20 compact numeric comparisons to match exactly
-before starting. Package and production files remain unchanged.
+Four full-grid tests are running, with live and zero carbon exchange repeated
+twice. All require the compact numeric comparisons to match before starting.
+A current-main candidate adds the fix as a package include. Its focused and
+full CPU tests are running. Public production remains unchanged.
 
 ## Evidence record
 
@@ -441,6 +453,9 @@ These job identifiers locate the evidence in that archive.
 
 | Evidence | Jobs |
 | --- | --- |
+| Ordered ocean repeats and numeric comparison | 60817815, 60817817 |
+| Full-grid ocean follow-up and current-main CPU tests | 60821733, 60830346 |
+| Grid-water baseline and limited-flux comparison | 60826008, 60830217 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
 | C06 30-day persistence test | 60781768, 60781800 |

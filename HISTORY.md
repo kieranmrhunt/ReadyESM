@@ -9,6 +9,11 @@ artefacts.
 
 ### 2026-10-20
 
+- Complete both ordered ocean repeats. Verify exact agreement across 425
+  arrays at five boundaries in all restart and repeat comparisons.
+- Add a limited grid-water transport prototype. Retain 87–88% of a sharp
+  cloud peak after a T15 rotation, up from 56–57% with donor-cell transport.
+  Pass physical checks and exact restarts in both 32-case comparison arms.
 - Complete the first ordered ocean replay with exact agreement through restart
   and four further steps. Queue full-grid repeats.
 - Test C10 grid-water storage for 32 cycles. All-water storage passes all
