@@ -2,6 +2,7 @@ using ReadyESM
 using Test
 
 include("ordered_ocean_grid.jl")
+include("solar_forcing.jl")
 include("standalone_atmosphere_restart.jl")
 include("carbon_stage0a.jl")
 include("carbon_stage0b.jl")

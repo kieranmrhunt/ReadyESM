@@ -325,6 +325,7 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
         call_counter = radiation.call_counter,
         ch4_vmr = radiation.ch4_vmr,
         n2o_vmr = radiation.n2o_vmr,
+        solar_distance_correction = radiation.solar_distance_correction,
         heating_rate = _restart_host_array(radiation.heating_rate),
         applied_heating_rate = _restart_host_array(radiation.applied_heating_rate),
         lw_up = _restart_host_array(RRTMGP.lw_flux_up(solver)),
@@ -345,6 +346,7 @@ end
 
 function _restore_rrtmgp_radiation_state!(radiation::RRTMGPRadiation, state)
     _validate_trace_gas_restart(radiation, state)
+    _validate_solar_restart(radiation, state)
     solver = radiation.solver
     radiation.call_counter = state.call_counter
     _restart_copy_array!(radiation.heating_rate, state.heating_rate, "RRTMGP heating rate")

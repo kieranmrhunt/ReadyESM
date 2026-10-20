@@ -181,13 +181,17 @@ function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_ac
         aerosol_vertical_profile = aerosol_active ?
             "fixed_log_pressure_gaussian_center_150hPa_width_0.8" :
             "none",
-        forcing_time_dependence = config.carbon.mode == :emissions_driven ?
-            "CO2_updated_each_coupling_step_from_emissions_and_air_sea_exchange" :
-            "constant_for_entire_integration",
+        forcing_time_dependence = _forcing_time_dependence(config),
         interactive_carbon_cycle = config.carbon.mode == :emissions_driven,
         interactive_aerosol_chemistry = false,
         aerosol_emissions = false,
         radiation_every_n_steps = config.forcing.radiation_every_n_steps,
+        requested_solar_distance_correction = config.forcing.solar_distance_correction,
+        applied_solar_distance_correction =
+            rrtmgp_active && radiation.solar_distance_correction,
+        solar_distance_scheme = _solar_distance_scheme(
+            rrtmgp_active && radiation.solar_distance_correction,
+        ),
         cloud_humidity_search_min_sigma =
             config.forcing.cloud_humidity_search_min_sigma,
         applied_cloud_humidity_search_min_sigma =
