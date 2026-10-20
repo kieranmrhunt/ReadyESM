@@ -18,7 +18,7 @@ Production keeps its current Betts–Miller scheme.
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | Both 30-day pairs retain moistening and reduced net downward radiation. The current-main candidate passes the full CPU suite. Coupled restart and observed skill are next. |
+| C06: rain evaporation and cold pools | Active | Both 30-day pairs retain moistening and reduced net downward radiation. Coupled source and restart comparisons pass. Four January skill runs are submitted. Integration with the latest ocean fix is under test. |
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
@@ -103,7 +103,7 @@ fails, and unmapped rain passes through unchanged.
 
 The current-main candidate passes 141 focused assertions and the full CPU
 suite. New checks reject unsupported C06/C07/C08 combinations and invalid
-parameters. Coupled source comparisons and fresh-process restarts are running.
+parameters. Coupled source comparisons and fresh-process restarts now pass.
 Both two-day sampler pilots complete. Their first reader rejects the
 Float32 model weights against a Float64 sum tolerance. An independent
 quadrature reconstruction matches every saved weight exactly. Explicit
@@ -114,9 +114,23 @@ The current-main native reference finishes eight steps, then its report
 builder fails because a snow-history variable hides a Julia function.
 A corrected runner reuses both verified reference integrations. The native
 report is explicitly recovered from execution evidence. The strong reference
-report is unchanged. Twelve report-fragment tests pass. Candidate integrations
-and restarts are running. Four 31-day native/strong runs wait for these checks,
-then compare January ERA5 skill and execution-repeat spread.
+report is unchanged. Twelve report-fragment tests pass. Both candidate
+integrations and fresh-process restarts complete.
+
+The native comparison reader then rejects four new diagnostic variables.
+The two base-convection fields match the existing total tendencies exactly.
+The two C06 fields are zero. A separate reader checks these identities,
+units, dimensions and data types. All 1,645 native state entries and all
+210 shared output variables match. Strong-case source checks match
+1,994 shared entries, with two added snow-history entries. Restarts match
+all state entries and all 214 output variables in both cases.
+The original failures remain in the run records.
+
+Four replacement 31-day native/strong runs will compare January ERA5 skill
+and execution-repeat spread. They retain the frozen C06 candidate.
+A separate candidate applies the same C06 code to the latest main branch,
+including the accepted ocean-ordering fix. Its focused and full CPU tests
+are running.
 
 ### C08 and C07
 
@@ -411,8 +425,18 @@ All other checks remain. It recovers those 18 members and reproduces all
 reproduces all 108 paired mass comparisons. No models were rerun.
 
 Float64 residuals are roughly proportional to timestep. Float32 adds a
-larger, less regular error. The next tests separate time filtering from
-precision loss and assess full-physics operation. Production is unchanged.
+larger, less regular error.
+
+The 36-member time-filter test completes all 216 trajectories and exact
+restarts. Turning off the Robert–Williams filter changes the retained-mean
+Float64 endpoint errors by less than 0.122%. The T31 15-second rotating
+case changes from −0.0421167 to −0.0420756 kg/m². The nearly linear
+timestep dependence remains. Keep the production filter.
+
+The next test compares centered and explicit time steps with the default
+backward-weighted implicit solver. It retains both pressure mean-mode
+corrections and the default time filter. Full-physics and operational
+timestep tests still follow these dynamics-only experiments.
 
 ### BS08 runoff and heat
 
@@ -524,10 +548,13 @@ These job identifiers locate the evidence in that archive.
 | Moving-cloud phase/source test and owned precision | 60831748, 60835591 |
 | Native pressure continuity and zero-mode attribution | 60840424, 60841330, 60841567 |
 | Six-hour pressure sweep, original reader and arithmetic recovery | 60845375, 60846103, 60846859 |
+| Pressure time-filter isolation | 60850042 |
+| Implicit time-centering sweep | 60861271 |
 | July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
 | Combined one-day coupled cases and reader | 60804346, 60804368 |
 | C06 30-day persistence test | 60781768, 60781800 |
 | C06 current-main CPU tests, coupled compatibility and skill samplers | 60813131, 60815837, 60809445, 60809446 |
+| C06 repaired coupled comparisons, January skill and latest-main tests | 60824167, 60858832, 60859107 |
 | Clean C08 one-day parameter runs and reader | 60782349, 60782351 |
 | C10 joint projection, physical phases and balanced clouds | 60809034, 60811701, 60818123 |
 | C10 diagnostic roundoff audit | 60818202 |
