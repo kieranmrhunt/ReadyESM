@@ -5,6 +5,7 @@ separate source snapshots until their results support a model update.
 The [README](../README.md#experimental-roadmap) tracks the ten blue-sky ideas.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
 It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
+The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
 Production keeps its current Betts–Miller scheme.
 
 ## Convection portfolio
@@ -16,11 +17,11 @@ Production keeps its current Betts–Miller scheme.
 | C03: surface-forced shallow closure | Closed | Moisture improves, but the intended storm-track response and spatial mechanism fail their tests. |
 | C04: elevated and slantwise convection | Closed at T31 | Eligible columns are rare at this resolution. Reopen for a higher-resolution or event-based test. |
 | C05: non-equilibrium deep closure | Closed | The tested memory produces little change in convective timing. |
-| C06: rain evaporation and cold pools | Active | All six ten-day runs pass physical checks. The stronger setting reduces late net downward radiation by about 0.7 W/m². Source-coverage flags remain. Thirty-day tests are queued. |
-| C07: convective momentum transport | Integrated option, assessment active | CPU option passes coupled and exact restart tests. January global wind gains come with regional trade-offs. |
-| C08: deterministic multi-plume convection | Integrated option, assessment active | CPU option passes coupled and exact restart tests. Case 12 improves moisture and temperature errors relative to its original setting. |
+| C06: rain evaporation and cold pools | Active | The first 30-day pair retains moistening and reduced net downward radiation. Source-placement flags remain. The repeat pair is running. |
+| C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
+| C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Ten-day tests pass physical checks but reach about 339 K. Extra substeps give little further reduction. Local heating traces are running. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Cloud-bearing source and restart tests pass. Spectral projection and the time filter produce negative phase values. A global smoothing fix was rejected. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
@@ -90,6 +91,12 @@ Independent checks cover 84 output histories and 28 paired metrics. Over days
 0.708 W/m² in the two repeats. Column water rises by 0.0665 and 0.0703 kg/m².
 Clear-sky net downward radiation rises by 0.0972 and 0.0805 W/m². Source-coverage
 flags remain failed. Matched 30-day runs will test persistence.
+
+The first 30-day pair now passes physical checks and production diagnostics.
+Over days 20–30, the candidate increases column water by 0.0462 kg/m² and
+reduces net downward radiation by 0.6271 W/m² against native. Clear-sky net
+downward radiation increases by 0.0672 W/m². Source placement still fails.
+The second pair is running.
 
 ### C08 and C07
 
@@ -199,6 +206,28 @@ All observed-skill ranges above cover three perturbed initial states for January
 1993, with prescribed seasonal SST and simple radiation. Selected parameters
 need a separate validation period. Production defaults remain unchanged.
 
+July validation now passes all 21 members and the physical and ERA5 readers.
+Independent interpolation and weighted sums verify 1,260 score rows and
+2,340 paired differences. Keep these results separate from January.
+
+Adding C07 to case 12 reduces global July RMSE against matched C08:
+
+| Variable | RMSE reduction across three seeds |
+| --- | ---: |
+| Column water | 0.136–0.142 kg/m² |
+| Rainfall | 0.052–0.054 mm/day |
+| Temperature at 500 hPa | 0.412–0.447 K |
+| Wind at 200 hPa | 0.697–0.752 m/s |
+| Wind at 500 hPa | 0.339–0.406 m/s |
+| Wind at 850 hPa | 0.378–0.439 m/s |
+
+Temperature at 200 and 850 hPa also improves. Against native convection,
+combined case 12 still has worse moisture and upper/mid-level temperature
+errors, despite better rainfall and wind scores. Extratropical 200 hPa wind
+worsens against C08. Case 12 remains the preferred coupled test, with case 3
+as contrast. Six one-day coupled cases are running, including native, plain
+C08 and zero-strength C07 controls.
+
 ### C10
 
 The stronger shallow-transport settings improve some global means but cause
@@ -239,6 +268,21 @@ The complete coupled state and all three forcing memories match at step four
 and each continued step through step eight. Native has 1,681 compared entries,
 and each experimental arm has 1,771. Active cases have zero physical failures.
 
+A cloud-bearing prototype now carries liquid, ice and their latent energy.
+Stored-column tests pass, followed by 432 live phase tests and 16 fresh-process
+restart checks. Grid water still becomes negative after spectral projection.
+
+A global smoothing repair was rejected. It cannot preserve each phase's
+inventory when that inventory is already negative. In the strongest admissible
+case it also removes over 99.9% of a cloud layer's horizontal variation.
+
+A passive test of the native time filter passes 552 assertions and reproduces
+the original default-filter states exactly. At step three, the filter turns
+a near-zero unfiltered liquid coefficient into a negative value in both
+precisions. With the filter off, this effect disappears but negative grid
+water remains. The next prototype must handle phase exchange and time history
+together, while conserving total water and energy.
+
 ### BS08 runoff and heat
 
 The twelve-process test on one A100 passes its registered compatibility rule.
@@ -252,6 +296,12 @@ The device-kernel test passes its physical checks and exact repeats, but its
 34.0% cost increase exceeds the 25% limit. The dependent coupled test cancels.
 A separate unchanged-model profile tests the suspected synchronization cost.
 The coupled test retains its 3% limit.
+
+The completed profile gives three ABBA ratios of 1.235, 1.346 and 1.382.
+All 3,600 raw substep samples and repeat hashes verify. Reducing the partition
+flag through its field interface takes 91.433 μs, versus 38.909 μs on the
+stored interior. A one-line candidate now tests the latter route. It must
+retain error detection, exact final states and the existing cost limits.
 
 ### BS10 carbon inventory
 
@@ -285,6 +335,14 @@ three prescribed CO2 levels with three alkalinity settings. It resumes the test
 stopped by the earlier inventory bug and checks every step. The emissions-driven
 candidate passes its compact CPU restart checks. GPU tests are queued.
 
+The full-grid zero-exchange day and all nine CO2/alkalinity cases now pass.
+GPU emissions host tests pass all 27 saved samples. All 56 carbon-history
+rows from four GPU restart cases pass the ledger checks, with maximum relative
+inventory error 2.956e-8. Two cases reproduce the full state exactly after
+restart. Two first differ in ocean fields after exact restored boundaries.
+Numeric repeats will measure those differences. The dependent full-grid
+emissions batch cancelled before allocation.
+
 ## Evidence record
 
 The development labbook retains source hashes, reports and failed attempts.
@@ -292,6 +350,12 @@ These job identifiers locate the evidence in that archive.
 
 | Evidence | Jobs |
 | --- | --- |
+| July monthly convection, physical reader and ERA5 scores | 60783806, 60783807, 60784800 |
+| Combined one-day coupled cases and reader | 60804346, 60804368 |
+| C06 30-day persistence test | 60781768, 60781800 |
+| C10 live cloud phase, rejected spectral bound and filter witness | 60800258, 60801160, 60804150 |
+| BS08 completed cost profile and reduction candidate | 60783921, 60803170 |
+| BS10 GPU emissions restart and numeric repeats | 60775069, 60775070, 60800419, 60800421 |
 | C02 current-model columns and ERA5 host pilots | 60681564, 60683567, 60683670 |
 | C02 passive monthly capture and reader | 60691659, 60691662 |
 | C02 nine-member January assessment and complete-run reader | 60692616, 60694629 |

@@ -47,12 +47,12 @@ The tables below track research candidates. See the
 | BS02 | Prognostic clouds | Transport, water storage and restart components pass. The tested cloud closure worsens radiation. | Replace cloud fraction and overlap before another screen. |
 | BS03 | Virtual vertical layers | The partial-layer follow-up failed its registered effect tests. This form is closed. | Reopen with a clear observational benefit. |
 | BS04 | Balanced initialisation | Accepted in v0.1.10. Three matched pairs improve early SST error, with mixed Antarctic ice results. | Extend the accepted launch beyond 30 days. |
-| BS05 | Parameter calibration | January ERA5 scores favour case 12 over the original C08 setting for moisture and temperature, with similar rainfall skill. | Extend cases 12 and 3 with coupled controls. |
+| BS05 | Parameter calibration | January and July support case 12's moisture gain. C07 improves July global winds and temperature against matched C08. | Compare six configurations in one-day coupled runs. |
 | BS06 | Sea-ice thickness distribution | The tested pressure hybrid is closed. Category transport and restart tools are retained. | Reopen after a defined coastal-growth or thickness trigger. |
 | BS07 | Coastal connectivity and landfast ice | The tested opening and generic coastal stress reduce target growth but worsen or relocate total growth. This form is closed. | Test geometry-specific landfast physics after a growth trigger. |
-| BS08 | Runoff storage and heat | GPU compatibility and physical checks pass. The kernel costs 34% more, above its 25% limit. | Profile and reduce the added cost before the coupled test. |
+| BS08 | Runoff storage and heat | Physical checks pass. Repeated timing still exceeds the 25% limit. A validation reduction is a measured cost. | Test a faster reduction with unchanged physics and exact state comparisons. |
 | BS09 | Automated experiment branching | The tested incident-recovery tool is complete and archived. | Reopen for a general tool with resource and environment checks. |
-| BS10 | Carbon, aerosols and emissions | The full-grid GPU pair passes carbon conservation. The live-carbon run also passes one full day. | Complete full-grid restarts, the zero-exchange day and the CO2/alkalinity sweep. |
+| BS10 | Carbon, aerosols and emissions | Full-grid day-one budgets and the CO2/alkalinity sweep pass. GPU emissions budgets pass, while two restart cases differ in ocean fields. | Measure restart differences against run-to-run variation. |
 
 Current convection work:
 
