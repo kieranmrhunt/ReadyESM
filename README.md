@@ -28,9 +28,13 @@ Two fresh processes each timed three model days after warm-up.
 | T31, 27 levels | 180×90×60 | 8.2 | 45–52 min |
 | T31, 27 levels | 360×180×60 | 5.7 | 46–53 min |
 | T31, 27 levels | 720×360×60 | 2.4 | 48–54 min |
+| T63, 27 levels | 360×180×60 | 3.0 | 48–54 min |
+| T127, 27 levels | 360×180×60 | 1.1 | 55–61 min |
 
 The rate covers integration with daily budget diagnostics. Start-up includes
 loading, model construction, initialization and warm-up.
+T63 and T127 used a wider land-data search for a few island cells during
+initialization, for timing only.
 [Timing details](docs/performance.md).
 
 ## Run
