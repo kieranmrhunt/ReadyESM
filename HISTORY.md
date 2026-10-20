@@ -7,6 +7,14 @@ artefacts.
 
 ## Main branch after 0.1.10
 
+### 2026-10-20
+
+- Close the tested uniform C02 depth cutoff after four settings worsen
+  temperature skill at all three tested pressure levels.
+- Record completed C06 and C10 ten-day comparisons, clean C07/C08 coupled
+  pilots, research day-one restarts and the live-carbon production day.
+- Keep production source and the v0.1.10 configuration unchanged.
+
 ### 2026-10-19
 
 - Track convective snowfall separately in output and diagnostic history.
