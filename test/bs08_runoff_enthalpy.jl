@@ -130,7 +130,8 @@ end
                 rows = [zero_row, warm], in_transit_enthalpy_j = 0.0, maps...))
         @test isnothing(RB._validate_bs08_diagnostics(good))
         for bad_row in (bs08_row(4; receiver_h = 0.0), bs08_row(4; receiver_water = 0.0), bs08_row(4; inconsistent = 2),
-                        merge(warm, (; zero_flow = true)))
+                        merge(warm, (; zero_flow = true)), bs08_row(4; receiver_h = 4e10), bs08_row(4; receiver_water = 2e3),
+                        merge(warm, (; pending_runoff_enthalpy_j = NaN)), merge(warm, (; time_seconds = 0.0)))
             bad = (; bs08_diagnostics = merge(good.bs08_diagnostics, (; rows = [zero_row, bad_row])))
             @test_throws ErrorException RB._validate_bs08_diagnostics(bad)
         end
@@ -186,12 +187,44 @@ end
         @test history.last_iteration == 8 && history.cumulative_released_enthalpy_j == 19.0
         push!(history.rows, bs08_row(12; released = 29.0, received = 27.0))   # continues past the saved endpoint
         @test length(history.rows) == 4 && history.rows[end].iteration == 12
-        # legacy v2 (no history) restores the exchange and leaves the history for the launch-only rule
+        # invalid saved histories are refused before any exchange or history change (Codex 15:35 probe cases)
+        populated = deepcopy(OB.prognostic_state(land))
+        endpoint = saved.diagnostic_history.rows[end]
+        for broken_history in (
+            merge(saved.diagnostic_history, (; rows = [saved.diagnostic_history.rows[1:2]...,
+                                                        merge(endpoint, (; pending_runoff_enthalpy_j = NaN))])),
+            merge(saved.diagnostic_history, (; rows = [saved.diagnostic_history.rows[1:2]...,
+                                                        merge(endpoint, (; time_seconds = -1.0))])),
+            merge(saved.diagnostic_history, (; last_time_seconds = -1.0)),
+            merge(saved.diagnostic_history, (; rows = [saved.diagnostic_history.rows[1:2]...,
+                                                        merge(endpoint, (; cumulative_released_enthalpy_j = 99.0))])),
+            merge(saved.diagnostic_history, (; in_effect_receiver_enthalpy_w = 1.0)),
+            merge(saved.diagnostic_history, (; rows = [saved.diagnostic_history.rows[1:2]...,
+                                                        merge(endpoint, (; receiver_enthalpy_w = 4e10))])),
+        )
+            @test_throws ErrorException OB.restore_prognostic_state!(land, merge(saved, (; diagnostic_history = broken_history)))
+            @test OB.prognostic_state(land) == populated
+        end
+        # an invalid legacy restore leaves a populated destination unchanged
         v2 = (; schema = "readiesm_native_runoff_exchange_v2", runoff_exchange = saved.runoff_exchange,
               runoff_enthalpy = saved.runoff_enthalpy)
+        bad_v2 = merge(v2, (; runoff_enthalpy = (pending_enthalpy_jm2 = fill(NaN, size(ex.pending_enthalpy)),
+                                                 held_enthalpy_rate_wm2 = saved.runoff_enthalpy.held_enthalpy_rate_wm2)))
+        @test_throws ErrorException OB.restore_prognostic_state!(land, bad_v2)
+        @test OB.prognostic_state(land) == populated
+        # a valid legacy v2 restore returns the history to launch state, so the launch-only rule applies
         OB.restore_prognostic_state!(land, v2)
         @test Array(ex.pending_enthalpy) == saved.runoff_enthalpy.pending_enthalpy_jm2
-        @test history.rows[end].iteration == 12
+        @test isempty(history.rows) && history.last_iteration == -1 && history.cumulative_released_enthalpy_j == 0.0
+        # the same holds for v1 and for a v3 checkpoint saved without history
+        OB.restore_prognostic_state!(land, saved)
+        @test history.last_iteration == 8
+        OB.restore_prognostic_state!(land, (; schema = "readiesm_native_runoff_exchange_v1",
+                                           runoff_exchange = saved.runoff_exchange))
+        @test isempty(history.rows) && history.last_iteration == -1
+        OB.restore_prognostic_state!(land, saved)
+        OB.restore_prognostic_state!(land, merge(saved, (; diagnostic_history = nothing)))
+        @test isempty(history.rows) && history.last_iteration == -1
     end
 end
 println("BS08_RUNOFF_ENTHALPY_PACKAGE_TESTS_PASS")

@@ -24,6 +24,9 @@ const _BS08_HISTORY_ROW_KEYS = (
     :partition_inconsistent_columns,
 )
 
+"Relative closure limit for routed water and enthalpy (the frozen routing gates use the same bound)."
+const _BS08_ROUTING_CLOSURE_LIMIT = 2e-6
+
 mutable struct BS08DiagnosticHistory
     source_area_m2::Vector{Float64}
     sample_every_n_steps::Int
@@ -105,6 +108,39 @@ function _bs08_relative_closure(source, receiver)
     return abs(receiver - source) / abs(source)
 end
 
+"Validate one history row: field set, finite values, zero-flow flag and routed water and enthalpy closure."
+function _validate_bs08_row(row)
+    keys(row) == _BS08_HISTORY_ROW_KEYS || error("BS08 history fields differ")
+    for key in _BS08_HISTORY_ROW_KEYS
+        value = getproperty(row, key)
+        value isa Bool || isfinite(value) || error("nonfinite BS08 history value $key")
+    end
+    row.iteration isa Integer && row.iteration >= 0 && row.time_seconds >= 0 || error("invalid BS08 history clock")
+    row.zero_flow == iszero(row.source_water_kgs) || error("BS08 zero-flow flag disagrees with routed water")
+    for (source, receiver, name) in ((row.source_water_kgs, row.receiver_water_kgs, "water"),
+                                     (row.source_enthalpy_w, row.receiver_enthalpy_w, "enthalpy"))
+        closure = _bs08_relative_closure(source, receiver)
+        isnan(closure) && error("BS08 history has an unmatched nonzero $name side")
+        closure <= _BS08_ROUTING_CLOSURE_LIMIT || error("BS08 routed $name closure $closure exceeds the limit")
+    end
+    return nothing
+end
+
+"Validate a row sequence: launch row first, strictly increasing iterations and times."
+function _validate_bs08_rows(rows)
+    isempty(rows) && error("BS08 history has no launch row")
+    first(rows).iteration == 0 && first(rows).time_seconds == 0 || error("BS08 history lacks its launch row")
+    for (index, row) in enumerate(rows)
+        _validate_bs08_row(row)
+        if index > 1
+            previous = rows[index - 1]
+            row.iteration > previous.iteration && row.time_seconds > previous.time_seconds ||
+                error("BS08 history rows are not increasing")
+        end
+    end
+    return nothing
+end
+
 function _bs08_diagnostic_row(earth, history, iteration, time_seconds)
     budget = _bs08_routing_budget(earth, history.source_area_m2)
     terrarium = earth.atmosphere.variables.prognostic.land.terrarium
@@ -152,13 +188,18 @@ function _record_bs08_diagnostics!(simulation)
     budget_callback.sample_every_n_steps == history.sample_every_n_steps ||
         error("BS08 diagnostic cadence differs from the coupled-budget cadence")
     at_end = iteration >= simulation.stop_iteration || time_seconds >= simulation.stop_time
-    row = _bs08_diagnostic_row(earth, history, iteration, time_seconds)
-    history.in_effect_receiver_enthalpy_w = row.receiver_enthalpy_w
+    # Every step needs only the receiver rate now in effect (one reduction). The full row (water integrals, the
+    # native-SST term and the store integrals) is built only on sample steps.
+    if iteration == 0 || iteration % history.sample_every_n_steps == 0 || at_end
+        row = _bs08_diagnostic_row(earth, history, iteration, time_seconds)
+        history.in_effect_receiver_enthalpy_w = row.receiver_enthalpy_w
+        push!(history.rows, row)
+    else
+        history.in_effect_receiver_enthalpy_w =
+            _budget_scalar(_budget_integral(earth.land.runoff_exchange.receiver_enthalpy_flux))
+    end
     history.last_iteration = iteration
     history.last_time_seconds = time_seconds
-    if iteration == 0 || iteration % history.sample_every_n_steps == 0 || at_end
-        push!(history.rows, row)
-    end
     return nothing
 end
 
@@ -189,14 +230,29 @@ function _validate_bs08_history_checkpoint(history, saved)
     all(isfinite, (saved.last_time_seconds, saved.in_effect_receiver_enthalpy_w,
                    saved.cumulative_released_enthalpy_j, saved.cumulative_received_enthalpy_j)) ||
         error("nonfinite BS08 history ledger")
-    isempty(saved.rows) && error("BS08 history checkpoint has no launch row")
-    first(saved.rows).iteration == 0 || error("BS08 history lacks its launch row")
-    for (index, row) in enumerate(saved.rows)
-        keys(row) == _BS08_HISTORY_ROW_KEYS || error("BS08 history fields differ")
-        index > 1 && (row.iteration > saved.rows[index - 1].iteration || error("BS08 history is not increasing"))
-        row.iteration <= saved.last_iteration || error("BS08 history extends beyond its clock")
+    _validate_bs08_rows(saved.rows)
+    endpoint = last(saved.rows)
+    endpoint.iteration <= saved.last_iteration && endpoint.time_seconds <= saved.last_time_seconds ||
+        error("BS08 history extends beyond its clock")
+    if endpoint.iteration == saved.last_iteration
+        endpoint.time_seconds == saved.last_time_seconds &&
+            endpoint.cumulative_released_enthalpy_j == saved.cumulative_released_enthalpy_j &&
+            endpoint.cumulative_received_enthalpy_j == saved.cumulative_received_enthalpy_j &&
+            endpoint.receiver_enthalpy_w == saved.in_effect_receiver_enthalpy_w ||
+            error("BS08 history endpoint row disagrees with the saved ledger")
     end
     return nothing
+end
+
+"Return an installed history to its launch state (used by restores without a saved history)."
+function _reset_bs08_history!(history)
+    history.last_iteration = -1
+    history.last_time_seconds = NaN
+    history.in_effect_receiver_enthalpy_w = 0.0
+    history.cumulative_released_enthalpy_j = 0.0
+    history.cumulative_received_enthalpy_j = 0.0
+    empty!(history.rows)
+    return history
 end
 
 function _restore_bs08_history!(history, saved)
@@ -242,22 +298,9 @@ function _validate_bs08_diagnostics(diagnostics)
     hasproperty(diagnostics, :bs08_diagnostics) || return nothing
     d = diagnostics.bs08_diagnostics
     d.schema == _BS08_HISTORY_SCHEMA || error("unknown BS08 output schema")
-    !isempty(d.rows) && first(d.rows).iteration == 0 || error("BS08 output lacks its launch row")
-    for row in d.rows
-        keys(row) == _BS08_HISTORY_ROW_KEYS || error("BS08 output fields differ")
-        for key in _BS08_HISTORY_ROW_KEYS
-            value = getproperty(row, key)
-            value isa Bool || isfinite(value) || error("nonfinite BS08 output value $key")
-        end
-        row.zero_flow == iszero(row.source_water_kgs) || error("BS08 zero-flow flag disagrees with routed water")
-        isnan(_bs08_relative_closure(row.source_enthalpy_w, row.receiver_enthalpy_w)) &&
-            error("BS08 output has an unmatched nonzero enthalpy side")
-        isnan(_bs08_relative_closure(row.source_water_kgs, row.receiver_water_kgs)) &&
-            error("BS08 output has an unmatched nonzero water side")
-        row.partition_inconsistent_columns == 0 || error("BS08 host partition is not the native law")
-    end
-    times = [row.time_seconds for row in d.rows]
-    all(>(0), diff(times)) || error("BS08 output times are not increasing")
+    _validate_bs08_rows(d.rows)
+    all(row -> row.partition_inconsistent_columns == 0, d.rows) || error("BS08 host partition is not the native law")
+    isfinite(d.in_transit_enthalpy_j) || error("nonfinite BS08 in-transit enthalpy")
     all(isfinite, d.surface_excess_enthalpy_jm2) && all(isfinite, d.pending_runoff_enthalpy_jm2) &&
         all(isfinite, d.cumulative_clamp_enthalpy_jm2) && all(isfinite, d.receiver_enthalpy_flux_wm2) ||
         error("nonfinite BS08 output map")

@@ -218,6 +218,8 @@ function Oceananigans.restore_prognostic_state!(land::_BS08RunoffLand, state::Na
         _restore_native_runoff_exchange!(land, state.runoff_exchange)
         fill!(ex.pending_enthalpy, 0)
         fill!(ex.held_enthalpy_rate, 0)
+        legacy_history = _bs08_diagnostic_history(land)
+        isnothing(legacy_history) || _reset_bs08_history!(legacy_history)
         BS08_EXCHANGE_LEGACY_ZERO_INITIALIZATIONS[] += 1
         @info "BS08: option-on restore from a runoff exchange without enthalpy; zero-initialised the pending enthalpy and the held enthalpy rate"
         return land
@@ -235,7 +237,7 @@ function Oceananigans.restore_prognostic_state!(land::_BS08RunoffLand, state::Na
     size(depth) == size(ex.pending_enthalpy) || throw(DimensionMismatch("runoff exchange checkpoint shape differs"))
     any(c -> iszero(depth[c]) && !iszero(state.runoff_enthalpy.pending_enthalpy_jm2[c]), eachindex(depth)) && error(
         "runoff enthalpy checkpoint has pending enthalpy without pending water")
-    # A v2 checkpoint, or a v3 one saved without history, leaves an installed history at launch state. The history
+    # A v2 checkpoint, or a v3 one saved without history, returns an installed history to launch state. The history
     # then refuses its first sample unless the run is at launch (documented launch-only legacy policy).
     history = _bs08_diagnostic_history(land)
     saved_history = state.schema == "readiesm_native_runoff_exchange_v3" ? state.diagnostic_history : nothing
@@ -245,6 +247,10 @@ function Oceananigans.restore_prognostic_state!(land::_BS08RunoffLand, state::Na
     for (destination, source) in pairs
         copyto!(destination, source)
     end
-    restore_history && _restore_bs08_history!(history, saved_history)
+    if restore_history
+        _restore_bs08_history!(history, saved_history)
+    elseif !isnothing(history)
+        _reset_bs08_history!(history)
+    end
     return land
 end
