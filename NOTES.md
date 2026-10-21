@@ -81,6 +81,10 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
   The older v0.1.8 D run retains the imprint and grows by 5.43 kg/m² over days
   90–384. Net-column process rain closes the scheme's column removal.
   Transport, filtering and coupling remain separate open terms.
+- Optional moist-mass coupling reduces dry-air drift in one January month.
+  It retains a roughly 0.2 kg/m² launch offset. The enthalpy carried by
+  the coupled water source is recorded but not yet applied to the energy
+  equations. The option stays off by default pending longer coupled tests.
 - Forcing is concentration/AOD driven. The current scope excludes carbon-cycle,
   SO2 and aerosol-emissions modules. RRTMGP receives the configured 420 ppm CO2.
   Terrarium carries a default 380 ppm ambient input, but it is physically

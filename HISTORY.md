@@ -1,11 +1,22 @@
 # Version history
 
-Latest tagged release: [v0.1.11](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.11),
+Latest tagged release: [v0.1.12](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.12),
 21 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.12 — 2026-10-21
+
+Production settings remain those of v0.1.11.
+
+- Added an optional atmospheric moist-mass coupling for the Betts–Miller
+  configuration. In one January month, dry-air change fell from
+  −6.51 to −0.24 kg/m². The option defaults to off.
+- Checked exact option-off output, fresh restarts, checkpoint compatibility,
+  the full CPU suite and an A100 run. The launch offset and energy carried
+  by water mass remain open. [Tests](docs/validation-v0.1.12.md).
 
 ## 0.1.11 — 2026-10-21
 

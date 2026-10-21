@@ -26,7 +26,7 @@ Production keeps its current Betts–Miller scheme.
 | C07: convective momentum transport | Integrated option, assessment active | Coupled and exact CPU restart tests pass. July confirms global wind gains against C08, with regional trade-offs. |
 | C08: deterministic multi-plume convection | Integrated option, assessment active | Coupled and exact CPU restart tests pass. Case 12 improves moisture against its original setting in January and July. |
 | C09: stochastic plume population | Closed | Eight seeds show no resolved change in the tested mean heating. |
-| C10: shallow eddy-diffusivity/mass-flux transport | Active | Positive grid transport preserves water and heat. The standalone restart repair is on main. Five wet one-day pressure tests pass exact restarts. Their mass gains come with larger water residuals. Ten-day tests are running. |
+| C10: shallow eddy-diffusivity/mass-flux transport | Active | Optional Betts–Miller moist-mass coupling is in v0.1.12, default off. A matched January month reduces dry-air change from −6.51 to −0.24 kg/m². Option-off identity, CPU, A100 and restart gates pass. The source enthalpy and launch offset remain open before a default change. |
 | C11: saturated-parcel trigger census | Closed | The affected columns contribute too little rain to justify this route. |
 
 ## Latest results
