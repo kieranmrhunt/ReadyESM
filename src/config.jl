@@ -51,6 +51,9 @@ Base.@kwdef struct ExperimentConfig
     # Zero the l = lmax+1 spectral row of the prognostic state after the initial conditions are set
     # (spectral_truncation.jl). Opt-in: false keeps the existing launch bitwise.
     atmosphere_initial_spectral_truncation::Bool = false
+    # Couple the physics vapour sources (E - P) to the air mass, and keep the global mean of the ln(p_s) tendency
+    # (moist_mass_coupling.jl). Opt-in for the net-column Betts-Miller host: false keeps every model unchanged.
+    atmosphere_moist_mass_coupling::Bool = false
     atmosphere_convection::Symbol = :betts_miller_constant_rh
     atmosphere_convection_timescale_seconds::Int = 14400
     atmosphere_c08_entrainment_scale::Float64 = 0.75
@@ -367,6 +370,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         atmosphere_initial_spectral_truncation = Bool(
             _mapping_value(raw, "atmosphere_initial_spectral_truncation", false),
         ),
+        atmosphere_moist_mass_coupling = Bool(
+            _mapping_value(raw, "atmosphere_moist_mass_coupling", false),
+        ),
         atmosphere_convection = Symbol(
             _mapping_value(
                 raw,
@@ -668,6 +674,28 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     config.atmosphere_convection_timescale_seconds > 0 || throw(ArgumentError(
         "atmosphere_convection_timescale_seconds must be positive",
     ))
+    if config.atmosphere_moist_mass_coupling
+        # Supported host only: the Betts-Miller remainder is spread in sigma. Other convection schemes need their
+        # own per-layer source adapter before they can be coupled.
+        config.atmosphere_convection in (:betts_miller_constant_rh, :betts_miller_sigma_rh_v1) || throw(ArgumentError(
+            "atmosphere_moist_mass_coupling requires atmosphere_convection=betts_miller_constant_rh or " *
+            "betts_miller_sigma_rh_v1",
+        ))
+        config.atmosphere_large_scale_precipitation == :net_column_conservative || throw(ArgumentError(
+            "atmosphere_moist_mass_coupling requires atmosphere_large_scale_precipitation=net_column_conservative",
+        ))
+        config.forcing.radiation in (:rrtmgp_clear_sky, :rrtmgp_all_sky) || throw(ArgumentError(
+            "atmosphere_moist_mass_coupling requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky",
+        ))
+        config.forcing.cloud_scheme != :prognostic_condensate || throw(ArgumentError(
+            "atmosphere_moist_mass_coupling treats vapour as the only atmospheric water and requires a " *
+            "diagnostic cloud scheme",
+        ))
+        config.atmosphere_vertical_diffusion == :speedyweather_0_21_1_zero_operator_control || throw(ArgumentError(
+            "atmosphere_moist_mass_coupling requires atmosphere_vertical_diffusion=" *
+            "speedyweather_0_21_1_zero_operator_control",
+        ))
+    end
     0 <= config.atmosphere_convection_upper_relative_humidity <= 1 || throw(
         ArgumentError(
             "atmosphere_convection_upper_relative_humidity must lie in [0, 1]",

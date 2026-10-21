@@ -91,6 +91,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `duration_days`, `analysis_start_day` | `730`, `365` | Run length and start of the diagnostic averaging period. |
 | `atmosphere_convection_timescale_seconds` | `7200` | Betts–Miller adjustment time. |
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
+| `atmosphere_moist_mass_coupling` | `false` | Let water-vapour sources change the air mass. Evaporation adds air and precipitation removes it, and the global mean surface pressure follows. Use it only with Betts–Miller convection, net-column large-scale precipitation and RRTMGP radiation. |
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
 | `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
 | `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Prescribed CH4 and N2O for RRTMGP. Omitted values use 1900 and 340 ppb. Keep these settings unchanged on restart. |

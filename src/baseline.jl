@@ -290,6 +290,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
     sea_ice = coupled_ocean ? PrescribedSeaIce(spectral_grid) :
         ThermodynamicSeaIce(spectral_grid)
     initial_conditions = _atmosphere_initial_conditions(config, spectral_grid)
+    stochastic_physics = _atmosphere_stochastic_physics(config)
     shortwave_radiation = RRTMGPNoShortwave()
     longwave_radiation = RRTMGPClearSkyRadiation(
         spectral_grid;
@@ -440,6 +441,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             hole_filling,
             large_scale_condensation,
             convection,
+            stochastic_physics,
         )
     elseif coupled_ocean
         surface_heat_flux = SurfaceHeatFlux(
@@ -471,6 +473,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             hole_filling,
             large_scale_condensation,
             convection,
+            stochastic_physics,
         )
     else
         PrimitiveWetModel(
@@ -490,8 +493,10 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             hole_filling,
             large_scale_condensation,
             convection,
+            stochastic_physics,
         )
     end
+    _check_moist_mass_coupling_host(model)
     add!(
         model.callbacks,
         :rrtmgp_postphysics_update =>

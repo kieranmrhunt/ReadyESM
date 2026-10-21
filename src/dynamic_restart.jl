@@ -865,6 +865,8 @@ function Oceananigans.restore_prognostic_state!(
     model::_ReadyESMRadiativeSpeedyEarthSystem,
     state,
 )
+    # Check the moist-mass coupling record before any atmosphere, ocean or land state is overwritten.
+    _validate_moist_mass_restart(model.atmosphere, state.atmosphere)
     _validate_carbon_restart_compatibility(
         model,
         hasproperty(state, :carbon) ? state.carbon : nothing,
@@ -1377,6 +1379,7 @@ function Oceananigans.prognostic_state(simulation::SpeedyWeather.Simulation)
         implicit = _speedy_implicit_restart_state(simulation.model.implicit),
         radiation = _rrtmgp_radiation_state(radiation),
         callbacks = _speedy_callback_state(simulation.model.callbacks),
+        _moist_mass_restart_state(simulation)...,
     )
 end
 
@@ -1385,6 +1388,7 @@ function Oceananigans.restore_prognostic_state!(
     state,
 )
     _validate_atmosphere_radiation_restart(simulation, state)
+    _validate_moist_mass_restart(simulation, state)
     # JLD2 reconstructs the checkpointed Variables tree on the CPU.
     # SpeedyWeather's alias-aware copy handles ordinary host-to-device arrays.
     # The narrowly typed lower-triangular, RingGrids.Field, and ScratchMemory

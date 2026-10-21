@@ -300,6 +300,7 @@ function collect_diagnostics(simulation, config::ExperimentConfig)
             atmosphere_initial_conditions = String(config.atmosphere_initial_conditions),
             atmosphere_initial_spectral_truncation =
                 config.atmosphere_initial_spectral_truncation,
+            _moist_mass_coupling_provenance(config)...,
             era5_month = config.era5_month,
             _atmosphere_initial_condition_provenance(
                 model.initial_conditions,
