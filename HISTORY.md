@@ -1,16 +1,21 @@
 # Version history
 
-Latest tagged release: [v0.1.10](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.10),
-17 October 2026. Changes below “Unreleased” are available on main.
+Latest tagged release: [v0.1.11](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.11),
+21 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
 
-## Unreleased
+## 0.1.11 — 2026-10-21
 
 Production settings remain those of v0.1.10.
 
+- Average land sensible and latent heat fluxes over each coupling interval.
+  This makes exported fluxes match those used during the land substeps.
+  The month test removes the regular-step land-water exchange mismatch to
+  rounding precision. Moisture error improves slightly, while temperature
+  and rainfall errors increase slightly. [Tests](docs/validation-v0.1.11.md).
 - Fixed the order of ocean surface-height and vertical grid-scale updates.
   [Tests](docs/validation-ocean-grid-ordering.md).
 - Fixed standalone atmosphere restart to restore both transform work arrays.

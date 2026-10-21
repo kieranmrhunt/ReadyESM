@@ -307,11 +307,13 @@ function _timestep_terrarium_cpu!(
     diagnostics = haskey(model.callbacks, :global_atmosphere_diagnostics) ?
         model.callbacks[:global_atmosphere_diagnostics] : nothing
     coupling_period = _terrarium_coupling_period(vars, model)
+    surface_fluxes = _terrarium_surface_flux_accumulator(state)
     _run_terrarium_land!(
         integrator,
         coupling_period,
         land.Δt;
         diagnostics,
+        surface_fluxes,
     )
 
     vars.prognostic.land.soil_temperature[mask] .=
@@ -320,11 +322,11 @@ function _timestep_terrarium_cpu!(
         @view Oceananigans.interior(state.saturation_water_ice)[:, 1, end]
     if haskey(vars.prognostic.land, :sensible_heat_flux)
         vars.prognostic.land.sensible_heat_flux[mask] .=
-            Oceananigans.interior(state.sensible_heat_flux)
+            surface_fluxes.sensible_heat_flux
     end
     if haskey(vars.prognostic.land, :surface_humidity_flux)
         vars.prognostic.land.surface_humidity_flux[mask] .=
-            Oceananigans.interior(state.latent_heat_flux) ./
+            surface_fluxes.latent_heat_flux ./
             constants.thermodynamics.latent_heat_vaporization
     end
     if haskey(vars.parameterizations, :surface_longwave_up)
@@ -927,9 +929,17 @@ function _scatter_terrarium_surface!(
     multiplier = one(eltype(source)),
     offset = zero(eltype(source)),
 )
+    return _scatter_terrarium_surface_values!(backend, destination,
+        Oceananigans.interior(source), land_indices; multiplier, offset)
+end
+
+function _scatter_terrarium_surface_values!(
+    backend, destination, source, land_indices;
+    multiplier = one(eltype(source)), offset = zero(eltype(source)),
+)
     _scatter_terrarium_surface_kernel!(backend)(
         destination,
-        Oceananigans.interior(source),
+        source,
         land_indices,
         multiplier,
         offset;
@@ -1745,12 +1755,20 @@ function _run_terrarium_land!(
     period,
     land_timestep;
     diagnostics = nothing,
+    surface_fluxes = nothing,
 )
     trace = _trace_terrarium_substeps(integrator.state)
-    schedule = _terrarium_substep_schedule(period, land_timestep)
     timestepper = Terrarium.get_timestepper(integrator.model)
+    if !isnothing(surface_fluxes)
+        timestepper isa Terrarium.ForwardEuler || throw(ArgumentError(
+            "Interval-averaged land fluxes require ForwardEuler stage weights"))
+        isfinite(land_timestep) && land_timestep > 0 || throw(ArgumentError("Positive land timestep required"))
+        Millisecond(period).value > 0 || throw(ArgumentError("Positive coupling duration required"))
+    end
+    schedule = _terrarium_substep_schedule(period, land_timestep)
+    _reset_terrarium_surface_fluxes!(surface_fluxes)
     owns_runoff = hasproperty(integrator.state, :runoff_pending_depth)
-    if !trace && isnothing(diagnostics) && !owns_runoff && iszero(schedule.remainder)
+    if !trace && isnothing(diagnostics) && isnothing(surface_fluxes) && !owns_runoff && iszero(schedule.remainder)
         Terrarium.run!(integrator; period, Δt = land_timestep)
         return nothing
     end
@@ -1775,6 +1793,7 @@ function _run_terrarium_land!(
         else
             Terrarium.timestep!(integrator, land_timestep; finalize = false)
         end
+        _accumulate_terrarium_surface_fluxes!(surface_fluxes, integrator.state, land_timestep)
         _accumulate_native_runoff!(integrator.state, land_timestep)
         _bs08_after_substep!(integrator.state, land_timestep)
         isnothing(diagnostics) || _accumulate_terrarium_land_water_budget!(
@@ -1810,6 +1829,7 @@ function _run_terrarium_land!(
                 finalize = false,
             )
         end
+        _accumulate_terrarium_surface_fluxes!(surface_fluxes, integrator.state, schedule.remainder)
         _accumulate_native_runoff!(integrator.state, schedule.remainder)
         _bs08_after_substep!(integrator.state, schedule.remainder)
         isnothing(diagnostics) || _accumulate_terrarium_land_water_budget!(
@@ -1845,6 +1865,7 @@ function _run_terrarium_land!(
     else
         Terrarium.compute_auxiliary!(integrator.state, integrator.model)
     end
+    _average_terrarium_surface_fluxes!(surface_fluxes, Millisecond(period).value / 1000)
     return nothing
 end
 
@@ -1906,11 +1927,13 @@ function SpeedyWeather.timestep!(
     coupling_period = _terrarium_coupling_period(vars, model)
     diagnostics = haskey(model.callbacks, :global_atmosphere_diagnostics) ?
         model.callbacks[:global_atmosphere_diagnostics] : nothing
+    surface_fluxes = _terrarium_surface_flux_accumulator(state)
     _run_terrarium_land!(
         integrator,
         coupling_period,
         land.Δt;
         diagnostics,
+        surface_fluxes,
     )
     trace = _trace_terrarium_substeps(state)
     trace && _terrarium_trace_sync!(:land_integrator_complete)
@@ -1937,20 +1960,20 @@ function SpeedyWeather.timestep!(
     )
     trace && _terrarium_trace_sync!(:soil_moisture_scatter)
     if haskey(vars.prognostic.land, :sensible_heat_flux)
-        _scatter_terrarium_surface!(
+        _scatter_terrarium_surface_values!(
             backend,
             vars.prognostic.land.sensible_heat_flux,
-            state.sensible_heat_flux,
+            surface_fluxes.sensible_heat_flux,
             land_indices,
         )
         trace && _terrarium_trace_sync!(:sensible_heat_scatter)
     end
     if haskey(vars.prognostic.land, :surface_humidity_flux)
         latent_heat = tmodel.constants.thermodynamics.latent_heat_vaporization
-        _scatter_terrarium_surface!(
+        _scatter_terrarium_surface_values!(
             backend,
             vars.prognostic.land.surface_humidity_flux,
-            state.latent_heat_flux,
+            surface_fluxes.latent_heat_flux,
             land_indices;
             multiplier = inv(latent_heat),
         )
