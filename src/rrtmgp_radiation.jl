@@ -132,6 +132,7 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     cloud_liquid_water_path_gm2::NF
     cloud_ice_water_path_gm2::NF
     prognostic_cloud_condensate::Condensate
+    solar_distance_correction::Bool
 end
 
 const DIAGNOSTIC_CLOUD_HUMIDITY_SEARCH_LEGACY_SCHEME =
@@ -1135,6 +1136,26 @@ function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}
     return vmr
 end
 
+"""
+Reject a checkpoint whose optional CH4/N2O settings differ from the reconstructed radiation, before any state is
+changed. A checkpoint written before these options existed has no record and implies the RRTMGP standard profile
+(`nothing`), so it restores only into a configuration without `ch4_ppb` and `n2o_ppb`.
+"""
+function _validate_trace_gas_restart(radiation, state)
+    for (label, field) in (("CH4", :ch4_vmr), ("N2O", :n2o_vmr))
+        saved = hasproperty(state, field) ? getproperty(state, field) : nothing
+        current = getproperty(radiation, field)
+        (isnothing(saved) || saved isa AbstractFloat) || throw(ArgumentError(
+            "checkpoint $label mole fraction must be nothing or a floating-point value",
+        ))
+        isnothing(saved) == isnothing(current) && (isnothing(saved) || saved === current) || throw(ArgumentError(
+            "checkpoint and reconstructed radiation use different $label settings " *
+            "(checkpoint $(something(saved, "standard profile")), configuration $(something(current, "standard profile")))",
+        ))
+    end
+    return nothing
+end
+
 function RRTMGPRadiation(
     spectral_grid::SpectralGrid;
     co2_ppm = 420,
@@ -1148,6 +1169,7 @@ function RRTMGPRadiation(
     cloud_liquid_water_path_gm2 = 60,
     cloud_ice_water_path_gm2 = 25,
     prognostic_cloud_condensate = nothing,
+    solar_distance_correction::Bool = false,
 )
     NF = spectral_grid.NF
     nlay = spectral_grid.nlayers
@@ -1225,6 +1247,7 @@ function RRTMGPRadiation(
         NF(cloud_liquid_water_path_gm2),
         NF(cloud_ice_water_path_gm2),
         prognostic_cloud_condensate,
+        solar_distance_correction,
     )
 end
 
@@ -1788,7 +1811,10 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
 
     # Solar geometry is a global SpeedyWeather parameterization and has already run.
     RRTMGP.cos_zenith(solver) .= clamp.(vars.parameterizations.cos_zenith.data, 0, 1)
-    RRTMGP.toa_flux(solver) .= model.planet.solar_constant
+    RRTMGP.toa_flux(solver) .= _solar_irradiance(
+        model.planet.solar_constant, vars.prognostic.clock.time,
+        radiation.solar_distance_correction,
+    )
     RRTMGP.surface_emissivity(solver) .= radiation.surface_emissivity
     RRTMGP.set_volume_mixing_ratio!(solver, "co2", radiation.co2_ppm * 1.0e-6)
     isnothing(radiation.ch4_vmr) ||

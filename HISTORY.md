@@ -8,6 +8,16 @@ records are in the development labbook.
 
 ### 2026-10-21
 
+Added seasonal Earth–Sun distance forcing for RRTMGP. Enable it with
+`forcing.solar_distance_correction: true`. The calculation follows the model
+clock and includes leap years. Production keeps the option off.
+
+Checkpoints now record the solar option and prescribed CH4/N2O settings.
+A mismatch stops restart before model state is copied. Older checkpoints
+restore with solar correction off and gas options omitted. The full CPU suite,
+coupled compatibility tests and full-grid A100 restart test pass.
+See the [solar guide](docs/solar-forcing.md).
+
 The monthly runoff-heat tests found soil overheating in both enabled runs.
 The disabled controls passed. Keep `terrarium_runoff_enthalpy` off while the
 soil heat-transport repair is tested. See the [feature guide](docs/bs08-runoff-enthalpy.md).

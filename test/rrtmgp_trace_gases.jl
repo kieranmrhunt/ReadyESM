@@ -60,4 +60,32 @@
     @test override_provenance.applied_n2o_ppb == Float64(over.n2o_vmr) * 1.0e9
     @test override_provenance.ch4_forcing_mode == "prescribed_well_mixed_volume_mixing_ratio"
 end
+
+@testset "RRTMGP CH4 and N2O restart record" begin
+    R = ReadyESM
+    grid = R.SpeedyWeather.SpectralGrid(; NF = Float32, trunc = 1, nlayers = 8)
+    base = R.RRTMGPRadiation(grid)
+    pd = R.RRTMGPRadiation(grid; ch4_ppb = 1746.2545166015625, n2o_ppb = 310.522216796875)
+    other = R.RRTMGPRadiation(grid; ch4_ppb = 1800.0, n2o_ppb = 310.522216796875)
+    only_ch4 = R.RRTMGPRadiation(grid; ch4_ppb = 1746.2545166015625)
+    saved_base = R._rrtmgp_radiation_state(base)
+    saved_pd = R._rrtmgp_radiation_state(pd)
+    @test isnothing(saved_base.ch4_vmr) && isnothing(saved_base.n2o_vmr)
+    @test saved_pd.ch4_vmr === pd.ch4_vmr && saved_pd.n2o_vmr === pd.n2o_vmr
+    # Checkpoints written before the record existed imply the standard profile.
+    legacy = (; (k => v for (k, v) in pairs(saved_pd) if k ∉ (:ch4_vmr, :n2o_vmr))...)
+    @test R._restore_rrtmgp_radiation_state!(base, legacy) === base
+    @test R._restore_rrtmgp_radiation_state!(base, saved_base) === base
+    @test R._restore_rrtmgp_radiation_state!(pd, saved_pd) === pd
+    # Every mismatch is rejected before the radiation state changes.
+    for (radiation, state) in ((pd, legacy), (pd, saved_base), (base, saved_pd), (other, saved_pd),
+                               (only_ch4, saved_pd), (pd, R._rrtmgp_radiation_state(only_ch4)))
+        before = radiation.call_counter
+        @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(radiation, merge(state, (; call_counter = 99)))
+        @test radiation.call_counter == before
+    end
+    @test_throws ArgumentError R._validate_trace_gas_restart(pd, (; ch4_vmr = 1, n2o_vmr = pd.n2o_vmr))
+    @test_throws ArgumentError R._validate_trace_gas_restart(pd, (; ch4_vmr = Float64(pd.ch4_vmr), n2o_vmr = pd.n2o_vmr))
+    @test isnothing(R._validate_trace_gas_restart(pd, (; ch4_vmr = pd.ch4_vmr, n2o_vmr = pd.n2o_vmr)))
+end
 println("RRTMGP_TRACE_GASES_UNIT_PASS")

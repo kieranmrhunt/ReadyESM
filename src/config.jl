@@ -9,6 +9,7 @@ Base.@kwdef struct ForcingConfig
     aerosol_species::String = "sulfate"
     radiation::Symbol = :speedy_simplified
     radiation_every_n_steps::Int = 1
+    solar_distance_correction::Bool = false
     cloud_scheme::Symbol = :none
     cloud_humidity_search_min_sigma::Float64 = 0.0
     cloud_liquid_water_path_gm2::Float64 = 60.0
@@ -236,6 +237,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
             _mapping_value(forcing_raw, "radiation_every_n_steps", 1),
         ),
         cloud_scheme = Symbol(_mapping_value(forcing_raw, "cloud_scheme", "none")),
+        solar_distance_correction = Bool(
+            _mapping_value(forcing_raw, "solar_distance_correction", false),
+        ),
         cloud_humidity_search_min_sigma = Float64(
             _mapping_value(forcing_raw, "cloud_humidity_search_min_sigma", 0.0),
         ),
@@ -1090,6 +1094,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     end
     config.forcing.radiation_every_n_steps > 0 ||
         throw(ArgumentError("radiation_every_n_steps must be positive"))
+    if config.forcing.solar_distance_correction && !rrtmgp_active
+        throw(ArgumentError("solar_distance_correction requires RRTMGP radiation"))
+    end
     config.forcing.cloud_scheme in (
         :none,
         :diagnostic,

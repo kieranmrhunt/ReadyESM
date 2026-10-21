@@ -299,6 +299,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         aerosol_optical_depth_550nm = config.forcing.aerosol_optical_depth_550nm,
         surface_emissivity = COUPLED_SURFACE_EMISSIVITY,
         solve_every_n_steps = config.forcing.radiation_every_n_steps,
+        solar_distance_correction = config.forcing.solar_distance_correction,
         cloud_scheme = config.forcing.cloud_scheme,
         cloud_humidity_search_min_sigma =
             config.forcing.cloud_humidity_search_min_sigma,

@@ -1,6 +1,6 @@
 # Experiment notes
 
-Updated 20 October 2026. Production is v0.1.10. Research candidates stay in
+Updated 21 October 2026. Production is v0.1.10. Research candidates stay in
 separate source snapshots until their results support a model update.
 This page tracks the convection and blue-sky experiments.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
@@ -8,6 +8,9 @@ It also includes [optional CPU C08 and C07 convection](validation-finite-convect
 The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
 Main also includes the [ordered ocean grid update](validation-ocean-grid-ordering.md).
 BS10 is integrated as an [optional carbon model](validation-carbon.md).
+Main also includes [seasonal solar forcing](solar-forcing.md) and checked
+CH4/N2O restart settings. The full CPU and A100 tests pass. Seasonal solar
+forcing remains off by default while the coupled climate comparisons continue.
 Production keeps its current Betts–Miller scheme.
 
 ## Convection portfolio
