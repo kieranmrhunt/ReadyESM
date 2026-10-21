@@ -6,6 +6,12 @@ records are in the development labbook.
 
 ## Main branch after 0.1.10
 
+### 2026-10-21
+
+The monthly runoff-heat tests found soil overheating in both enabled runs.
+The disabled controls passed. Keep `terrarium_runoff_enthalpy` off while the
+soil heat-transport repair is tested. See the [feature guide](docs/bs08-runoff-enthalpy.md).
+
 ### 2026-10-20
 
 Added optional runoff-heat routing. Water now carries its land-derived heat

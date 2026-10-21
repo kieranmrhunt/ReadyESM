@@ -535,8 +535,9 @@ Production pressure dynamics remain unchanged.
 The optional runoff-enthalpy implementation now has joint CPU and A100
 qualification with prescribed methane and nitrous oxide. Off mode preserves
 main's state and output. The active CPU restart is exact, and the GPU energy
-ledger closes. Production keeps the option off. Four monthly coupled runs
-will assess coastal temperature, salinity and atmospheric effects. See the
+ledger closes. Both enabled monthly runs then failed soil-temperature checks,
+with a maximum of 192 °C. Both disabled controls passed. A soil heat-transport
+repair is under test. Keep the option off in climate runs. See the
 [validation record](validation-runoff-trace-gases.md) and
 [configuration guide](bs08-runoff-enthalpy.md).
 

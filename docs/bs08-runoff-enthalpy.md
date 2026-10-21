@@ -1,5 +1,12 @@
 # Runoff enthalpy (BS08, optional)
 
+## Known problem
+
+Keep `terrarium_runoff_enthalpy: false` in climate runs. In two matched
+31-day tests, enabling the option raised subsurface soil temperatures to
+192 °C. Both controls stayed below 43 °C. The river heat budget balanced,
+but heat transport inside the soil was incomplete. A repair is under test.
+
 ## What it does
 
 By default, land runoff reaches the ocean at the sea surface temperature of the receiving cell. The ocean
@@ -13,7 +20,7 @@ The option is off by default. With the option off, the model and its output are 
 
 ## How to use it
 
-Set the option in the experiment configuration:
+For isolated development tests, enable the option in the experiment configuration:
 
 ```yaml
 terrarium_runoff_enthalpy: true
@@ -68,5 +75,5 @@ An earlier four-block coupled timing test measured a mean on/off ratio of
 exceeded its 1.25 limit. These tests used different harnesses and source
 revisions. Allow for extra runtime when enabling the option.
 
-The option is provided for controlled runs. A matched monthly comparison is
-measuring its effect on coastal temperature, salinity and the coupled climate.
+The monthly comparison found the soil-temperature problem described above.
+The option remains off by default.
