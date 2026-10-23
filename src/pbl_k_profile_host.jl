@@ -6,31 +6,36 @@ column physics is in pbl_k_profile.jl. Host conventions, agreed with Codex's int
 - vertical_diffusion runs first in each column, before convection and the surface fluxes, and SpeedyWeather zeroes the
   top-level surface flux totals before column physics. The surface buoyancy flux therefore comes from the persistent
   prescribed coupled inputs, `prognostic.ocean` and `prognostic.land` sensible heat (W/m2) and humidity (kg/m2/s)
-  fluxes, positive upward, conditional means weighted once by the land fraction (a zero-area tile is never read);
+  fluxes, positive upward, conditional means weighted once by the land fraction (a zero-area tile is never read).
+  B_s is the surface flux of the virtual potential temperature that the Richardson number uses, Tv sigma^-kappa:
+  B_s = (1 + mu q_1) H / (rho cp) + mu T_s E / rho, with T_s = T_1 sigma_n^-kappa and mu = atmosphere.μ_virt_temp;
 - the friction velocity is the stress equivalent of SpeedyWeather's surface momentum flux,
   u*^2 = C_D V0 f |V1|, with the lagged stored drag (or the fixed drag the momentum scheme would use), V0 and the
   surface air density computed locally in the SurfaceCondition form. The shared drag and stress are unchanged. At
   start-up C_D can be zero; then u* = 0 and the calm-safe closure applies (no neutral fallback);
 - dry static energy s = cp T + Phi and humidity are mixed from the `_prev` state over 2 dt, and the flux-form tendency
   of the backward-Euler solution is added (the leapfrog update over 2 dt then equals the implicit step). Momentum is
-  not mixed in v1. Heights above the surface are hydrostatic from the column's virtual temperature.
+  not mixed in v1. Heights above the surface are hydrostatic from the column's virtual temperature;
+- the depth h is at least the top face of layer 1 and at most the height of sigma = 0.5 in that column. The bulk
+  Richardson number has a 0.1 m/s calm-wind floor (PBL_CALM_WIND_FLOOR), part of the provenance below.
 =#
 
-const PBL_K_PROFILE_PROVENANCE = "holtslag_boville_1993_k_profile_backward_euler_sigma_flux_scalars_v1"
-const PBL_VIRTUAL_FACTOR = 0.61
+const PBL_K_PROFILE_PROVENANCE =
+    "holtslag_boville_1993_k_profile_ric0p3_calm_wind_floor_0p1ms_sigma0p5_cap_backward_euler_sigma_flux_scalars_v1"
+const PBL_MAXIMUM_SIGMA = 0.5
 
 """Holtslag-Boville K-profile mixing of dry static energy and humidity (opt-in vertical diffusion)."""
 struct KProfileBoundaryLayerMixing{NF} <: SpeedyWeather.AbstractVerticalDiffusion
     critical_richardson::NF
-    maximum_height::NF
+    maximum_sigma::NF
 end
 
 Adapt.@adapt_structure KProfileBoundaryLayerMixing
 
 KProfileBoundaryLayerMixing(spectral_grid::SpeedyWeather.SpectralGrid; critical_richardson = PBL_CRITICAL_RICHARDSON,
-                            maximum_height = 5000) =
+                            maximum_sigma = PBL_MAXIMUM_SIGMA) =
     KProfileBoundaryLayerMixing{spectral_grid.NF}(spectral_grid.NF(critical_richardson),
-                                                  spectral_grid.NF(maximum_height))
+                                                  spectral_grid.NF(maximum_sigma))
 
 _atmosphere_vertical_diffusion_provenance(::KProfileBoundaryLayerMixing) = PBL_K_PROFILE_PROVENANCE
 
@@ -126,10 +131,28 @@ Base.@propagate_inbounds function _pbl_drag_coefficient(ij, vars, momentum_flux,
     return vars.parameterizations.boundary_layer_drag[ij]
 end
 
-"""Conditional ocean/land flux, weighted once by area, without reading a zero-area tile."""
-@inline _pbl_area_weighted(land_value, ocean_value, land_fraction) =
-    (land_fraction > 0 ? land_fraction * land_value : zero(land_value)) +
-    (land_fraction < 1 ? (1 - land_fraction) * ocean_value : zero(ocean_value))
+"""Conditional ocean/land flux at `ij`, weighted once by area. A tile with zero area is not read."""
+Base.@propagate_inbounds function _pbl_area_weighted(land_field, ocean_field, ij, land_fraction)
+    value = zero(land_fraction)
+    land_fraction > 0 && (value += land_fraction * land_field[ij])
+    land_fraction < 1 && (value += (1 - land_fraction) * ocean_field[ij])
+    return value
+end
+
+"""Height (m) above the surface of the sigma level `target`, with the same hydrostatic layer-mean virtual temperatures
+as the full-level heights in `heights` (log-sigma form between full levels)."""
+Base.@propagate_inbounds function _pbl_sigma_height(heights, temperature, humidity, sigma, atmosphere, ij, target,
+                                                    gas_constant, gravity)
+    n = length(sigma)
+    tv(k) = SpeedyWeather.virtual_temperature(temperature[ij, k], humidity[ij, k], atmosphere)
+    target >= sigma[n] && return gas_constant * tv(n) / gravity * log(1 / target)
+    for k in (n - 1):-1:1
+        if target >= sigma[k]
+            return heights[ij, k + 1] + gas_constant * (tv(k) + tv(k + 1)) / 2 / gravity * log(sigma[k + 1] / target)
+        end
+    end
+    return heights[ij, 1] + gas_constant * tv(1) / gravity * log(sigma[1] / target)
+end
 
 """Add the flux-form tendency of the solved column `x_new` (times `scale`) to `tendency[ij, :]`."""
 Base.@propagate_inbounds function _pbl_add_flux_tendency!(tendency, ij, x_new, a, dsigma, scale)
@@ -182,19 +205,24 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
     drag = NF(_pbl_drag_coefficient(ij, vars, model.surface_momentum_flux, land_fraction))
     momentum_slowdown = NF(model.surface_momentum_flux.wind_slowdown)
     ustar = sqrt(max(drag * surface_wind * momentum_slowdown * sqrt(u1^2 + v1^2), zero(NF)))
-    sensible = NF(_pbl_area_weighted(vars.prognostic.land.sensible_heat_flux[ij],
-                                     vars.prognostic.ocean.sensible_heat_flux[ij], land_fraction))
-    evaporation = NF(_pbl_area_weighted(vars.prognostic.land.surface_humidity_flux[ij],
-                                        vars.prognostic.ocean.surface_humidity_flux[ij], land_fraction))
-    buoyancy_flux = sensible / (density * heat_capacity) +
-                    NF(PBL_VIRTUAL_FACTOR) * temperature[ij, n] * evaporation / density
+    sensible = NF(_pbl_area_weighted(vars.prognostic.land.sensible_heat_flux,
+                                     vars.prognostic.ocean.sensible_heat_flux, ij, land_fraction))
+    evaporation = NF(_pbl_area_weighted(vars.prognostic.land.surface_humidity_flux,
+                                        vars.prognostic.ocean.surface_humidity_flux, ij, land_fraction))
+    # Surface flux of Tv sigma^-kappa (the Richardson number's variable) at sigma = 1, from the extrapolated T_s.
+    mu = NF(atmosphere.μ_virt_temp)
+    surface_temperature = temperature[ij, n] * sigma[n]^(-kappa)
+    buoyancy_flux = (1 + mu * humidity[ij, n]) * sensible / (density * heat_capacity) +
+                    mu * surface_temperature * evaporation / density
 
     thetav = _PBLThetaV(temperature, humidity, sigma, atmosphere, kappa, ij)
     wind2 = _PBLWind2{typeof(u), typeof(v), NF}(u, v, ij, n)
     z_full = view(heights.data, ij, :)
     thetav_reference = thetav[n]
-    h = pbl_height(z_full, thetav, wind2, ustar, buoyancy_flux, thetav_reference, gravity, z_lowest_face,
-                   scheme.maximum_height; critical = scheme.critical_richardson)
+    z_maximum = _pbl_sigma_height(heights, temperature, humidity, sigma, atmosphere, ij, scheme.maximum_sigma,
+                                  gas_constant, gravity)
+    h = pbl_height(z_full, thetav, wind2, ustar, buoyancy_flux, thetav_reference, gravity, z_lowest_face, z_maximum;
+                   critical = scheme.critical_richardson)
     a = _PBLFaceCoefficients(heights, temperature, humidity, sigma, sigma_half, atmosphere, ij, NF(h), ustar,
                              buoyancy_flux, thetav_reference, gravity, gas_constant)
 

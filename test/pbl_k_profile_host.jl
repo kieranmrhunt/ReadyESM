@@ -6,6 +6,16 @@ const S = R.SpeedyWeather
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
 
+"""A tile field that must never be read (Codex: a zero-area tile is not read, not only weighted by zero)."""
+struct AbsentTile <: AbstractVector{Float32} end
+Base.size(::AbsentTile) = (4,)
+Base.getindex(::AbsentTile, ::Int) = error("absent tile read")
+
+"""Height cap of column `ij`: the height of sigma = scheme.maximum_sigma."""
+column_cap(vars, model, ij) = R._pbl_sigma_height(vars.parameterizations.pbl_height_work, vars.grid.temperature_prev,
+    vars.grid.humidity_prev, model.geometry.σ_levels_full, model.atmosphere, ij, model.vertical_diffusion.maximum_sigma,
+    Float32(model.atmosphere.R_dry), Float32(model.planet.gravity))
+
 """Compact coupled CPU configuration (as Codex's carbon/BS08 combination checks): T7/L8, 32x16x4 idealized ocean."""
 function compact_coupled(output)
     base = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
@@ -67,7 +77,8 @@ function check_columns(vars, model; label)
     @test water_error < 1e-4
     @test inactive_ok
     h = Array(vars.parameterizations.pbl_height.data)
-    @test all(isfinite, h) && all(h .<= scheme.maximum_height)
+    caps = [column_cap(vars, model, ij) for ij in 1:npoints]
+    @test all(isfinite, h) && all(h .<= caps .* (1 + 1f-6)) && all(3000 .< caps .< 8000)
     return dT, dq
 end
 
@@ -82,10 +93,28 @@ end
         @test R.validate(on; check_input_files = false) === on
         scheme = R._atmosphere_vertical_diffusion(on, grid)
         @test scheme isa R.KProfileBoundaryLayerMixing && scheme.critical_richardson == 0.3f0
+        @test scheme.maximum_sigma == 0.5f0
+        @test occursin("calm_wind_floor_0p1ms", R.PBL_K_PROFILE_PROVENANCE)
         @test R._atmosphere_vertical_diffusion_provenance(scheme) == R.PBL_K_PROFILE_PROVENANCE
         @test_throws ArgumentError R.validate(with(on; land_model = :speedy_bucket); check_input_files = false)
         @test_throws ArgumentError R.validate(with(on; ocean_model = :slab); check_input_files = false)
         @test_throws ArgumentError R.validate(with(on; atmosphere_moist_mass_coupling = true); check_input_files = false)
+    end
+
+    @testset "absent tiles and the sigma cap" begin
+        @test R._pbl_area_weighted(AbsentTile(), fill(2.0f0, 4), 3, 0.0f0) == 2.0f0
+        @test R._pbl_area_weighted(fill(5.0f0, 4), AbsentTile(), 3, 1.0f0) == 5.0f0
+        @test R._pbl_area_weighted(fill(5.0f0, 4), fill(2.0f0, 4), 3, 0.25f0) ≈ 0.25f0 * 5 + 0.75f0 * 2
+        @test_throws ErrorException R._pbl_area_weighted(AbsentTile(), fill(2.0f0, 4), 3, 0.5f0)
+        # Isothermal dry column: z(sigma) = R T / g log(1 / sigma) exactly, for any target between or below levels.
+        atmosphere = S.EarthAtmosphere(grid)
+        sigma = Float64[0.05, 0.2, 0.45, 0.7, 0.9, 0.99]
+        Rd, g, T0 = 287.0, 9.81, 260.0
+        T = fill(T0, 1, 6); q = zeros(1, 6)
+        heights = reshape(Rd * T0 / g .* log.(1 ./ sigma), 1, 6)
+        for target in (0.5, 0.995, 0.3, 0.02)
+            @test R._pbl_sigma_height(heights, T, q, sigma, atmosphere, 1, target, Rd, g) ≈ Rd * T0 / g * log(1 / target)
+        end
     end
 
     @testset "compact coupled model" begin
@@ -111,6 +140,29 @@ end
             @test all(isfinite, Array(p.pbl_buoyancy_flux.data))
             @test any(>(0), Array(p.pbl_lowest_face_diffusivity.data))
             dT, dq = check_columns(vars, model; label = "after_4_steps")
+            # B_s is the surface flux of Tv sigma^-kappa: finite difference of T_s (1 + mu q) along (H/(rho cp), E/rho).
+            atmosphere = model.atmosphere
+            mu, kappa, Rd = Float64(atmosphere.μ_virt_temp), Float64(atmosphere.κ), Float64(atmosphere.R_dry)
+            cp, n = Float64(atmosphere.heat_capacity), model.geometry.nlayers
+            sigma_n = Float64(model.geometry.σ_levels_full[n])
+            worst = 0.0
+            for ij in axes(dT, 1)
+                T1 = Float64(vars.grid.temperature_prev[ij, n]); q1 = Float64(vars.grid.humidity_prev[ij, n])
+                Ts = T1 * sigma_n^(-kappa)
+                rho = Float64(vars.grid.pressure_prev[ij]) / (Rd * T1 * (1 + mu * q1) * sigma_n^(-kappa))
+                f = Float64(model.land_sea_mask.mask[ij])
+                H = (f > 0 ? f * vars.prognostic.land.sensible_heat_flux[ij] : 0.0) +
+                    (f < 1 ? (1 - f) * vars.prognostic.ocean.sensible_heat_flux[ij] : 0.0)
+                E = (f > 0 ? f * vars.prognostic.land.surface_humidity_flux[ij] : 0.0) +
+                    (f < 1 ? (1 - f) * vars.prognostic.ocean.surface_humidity_flux[ij] : 0.0)
+                eps = 1e-3
+                thetav(T, q) = T * (1 + mu * q)
+                fd = (thetav(Ts + eps * H / (rho * cp), q1 + eps * E / rho) - thetav(Ts, q1)) / eps
+                B = Float64(vars.parameterizations.pbl_buoyancy_flux[ij])
+                worst = max(worst, abs(B - fd) / (abs(fd) + 1e-4))
+            end
+            println("PBL_HOST_BUOYANCY_CONVENTION max_relative=$worst")
+            @test worst < 1e-3
             # Mixing must actually act (at L8 usually only the lowest face is inside the boundary layer, which
             # makes the two-layer exchange conserve to the bit).
             println("PBL_HOST_ACTIVE_COLUMNS ", count(ij -> any(!=(0), dq[ij, :]), axes(dq, 1)), " of ", size(dq, 1))
