@@ -1,6 +1,6 @@
 # Version history
 
-Latest tagged release: [v0.1.13](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.13),
+Latest tagged version: [v0.1.13](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.13),
 23 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
