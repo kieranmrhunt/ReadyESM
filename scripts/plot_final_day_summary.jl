@@ -276,6 +276,7 @@ completion_label = isapprox(final_day, expected_days; atol = 1e-6, rtol = 0) ?
     "complete requested horizon" :
     @sprintf("incomplete: expected day %.0f", expected_days)
 acceptance = parse_status(status_path)
+acceptance_label = isempty(status_path) ? "" : " · scientific acceptance: $acceptance"
 global_precipitation = SECONDS_PER_DAY * (
     last(diagnostics.global_rainfall_flux) +
     last(diagnostics.global_snowfall_flux)
@@ -292,9 +293,9 @@ Label(
 Label(
     figure[2, 1:6],
     @sprintf(
-        "%s · scientific acceptance: %s · TOA net %+0.2f W m⁻² · global surface air %.2f K · global precipitation %.2f mm day⁻¹",
+        "%s%s · TOA net %+0.2f W m⁻² · global surface air %.2f K · global precipitation %.2f mm day⁻¹",
         completion_label,
-        acceptance,
+        acceptance_label,
         last(diagnostics.toa_net_downward),
         last(diagnostics.global_surface_air_temperature),
         global_precipitation,
@@ -394,12 +395,11 @@ atmosphere_map!(
 Label(
     figure[6, 1:6],
     @sprintf(
-        "Final full-depth ocean Tmax %.2f °C · Smin %.2f psu · max physical A×h %.2f m · land water closure residual %+0.4g kg m⁻².\nPrecipitation is the saved instantaneous flux expressed per day; grey denotes inactive/unplotted cells; crosses mark the surface salinity minimum and A×h maximum. Source: %s",
+        "Final full-depth ocean Tmax %.2f °C · Smin %.2f psu · max physical A×h %.2f m · land water closure residual %+0.4g kg m⁻².\nPrecipitation is the saved instantaneous flux expressed per day; grey denotes inactive/unplotted cells; crosses mark the surface salinity minimum and A×h maximum.",
         last(diagnostics.ocean_temperature_maximum),
         last(diagnostics.ocean_salinity_minimum),
         last(diagnostics.sea_ice_area_equivalent_maximum),
         last(diagnostics.land_water_budget_residual),
-        relpath(diagnostics_path, pwd()),
     );
     fontsize = 14,
     color = colorant"#4B5563",
