@@ -57,6 +57,8 @@ function _atmosphere_vertical_diffusion(config::ExperimentConfig, spectral_grid)
     config.atmosphere_vertical_diffusion ==
         :speedyweather_0_21_1_zero_operator_control &&
         return SpeedyWeather.BulkRichardsonDiffusion(spectral_grid)
+    config.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1 &&
+        return KProfileBoundaryLayerMixing(spectral_grid)
     error(
         "unsupported atmosphere vertical diffusion " *
         "$(config.atmosphere_vertical_diffusion)",

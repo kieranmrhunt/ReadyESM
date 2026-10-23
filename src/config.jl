@@ -626,13 +626,20 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     config.atmosphere_vertical_diffusion in (
         :metric_bulk_richardson,
         :speedyweather_0_21_1_zero_operator_control,
+        :holtslag_boville_k_profile_v1,
     ) || throw(ArgumentError(
-        "atmosphere_vertical_diffusion must be metric_bulk_richardson or " *
-        "speedyweather_0_21_1_zero_operator_control",
+        "atmosphere_vertical_diffusion must be metric_bulk_richardson, " *
+        "speedyweather_0_21_1_zero_operator_control or holtslag_boville_k_profile_v1",
     ))
     config.atmosphere_vertical_advection in ATMOSPHERE_VERTICAL_ADVECTION_OPTIONS || throw(ArgumentError(
         "atmosphere_vertical_advection must be one of $(ATMOSPHERE_VERTICAL_ADVECTION_OPTIONS)",
     ))
+    # The K-profile reads the persistent prescribed ocean and land flux inputs of the coupled model.
+    config.atmosphere_vertical_diffusion != :holtslag_boville_k_profile_v1 ||
+        (config.ocean_model == :oceananigans && config.land_model == :terrarium) || throw(ArgumentError(
+            "atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1 requires ocean_model=oceananigans and " *
+            "land_model=terrarium (it reads their coupled surface flux inputs)",
+        ))
     config.atmosphere_large_scale_precipitation in (
         :upstream_observed,
         :net_column_conservative,
