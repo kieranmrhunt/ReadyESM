@@ -42,6 +42,7 @@ include("finite_multiplume_convection.jl")
 include("convective_momentum_transport.jl")
 include("optional_land.jl")
 include("rrtmgp_trace_gases.jl")
+include("pbl_k_profile.jl")
 @test config.forcing.radiation == :rrtmgp_all_sky
 @test config.forcing.co2_ppm == 420
 @test config.forcing.cloud_liquid_water_path_gm2 == 75
