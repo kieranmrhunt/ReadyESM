@@ -24,18 +24,37 @@ const PBL_K_PROFILE_PROVENANCE =
     "holtslag_boville_1993_k_profile_ric0p3_calm_wind_floor_0p1ms_sigma0p5_cap_backward_euler_sigma_flux_scalars_v1"
 const PBL_MAXIMUM_SIGMA = 0.5
 
-"""Holtslag-Boville K-profile mixing of dry static energy and humidity (opt-in vertical diffusion)."""
+"""
+Holtslag-Boville K-profile mixing of dry static energy and humidity (opt-in vertical diffusion).
+
+On the GPU, SpeedyWeather passes each column scheme a device copy of the model that holds only the global fields
+(geometry, planet, atmosphere, time stepping, land-sea mask); the other parameterizations are separate kernel
+arguments. The scheme therefore carries the scalar parameters it needs from the surface condition and the surface
+momentum flux. `initialize!` checks them against the model's own schemes, so they cannot drift apart.
+"""
 struct KProfileBoundaryLayerMixing{NF} <: SpeedyWeather.AbstractVerticalDiffusion
     critical_richardson::NF
     maximum_sigma::NF
+    surface_wind_slowdown::NF    # SurfaceCondition.wind_slowdown
+    gust_speed::NF               # SurfaceCondition.gust_speed (m/s)
+    momentum_wind_slowdown::NF   # SurfaceMomentumFlux.wind_slowdown
+    use_boundary_layer_drag::Bool
+    drag_ocean::NF
+    drag_land::NF
 end
 
 Adapt.@adapt_structure KProfileBoundaryLayerMixing
 
-KProfileBoundaryLayerMixing(spectral_grid::SpeedyWeather.SpectralGrid; critical_richardson = PBL_CRITICAL_RICHARDSON,
-                            maximum_sigma = PBL_MAXIMUM_SIGMA) =
-    KProfileBoundaryLayerMixing{spectral_grid.NF}(spectral_grid.NF(critical_richardson),
-                                                  spectral_grid.NF(maximum_sigma))
+function KProfileBoundaryLayerMixing(spectral_grid::SpeedyWeather.SpectralGrid;
+                                     critical_richardson = PBL_CRITICAL_RICHARDSON, maximum_sigma = PBL_MAXIMUM_SIGMA,
+                                     surface_condition = SpeedyWeather.SurfaceCondition(spectral_grid),
+                                     surface_momentum_flux = SpeedyWeather.SurfaceMomentumFlux(spectral_grid))
+    NF = spectral_grid.NF
+    return KProfileBoundaryLayerMixing{NF}(NF(critical_richardson), NF(maximum_sigma),
+        NF(surface_condition.wind_slowdown), NF(surface_condition.gust_speed),
+        NF(surface_momentum_flux.wind_slowdown), Bool(surface_momentum_flux.use_boundary_layer_drag),
+        NF(surface_momentum_flux.drag_ocean), NF(surface_momentum_flux.drag_land))
+end
 
 _atmosphere_vertical_diffusion_provenance(::KProfileBoundaryLayerMixing) = PBL_K_PROFILE_PROVENANCE
 
@@ -56,7 +75,18 @@ SpeedyWeather.variables(::KProfileBoundaryLayerMixing) = (
         desc = "K-profile implicit solution (work column)", units = "?"),
 )
 
-SpeedyWeather.initialize!(::KProfileBoundaryLayerMixing, ::SpeedyWeather.AbstractModel) = nothing
+function SpeedyWeather.initialize!(scheme::KProfileBoundaryLayerMixing, model::SpeedyWeather.AbstractModel)
+    condition, momentum = model.surface_condition, model.surface_momentum_flux
+    condition isa SpeedyWeather.SurfaceCondition && momentum isa SpeedyWeather.SurfaceMomentumFlux ||
+        throw(ArgumentError("the K-profile scheme supports SpeedyWeather's SurfaceCondition and SurfaceMomentumFlux"))
+    matches = scheme.surface_wind_slowdown == condition.wind_slowdown && scheme.gust_speed == condition.gust_speed &&
+        scheme.momentum_wind_slowdown == momentum.wind_slowdown &&
+        scheme.use_boundary_layer_drag == momentum.use_boundary_layer_drag &&
+        scheme.drag_ocean == momentum.drag_ocean && scheme.drag_land == momentum.drag_land
+    matches || throw(ArgumentError("K-profile surface parameters differ from the model's surface condition or " *
+                                   "momentum flux; build the scheme from the same objects"))
+    return nothing
+end
 
 """Lazy column of virtual potential temperature referenced to the surface pressure, Tv sigma^-kappa."""
 struct _PBLThetaV{T, Q, S, A, NF} <: AbstractVector{NF}
@@ -124,11 +154,9 @@ Base.@propagate_inbounds function Base.getindex(x::_PBLFaceCoefficients{Z, T, Q,
 end
 
 """Momentum drag coefficient exactly as the surface momentum flux scheme selects it, read from the lagged state."""
-Base.@propagate_inbounds function _pbl_drag_coefficient(ij, vars, momentum_flux, land_fraction)
-    if hasproperty(momentum_flux, :use_boundary_layer_drag) && !momentum_flux.use_boundary_layer_drag
-        return land_fraction * momentum_flux.drag_land + (1 - land_fraction) * momentum_flux.drag_ocean
-    end
-    return vars.parameterizations.boundary_layer_drag[ij]
+Base.@propagate_inbounds function _pbl_drag_coefficient(ij, vars, scheme::KProfileBoundaryLayerMixing, land_fraction)
+    scheme.use_boundary_layer_drag && return vars.parameterizations.boundary_layer_drag[ij]
+    return land_fraction * scheme.drag_land + (1 - land_fraction) * scheme.drag_ocean
 end
 
 """Conditional ocean/land flux at `ij`, weighted once by area. A tile with zero area is not read."""
@@ -194,16 +222,16 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
     end
     z_lowest_face = heights[ij, n] + gas_constant * tv_lowest / gravity * log(sigma[n] / sigma_half[n])
 
-    # Surface quantities in the SurfaceCondition form, without calling the mutating scheme early.
-    condition = model.surface_condition
-    slowdown = NF(condition.wind_slowdown)
-    gust = NF(condition.gust_speed)
+    # Surface quantities in the SurfaceCondition form, without calling the mutating scheme early. The parameters come
+    # from the scheme (see the struct docstring), not from model.surface_condition, which the GPU kernel lacks.
+    slowdown = scheme.surface_wind_slowdown
+    gust = scheme.gust_speed
     u1, v1 = u[ij, n], v[ij, n]
     surface_wind = sqrt((slowdown * u1)^2 + (slowdown * v1)^2 + gust^2)
     density = surface_pressure / (gas_constant * tv_lowest * sigma[n]^(-kappa))
     land_fraction = NF(model.land_sea_mask.mask[ij])
-    drag = NF(_pbl_drag_coefficient(ij, vars, model.surface_momentum_flux, land_fraction))
-    momentum_slowdown = NF(model.surface_momentum_flux.wind_slowdown)
+    drag = NF(_pbl_drag_coefficient(ij, vars, scheme, land_fraction))
+    momentum_slowdown = scheme.momentum_wind_slowdown
     ustar = sqrt(max(drag * surface_wind * momentum_slowdown * sqrt(u1^2 + v1^2), zero(NF)))
     sensible = NF(_pbl_area_weighted(vars.prognostic.land.sensible_heat_flux,
                                      vars.prognostic.ocean.sensible_heat_flux, ij, land_fraction))
@@ -217,7 +245,7 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
 
     thetav = _PBLThetaV(temperature, humidity, sigma, atmosphere, kappa, ij)
     wind2 = _PBLWind2{typeof(u), typeof(v), NF}(u, v, ij, n)
-    z_full = view(heights.data, ij, :)
+    z_full = view(heights, ij, :)
     thetav_reference = thetav[n]
     z_maximum = _pbl_sigma_height(heights, temperature, humidity, sigma, atmosphere, ij, scheme.maximum_sigma,
                                   gas_constant, gravity)
@@ -234,13 +262,14 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
         pbl_diffusivity(z_lowest_face, h, ustar, buoyancy_flux, thetav_reference, gravity)
 
     dt = 2 * NF(time_stepping.Δt_sec)
-    c = view(vars.scratch.grid.a.data, ij, :)
-    d = view(vars.scratch.grid.b.data, ij, :)
-    x_new = view(vars.parameterizations.pbl_solution_work.data, ij, :)
+    # Column views of the arrays themselves: Fields on the CPU, plain device matrices in the GPU kernel.
+    c = view(vars.scratch.grid.a, ij, :)
+    d = view(vars.scratch.grid.b, ij, :)
+    x_new = view(vars.parameterizations.pbl_solution_work, ij, :)
     dry_static_energy = _PBLDryStaticEnergy(temperature, vars.grid.geopotential, heat_capacity, ij, n)
     pbl_implicit_diffuse!(x_new, dry_static_energy, a, dsigma, dt, c, d)
     _pbl_add_flux_tendency!(vars.tendencies.grid.temperature, ij, x_new, a, dsigma, inv(heat_capacity))
-    pbl_implicit_diffuse!(x_new, view(humidity.data, ij, :), a, dsigma, dt, c, d)
+    pbl_implicit_diffuse!(x_new, view(humidity, ij, :), a, dsigma, dt, c, d)
     _pbl_add_flux_tendency!(vars.tendencies.grid.humidity, ij, x_new, a, dsigma, one(NF))
     return nothing
 end

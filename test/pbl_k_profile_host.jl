@@ -94,6 +94,12 @@ end
         scheme = R._atmosphere_vertical_diffusion(on, grid)
         @test scheme isa R.KProfileBoundaryLayerMixing && scheme.critical_richardson == 0.3f0
         @test scheme.maximum_sigma == 0.5f0
+        # Surface parameters carried by the scheme (the GPU kernel's model has no surface_condition).
+        condition, momentum = S.SurfaceCondition(grid), S.SurfaceMomentumFlux(grid)
+        @test scheme.surface_wind_slowdown == condition.wind_slowdown && scheme.gust_speed == condition.gust_speed
+        @test scheme.momentum_wind_slowdown == momentum.wind_slowdown && scheme.drag_land == momentum.drag_land &&
+              scheme.drag_ocean == momentum.drag_ocean && scheme.use_boundary_layer_drag == momentum.use_boundary_layer_drag
+        @test isbitstype(typeof(scheme))
         @test occursin("calm_wind_floor_0p1ms", R.PBL_K_PROFILE_PROVENANCE)
         @test R._atmosphere_vertical_diffusion_provenance(scheme) == R.PBL_K_PROFILE_PROVENANCE
         @test_throws ArgumentError R.validate(with(on; land_model = :speedy_bucket); check_input_files = false)
@@ -140,6 +146,60 @@ end
             @test all(isfinite, Array(p.pbl_buoyancy_flux.data))
             @test any(>(0), Array(p.pbl_lowest_face_diffusivity.data))
             dT, dq = check_columns(vars, model; label = "after_4_steps")
+            # GPU interface on the CPU: a model holding only the fields of SpeedyWeather's device model, and plain
+            # arrays instead of Fields. The tendencies must be bitwise those of the full-model, Field-based call.
+            device_model = (; geometry = model.geometry, planet = model.planet, atmosphere = model.atmosphere,
+                            time_stepping = model.time_stepping, land_sea_mask = model.land_sea_mask)
+            plain(x) = copy(Array(x.data))
+            g, p = vars.grid, vars.parameterizations
+            device_vars = (
+                grid = (; temperature_prev = plain(g.temperature_prev), humidity_prev = plain(g.humidity_prev),
+                        u_prev = plain(g.u_prev), v_prev = plain(g.v_prev), pressure_prev = plain(g.pressure_prev),
+                        geopotential = plain(g.geopotential)),
+                parameterizations = (; (name => plain(getproperty(p, name)) for name in
+                    (:pbl_height, :pbl_friction_velocity, :pbl_buoyancy_flux, :pbl_drag_coefficient,
+                     :pbl_lowest_face_diffusivity, :pbl_height_work, :pbl_solution_work, :boundary_layer_drag))...),
+                prognostic = (; land = (; sensible_heat_flux = plain(vars.prognostic.land.sensible_heat_flux),
+                                        surface_humidity_flux = plain(vars.prognostic.land.surface_humidity_flux)),
+                              ocean = (; sensible_heat_flux = plain(vars.prognostic.ocean.sensible_heat_flux),
+                                         surface_humidity_flux = plain(vars.prognostic.ocean.surface_humidity_flux))),
+                scratch = (; grid = (; a = plain(vars.scratch.grid.a), b = plain(vars.scratch.grid.b))),
+                tendencies = (; grid = (; temperature = zero(dT), humidity = zero(dq))))
+            for ij in axes(dT, 1)
+                S.parameterization!(ij, device_vars, model.vertical_diffusion, device_model)
+            end
+            @test device_vars.tendencies.grid.temperature == dT
+            @test device_vars.tendencies.grid.humidity == dq
+            @test device_vars.parameterizations.pbl_height == Array(vars.parameterizations.pbl_height.data)
+            # initialize! refuses a scheme whose surface parameters differ from the model's, for every copied value.
+            sg = model.spectral_grid
+            for (condition, momentum) in (
+                    (S.SurfaceCondition(sg; gust_speed = 3), S.SurfaceMomentumFlux(sg)),
+                    (S.SurfaceCondition(sg; wind_slowdown = 0.9), S.SurfaceMomentumFlux(sg)),
+                    (S.SurfaceCondition(sg), S.SurfaceMomentumFlux(sg; wind_slowdown = 0.9)),
+                    (S.SurfaceCondition(sg), S.SurfaceMomentumFlux(sg; use_boundary_layer_drag = false)),
+                    (S.SurfaceCondition(sg), S.SurfaceMomentumFlux(sg; drag_ocean = 1.5e-3)),
+                    (S.SurfaceCondition(sg), S.SurfaceMomentumFlux(sg; drag_land = 2.0e-3)))
+                other = R.KProfileBoundaryLayerMixing(sg; surface_condition = condition, surface_momentum_flux = momentum)
+                @test_throws ArgumentError S.initialize!(other, model)
+            end
+            @test S.initialize!(model.vertical_diffusion, model) === nothing
+            # Fixed-drag mode (use_boundary_layer_drag = false) through both interfaces: bitwise equal, and the drag
+            # is the area-weighted fixed land and ocean coefficient.
+            fixed = R.KProfileBoundaryLayerMixing(sg; surface_momentum_flux = S.SurfaceMomentumFlux(sg; use_boundary_layer_drag = false))
+            fill!(vars.tendencies.grid.temperature.data, 0); fill!(vars.tendencies.grid.humidity.data, 0)
+            for ij in axes(dT, 1)
+                S.parameterization!(ij, vars, fixed, model)
+            end
+            fixed_dT = copy(vars.tendencies.grid.temperature.data); fixed_dq = copy(vars.tendencies.grid.humidity.data)
+            fill!(device_vars.tendencies.grid.temperature, 0); fill!(device_vars.tendencies.grid.humidity, 0)
+            for ij in axes(dT, 1)
+                S.parameterization!(ij, device_vars, fixed, device_model)
+            end
+            @test device_vars.tendencies.grid.temperature == fixed_dT && device_vars.tendencies.grid.humidity == fixed_dq
+            f = Float32.(Array(model.land_sea_mask.mask.data))
+            @test device_vars.parameterizations.pbl_drag_coefficient ≈ f .* fixed.drag_land .+ (1 .- f) .* fixed.drag_ocean
+            @test Array(vars.parameterizations.pbl_drag_coefficient.data) == device_vars.parameterizations.pbl_drag_coefficient
             # B_s is the surface flux of Tv sigma^-kappa: finite difference of T_s (1 + mu q) along (H/(rho cp), E/rho).
             atmosphere = model.atmosphere
             mu, kappa, Rd = Float64(atmosphere.μ_virt_temp), Float64(atmosphere.κ), Float64(atmosphere.R_dry)
