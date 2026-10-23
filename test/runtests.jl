@@ -28,7 +28,11 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
       :speedyweather_0_21_1_zero_operator_control
 @test config.atmosphere_large_scale_precipitation == :net_column_conservative
 @test config.atmosphere_saturation_law == :mixed_phase
-@test config.atmosphere_convection == :betts_miller_constant_rh
+@test config.atmosphere_convection == :betts_miller_sigma_rh_v1
+@test config.atmosphere_convection_upper_relative_humidity == 0.5
+@test config.atmosphere_convection_lower_relative_humidity == 0.7
+@test config.atmosphere_convection_transition_top_sigma == 0.3
+@test config.atmosphere_convection_transition_bottom_sigma == 0.7
 @test config.atmosphere_convection_timescale_seconds == 7200
 @test config.atmosphere_initial_spectral_truncation
 @test !ExperimentConfig().atmosphere_initial_spectral_truncation

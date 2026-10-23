@@ -87,6 +87,9 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `device` | `gpu` | Use `gpu` or `cpu`. |
 | `truncation`, `nlayers` | `31`, `27` | Atmospheric horizontal truncation and vertical levels. |
 | `duration_days`, `analysis_start_day` | `730`, `365` | Run length and start of the diagnostic averaging period. |
+| `atmosphere_convection` | `betts_miller_sigma_rh_v1` | Betts–Miller with a vertical humidity profile. Use `betts_miller_constant_rh` for the previous scheme. |
+| `atmosphere_convection_upper_relative_humidity`, `atmosphere_convection_lower_relative_humidity` | `0.5`, `0.7` | Reference relative humidity above and below the transition. |
+| `atmosphere_convection_transition_top_sigma`, `atmosphere_convection_transition_bottom_sigma` | `0.3`, `0.7` | Bounds of the linear transition in pressure fraction. |
 | `atmosphere_convection_timescale_seconds` | `7200` | Betts–Miller adjustment time. |
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
 | `atmosphere_moist_mass_coupling` | `false` | Let water-vapour sources change the air mass. Evaporation adds air and precipitation removes it, and the global mean surface pressure follows. Use it only with Betts–Miller convection, net-column large-scale precipitation and RRTMGP radiation. |

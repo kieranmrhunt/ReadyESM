@@ -1,11 +1,21 @@
 # Version history
 
-Latest tagged release: [v0.1.12](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.12),
-21 October 2026.
+Latest tagged release: [v0.1.13](https://github.com/kieranmrhunt/ReadyESM/releases/tag/v0.1.13),
+23 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.13 — 2026-10-23
+
+- Changed the production Betts–Miller reference humidity by height. It is
+  0.5 above sigma 0.3, rises to 0.7 at sigma 0.7, and stays 0.7 below.
+  Model code and the two-hour adjustment time are unchanged.
+- Three fresh paired runs in each of January and July improved the v4 climate
+  score and TOA radiation. The paired-input, conservation, restart, CPU and
+  physical-safety checks passed. The high sea-ice-area bias remains.
+  [Tests](docs/validation-v0.1.13.md).
 
 ## 0.1.12 — 2026-10-21
 

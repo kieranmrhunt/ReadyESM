@@ -11,7 +11,11 @@ atmosphere_divergence_hyperdiffusion_hours: 1
 atmosphere_vertical_diffusion: speedyweather_0_21_1_zero_operator_control
 atmosphere_large_scale_precipitation: net_column_conservative
 atmosphere_saturation_law: mixed_phase
-atmosphere_convection: betts_miller_constant_rh
+atmosphere_convection: betts_miller_sigma_rh_v1
+atmosphere_convection_upper_relative_humidity: 0.5
+atmosphere_convection_lower_relative_humidity: 0.7
+atmosphere_convection_transition_top_sigma: 0.3
+atmosphere_convection_transition_bottom_sigma: 0.7
 atmosphere_convection_timescale_seconds: 7200
 atmosphere_speed_limit_ms: 60
 atmosphere_speed_limit_drag_per_m: 2.0e-6
