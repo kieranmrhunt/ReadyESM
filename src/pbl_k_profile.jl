@@ -21,6 +21,10 @@ const PBL_THERMAL_EXCESS_FACTOR = 8.5
 const PBL_CONVECTIVE_VELOCITY_FACTOR = 0.6
 const PBL_STABLE_PROFILE_FACTOR = 5.0
 const PBL_SHEAR_FLOOR_FACTOR = 100.0
+# Calm limit: with zero resolved wind and zero u* the bulk Richardson number is 0/0. A 0.1 m/s wind floor in its
+# denominator keeps it finite (stable calm columns get a large Ri and a shallow layer, neutral ones Ri = 0). It
+# changes Ri by about 0.04 % at a typical 5 m/s wind.
+const PBL_CALM_WIND_FLOOR = 0.1
 
 """Obukhov length (m) for friction velocity `ustar` and surface kinematic virtual heat flux `buoyancy_flux` (K m/s).
 Infinite for zero flux, positive for a stable (downward) flux, negative for an unstable one."""
@@ -35,6 +39,8 @@ pbl_convective_velocity(h, buoyancy_flux, thetav_reference, gravity) =
 
 """Turbulent velocity scale w_s (m/s) at height `z` in a boundary layer of depth `h`."""
 function pbl_velocity_scale(z, h, ustar, buoyancy_flux, thetav_reference, gravity)
+    # Calm and stable or neutral: no turbulence velocity (avoids 0/0 in the Obukhov length).
+    ustar == 0 && buoyancy_flux <= 0 && return zero(float(ustar))
     if buoyancy_flux > 0
         wstar = pbl_convective_velocity(h, buoyancy_flux, thetav_reference, gravity)
         return cbrt(ustar^3 + PBL_CONVECTIVE_VELOCITY_FACTOR * wstar^3)
@@ -55,7 +61,7 @@ linearly interpolated, for a surface reference virtual potential temperature `th
 function _pbl_richardson_crossing(z_full, thetav_full, wind2_full, ustar, thetav_surface, thetav_reference, gravity,
                                   critical)
     n = length(z_full)
-    shear_floor = PBL_SHEAR_FLOOR_FACTOR * ustar^2
+    shear_floor = PBL_SHEAR_FLOOR_FACTOR * ustar^2 + PBL_CALM_WIND_FLOOR^2
     richardson(k) = gravity * z_full[k] * (thetav_full[k] - thetav_surface) /
                     (thetav_reference * (wind2_full[k] + shear_floor))
     previous = richardson(n)
@@ -95,7 +101,9 @@ end
 """
 Interface coefficients `a[k]` (1/s) for the interface between layers k and k + 1, k = 1:n-1:
 a = (sigma_half g / (R_d Tv_half))^2 K(z_half) / (sigma_full[k+1] - sigma_full[k]), the hydrostatic conversion of the
-height-coordinate flux rho K dx/dz to sigma. K is zero at and above `h`.
+height-coordinate flux rho K dx/dz to sigma. K is evaluated at the face height and is zero for faces at or above `h`.
+Finite-volume consequence: a cell whose lower face lies below h exchanges through that face even when its centre is
+above h (a partially intersected top cell). Cells whose upper and lower faces are both at or above h are unchanged.
 """
 function pbl_interface_coefficients!(a, z_half, sigma_full, sigma_half, tv_half, h, ustar, buoyancy_flux,
                                      thetav_reference, gravity, gas_constant)
@@ -134,4 +142,22 @@ function pbl_implicit_diffuse!(x_new, x, a, dsigma, dt, c, d)
         x_new[k] = d[k] - c[k] * x_new[k + 1]
     end
     return x_new
+end
+
+"""
+Flux-form tendency (x units per second) of the backward-Euler step: solve for the new column, then form
+(F_{k+1/2} - F_{k-1/2}) / dsigma_k from the new state's face fluxes. In exact arithmetic this equals (x_new - x) / dt.
+In floating point it avoids subtracting two nearly equal states (about 3e5 J/kg for dry static energy), and the face
+fluxes cancel pairwise in the sigma-weighted column sum.
+"""
+function pbl_implicit_tendency!(tendency, x, a, dsigma, dt, c, d, x_new)
+    n = length(x)
+    pbl_implicit_diffuse!(x_new, x, a, dsigma, dt, c, d)
+    flux_above = zero(eltype(tendency))
+    for k in 1:n
+        flux_below = k < n ? a[k] * (x_new[k + 1] - x_new[k]) : zero(flux_above)
+        tendency[k] = (flux_below - flux_above) / dsigma[k]
+        flux_above = flux_below
+    end
+    return tendency
 end

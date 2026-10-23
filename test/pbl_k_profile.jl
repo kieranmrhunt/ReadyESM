@@ -58,13 +58,77 @@ dsigma = diff(sigma_half)
         @test maximum(abs.(R.pbl_implicit_diffuse!(oo, ones(m_layers), a, ds, dt, cc, dd) .- 1)) < 1e-14
     end
 
-    @testset "stress: very large K stays finite and mixes toward the column mean" begin
+    @testset "stress: coefficient a = 1e3 s^-1 stays finite and mixes toward the column mean" begin
         x = 3.0e5 .+ 2.0e4 .* rand(rng, n)
         a = fill(1.0e3, n - 1)
         out2 = R.pbl_implicit_diffuse!(zeros(n), x, a, dsigma, 1800.0, c, d)
         mean = sum(dsigma .* x) / sum(dsigma)
         @test all(isfinite, out2)
         @test maximum(abs.(out2 .- mean)) < 1e-3 * (maximum(x) - minimum(x))
+    end
+
+    @testset "calm columns stay finite in all three stability branches (Codex reproducer)" begin
+        z3, th3 = [1500.0, 500.0, 100.0], [310.0, 303.0, 300.0]
+        for flux in (0.0, -0.02, 0.1)
+            h3 = R.pbl_height(z3, th3, zeros(3), 0.0, flux, 300.0, G, 100.0, 3000.0)
+            @test isfinite(h3) && 100.0 <= h3 <= 3000.0
+            @test isfinite(R.pbl_velocity_scale(50.0, h3, 0.0, flux, 300.0, G))
+            @test isfinite(R.pbl_diffusivity(50.0, h3, 0.0, flux, 300.0, G))
+        end
+        @test R.pbl_velocity_scale(50.0, 500.0, 0.0, 0.0, 300.0, G) == 0
+        @test R.pbl_velocity_scale(50.0, 500.0, 0.0, -0.02, 300.0, G) == 0
+        @test R.pbl_velocity_scale(50.0, 500.0, 0.0, 0.1, 300.0, G) ≈ cbrt(0.6 * (G / 300 * 0.1 * 500))
+        # Stable calm: the layer stays at its floor; unstable calm: the thermal excess deepens it.
+        @test 100.0 <= R.pbl_height(z3, th3, zeros(3), 0.0, -0.02, 300.0, G, 100.0, 3000.0) < 101.0
+        @test R.pbl_height(z3, th3, zeros(3), 0.0, 0.1, 300.0, G, 100.0, 3000.0) > 100.0
+    end
+
+    @testset "partially intersected top cell (coefficients from the closure)" begin
+        # Codex's case: centres at 1500/500/100 m, faces at 1000/300 m, h = 400 m. Only the 300 m face is active,
+        # so the cell centred at 500 m changes through its lower face while the top cell is unchanged.
+        z_half4 = [3000.0, 1000.0, 300.0, 0.0]
+        a4 = zeros(2)
+        R.pbl_interface_coefficients!(a4, z_half4, [0.75, 0.85, 0.94], [0.7, 0.8, 0.9, 1.0], fill(300.0, 4), 400.0,
+                                      0.2, 0.01, 300.0, G, RD)
+        @test a4[1] == 0 && a4[2] > 0
+        x4 = [320.0, 310.0, 300.0]
+        o4 = R.pbl_implicit_diffuse!(zeros(3), x4, a4, [0.1, 0.1, 0.1], 1800.0, zeros(3), zeros(3))
+        @test o4[1] == x4[1] && o4[2] != x4[2] && o4[3] != x4[3]
+    end
+
+    @testset "flux-form tendency: conservative and equal to the state difference" begin
+        x = 3.0e5 .+ 2.0e4 .* rand(rng, n)
+        a = 10.0 .^ (4 .* rand(rng, n - 1) .- 6)
+        tend, xn = zeros(n), zeros(n)
+        R.pbl_implicit_tendency!(tend, x, a, dsigma, 1800.0, c, d, xn)
+        @test maximum(abs.(tend .- (xn .- x) ./ 1800.0)) < 1e-9 * maximum(abs.(tend))
+        @test abs(sum(dsigma .* tend)) < 1e-13 * sum(dsigma .* abs.(tend))
+        # Float32, 1000 steps, physical K = 1000 m2/s through the sigma metric on the lowest ten faces.
+        z_half = vcat([-8000 * log(max(s, 1e-6)) for s in sigma_half[1:end-1]], 0.0)
+        a_phys = zeros(n - 1)
+        for k in (n - 10):(n - 1)
+            a_phys[k] = (sigma_half[k + 1] * G / (RD * THETA))^2 * 1000.0 / (sigma_full[k + 1] - sigma_full[k])
+        end
+        drift(tendency_form) = begin
+            x32 = Float32.(3.0e5 .+ 2.0e4 .* rand(MersenneTwister(7), n))
+            initial = sum(Float64.(dsigma) .* Float64.(x32))
+            a32, ds32 = Float32.(a_phys), Float32.(dsigma)
+            t32, n32, c32, d32 = zeros(Float32, n), zeros(Float32, n), zeros(Float32, n), zeros(Float32, n)
+            for step in 1:1000
+                if tendency_form
+                    R.pbl_implicit_tendency!(t32, x32, a32, ds32, 1800.0f0, c32, d32, n32)
+                else
+                    R.pbl_implicit_diffuse!(n32, x32, a32, ds32, 1800.0f0, c32, d32)
+                    t32 .= (n32 .- x32) ./ 1800.0f0
+                end
+                x32 .+= 1800.0f0 .* t32
+            end
+            (sum(Float64.(dsigma) .* Float64.(x32)) - initial) / initial
+        end
+        state_drift, flux_drift = drift(false), drift(true)
+        println("PBL_FLOAT32_1000STEP_DRIFT state_difference=$state_drift flux_form=$flux_drift")
+        @test abs(flux_drift) <= abs(state_drift)
+        @test abs(flux_drift) < 1e-5
     end
 
     @testset "no tendency above the boundary layer" begin
@@ -104,7 +168,8 @@ dsigma = diff(sigma_half)
         ustar = 0.3
         h = R.pbl_height(z_full, thetav, wind2, ustar, 0.0, THETA, G, z_full[end], 5000.0)
         # Independent linear interpolation of the same Ri_b profile.
-        ri = [G * z_full[k] * (thetav[k] - thetav[end]) / (THETA * (wind2[k] + 100 * ustar^2)) for k in 1:n]
+        ri = [G * z_full[k] * (thetav[k] - thetav[end]) /
+              (THETA * (wind2[k] + 100 * ustar^2 + R.PBL_CALM_WIND_FLOOR^2)) for k in 1:n]
         k = findlast(r -> r >= 0.3, ri)
         expected = z_full[k + 1] + (0.3 - ri[k + 1]) / (ri[k] - ri[k + 1]) * (z_full[k] - z_full[k + 1])
         @test h ≈ expected
