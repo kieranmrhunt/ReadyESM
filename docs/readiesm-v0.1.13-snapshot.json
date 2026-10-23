@@ -1,0 +1,14 @@
+{
+  "version": "0.1.13",
+  "model_day": 31,
+  "start_date": "1993-01-01T00:00:00",
+  "run": "January candidate, member 1",
+  "model_job": "61723008_1",
+  "model_source_commit": "ad5a6da5ed4cdae0d0e559bc370b77312c650542",
+  "release_commit": "b38898a1d18877733ea031ae32b71b17bacd9857",
+  "diagnostics_sha256": "64b37a2b40e774c49baa3dec825f5a2b1a691f89a95b1affd2cd1bc7187fb511",
+  "snapshot_sha256": "338516031314703c9da1effe32b4e123e241b5cec45ff5373e43758611b6923a",
+  "production_diagnostics_pass": true,
+  "renderer": "scripts/plot_final_day_summary.jl",
+  "scope": "One 31-day T31/L27 coupled run from the six-pair validated release."
+}

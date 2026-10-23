@@ -8,10 +8,10 @@ The standard setup has a T31 atmosphere with 27 vertical levels, a 1° tripolar
 ocean with 60 levels, and 16 soil layers. ERA5 supplies the initial atmosphere
 and land state. ECCO supplies the ocean and sea ice.
 
-![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.12-snapshot.png)
+![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.13-snapshot.png)
 
-A 31-day initialised v0.1.12 run, starting 1 January 1993.
-[Figure details](docs/readiesm-v0.1.12-snapshot.json).
+A 31-day initialised v0.1.13 run, starting 1 January 1993.
+[Figure details](docs/readiesm-v0.1.13-snapshot.json).
 
 ## Speed
 
