@@ -56,8 +56,13 @@ _atmosphere_vertical_advection_provenance(scheme) = string(nameof(typeof(scheme)
 function _restricted_wet_model_type(restrictions::Pair{Symbol, <:Type}...)
     body = Base.unwrap_unionall(SpeedyWeather.PrimitiveWetModel)
     params = collect(body.parameters)
+    names = fieldnames(body)
     for (field, bound) in restrictions
-        tv = fieldtype(body, field)
+        # Raw declared field type. fieldtype(body, field) with a non-constant field name is inferred as Type, so the
+        # compiler folds `isa TypeVar` to false although the value is the TypeVar (found by Codex, 24 Oct).
+        index = findfirst(==(field), names)
+        isnothing(index) && error("PrimitiveWetModel has no field $field")
+        tv = body.types[index]
         tv isa TypeVar || error("PrimitiveWetModel.$field is not a type parameter")
         bound <: tv.ub || error("$bound is outside the $field bound $(tv.ub)")
         i = findfirst(x -> x === tv, params)
