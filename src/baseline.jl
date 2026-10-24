@@ -205,6 +205,7 @@ function build_baseline(config::ExperimentConfig)
     sea_ice = ThermodynamicSeaIce(spectral_grid)
     model = PrimitiveWetModel(
         spectral_grid;
+        vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
         atmosphere,
         ocean,
         sea_ice,
@@ -422,6 +423,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         albedo = _coupled_atmosphere_albedo(spectral_grid)
         PrimitiveWetModel(
             spectral_grid;
+            vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
             atmosphere,
             ocean,
             sea_ice,
@@ -456,6 +458,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         )
         PrimitiveWetModel(
             spectral_grid;
+            vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
             atmosphere,
             ocean,
             sea_ice,
@@ -478,6 +481,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
     else
         PrimitiveWetModel(
             spectral_grid;
+            vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
             atmosphere,
             ocean,
             sea_ice,

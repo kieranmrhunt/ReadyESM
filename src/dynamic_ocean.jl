@@ -3546,6 +3546,8 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 _atmosphere_vertical_diffusion_provenance(
                     atmosphere.model.vertical_diffusion,
                 ),
+            atmosphere_vertical_advection = _atmosphere_vertical_advection_provenance(
+                atmosphere.model.vertical_advection),
             atmosphere_speed_limit_ms = config.atmosphere_speed_limit_ms,
             atmosphere_speed_limit_drag_per_m =
                 config.atmosphere_speed_limit_drag_per_m,

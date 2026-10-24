@@ -44,6 +44,9 @@ Base.@kwdef struct ExperimentConfig
     # SpeedyWeather 0.21.1 zero-transport control.
     atmosphere_vertical_diffusion::Symbol =
         :speedyweather_0_21_1_zero_operator_control
+    # Vertical advection of the dynamical core. The default keeps SpeedyWeather 0.21.1, which advects only the
+    # temperature anomaly. :centered_full_temperature ports upstream PR #1286 (full_temperature_vertical_advection.jl).
+    atmosphere_vertical_advection::Symbol = :speedyweather_0_21_1_centered
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
@@ -357,6 +360,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "metric_bulk_richardson",
             ),
         ),
+        atmosphere_vertical_advection = Symbol(
+            _mapping_value(raw, "atmosphere_vertical_advection", "speedyweather_0_21_1_centered"),
+        ),
         atmosphere_large_scale_precipitation = Symbol(
             _mapping_value(
                 raw,
@@ -623,6 +629,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     ) || throw(ArgumentError(
         "atmosphere_vertical_diffusion must be metric_bulk_richardson or " *
         "speedyweather_0_21_1_zero_operator_control",
+    ))
+    config.atmosphere_vertical_advection in ATMOSPHERE_VERTICAL_ADVECTION_OPTIONS || throw(ArgumentError(
+        "atmosphere_vertical_advection must be one of $(ATMOSPHERE_VERTICAL_ADVECTION_OPTIONS)",
     ))
     config.atmosphere_large_scale_precipitation in (
         :upstream_observed,
