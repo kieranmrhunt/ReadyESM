@@ -47,6 +47,11 @@ Base.@kwdef struct ExperimentConfig
     # Vertical advection of the dynamical core. The default keeps SpeedyWeather 0.21.1, which advects only the
     # temperature anomaly. :centered_full_temperature ports upstream PR #1286 (full_temperature_vertical_advection.jl).
     atmosphere_vertical_advection::Symbol = :speedyweather_0_21_1_centered
+    # K-profile strength-screen parameters (pbl_k_profile_host.jl). Diagnostic experiments only. The defaults keep
+    # the K-profile bitwise, and non-default values require atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1.
+    atmosphere_pbl_diffusivity_scale::Float64 = 1.0
+    atmosphere_pbl_mix_heat::Bool = true
+    atmosphere_pbl_mix_humidity::Bool = true
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
@@ -363,6 +368,15 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         atmosphere_vertical_advection = Symbol(
             _mapping_value(raw, "atmosphere_vertical_advection", "speedyweather_0_21_1_centered"),
         ),
+        atmosphere_pbl_diffusivity_scale = Float64(
+            _mapping_value(raw, "atmosphere_pbl_diffusivity_scale", 1.0),
+        ),
+        atmosphere_pbl_mix_heat = Bool(
+            _mapping_value(raw, "atmosphere_pbl_mix_heat", true),
+        ),
+        atmosphere_pbl_mix_humidity = Bool(
+            _mapping_value(raw, "atmosphere_pbl_mix_humidity", true),
+        ),
         atmosphere_large_scale_precipitation = Symbol(
             _mapping_value(
                 raw,
@@ -639,6 +653,19 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         (config.ocean_model == :oceananigans && config.land_model == :terrarium) || throw(ArgumentError(
             "atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1 requires ocean_model=oceananigans and " *
             "land_model=terrarium (it reads their coupled surface flux inputs)",
+        ))
+    # Strength-screen parameters: finite scale in (0, 1], at least one mixed scalar, and only with the K-profile.
+    0 < config.atmosphere_pbl_diffusivity_scale <= 1 || throw(ArgumentError(
+        "atmosphere_pbl_diffusivity_scale must be in (0, 1]",
+    ))
+    (config.atmosphere_pbl_mix_heat || config.atmosphere_pbl_mix_humidity) || throw(ArgumentError(
+        "atmosphere_pbl_mix_heat and atmosphere_pbl_mix_humidity cannot both be false",
+    ))
+    config.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1 ||
+        (config.atmosphere_pbl_diffusivity_scale == 1 && config.atmosphere_pbl_mix_heat &&
+         config.atmosphere_pbl_mix_humidity) || throw(ArgumentError(
+            "atmosphere_pbl_diffusivity_scale, atmosphere_pbl_mix_heat and atmosphere_pbl_mix_humidity require " *
+            "atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1",
         ))
     config.atmosphere_large_scale_precipitation in (
         :upstream_observed,

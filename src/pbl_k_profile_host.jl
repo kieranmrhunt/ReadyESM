@@ -18,6 +18,10 @@ column physics is in pbl_k_profile.jl. Host conventions, agreed with Codex's int
   not mixed in v1. Heights above the surface are hydrostatic from the column's virtual temperature;
 - the depth h is at least the top face of layer 1 and at most the height of sigma = 0.5 in that column. The bulk
   Richardson number has a 0.1 m/s calm-wind floor (PBL_CALM_WIND_FLOOR), part of the provenance below.
+- strength-screen parameters (diagnostic experiments only, defaults keep the scheme bitwise): `diffusivity_scale`
+  in (0, 1] multiplies every face coefficient after it is computed (and the reported lowest-face diffusivity), so a
+  scale of 1 is an exact multiply. `mix_heat` and `mix_humidity` skip the solve and tendency of that scalar. The
+  boundary-layer depth, Ric and the depth cap do not change. A non-default value adds a provenance suffix.
 =#
 
 const PBL_K_PROFILE_PROVENANCE =
@@ -41,6 +45,9 @@ struct KProfileBoundaryLayerMixing{NF} <: SpeedyWeather.AbstractVerticalDiffusio
     use_boundary_layer_drag::Bool
     drag_ocean::NF
     drag_land::NF
+    diffusivity_scale::NF        # strength screen: multiplies the face coefficients (default 1, exact)
+    mix_heat::Bool               # strength screen: mix dry static energy (default true)
+    mix_humidity::Bool           # strength screen: mix humidity (default true)
 end
 
 Adapt.@adapt_structure KProfileBoundaryLayerMixing
@@ -48,15 +55,27 @@ Adapt.@adapt_structure KProfileBoundaryLayerMixing
 function KProfileBoundaryLayerMixing(spectral_grid::SpeedyWeather.SpectralGrid;
                                      critical_richardson = PBL_CRITICAL_RICHARDSON, maximum_sigma = PBL_MAXIMUM_SIGMA,
                                      surface_condition = SpeedyWeather.SurfaceCondition(spectral_grid),
-                                     surface_momentum_flux = SpeedyWeather.SurfaceMomentumFlux(spectral_grid))
+                                     surface_momentum_flux = SpeedyWeather.SurfaceMomentumFlux(spectral_grid),
+                                     diffusivity_scale = 1, mix_heat = true, mix_humidity = true)
+    0 < diffusivity_scale <= 1 || throw(ArgumentError("diffusivity_scale must be in (0, 1], got $diffusivity_scale"))
+    (mix_heat || mix_humidity) || throw(ArgumentError("the K-profile must mix heat, humidity or both"))
     NF = spectral_grid.NF
     return KProfileBoundaryLayerMixing{NF}(NF(critical_richardson), NF(maximum_sigma),
         NF(surface_condition.wind_slowdown), NF(surface_condition.gust_speed),
         NF(surface_momentum_flux.wind_slowdown), Bool(surface_momentum_flux.use_boundary_layer_drag),
-        NF(surface_momentum_flux.drag_ocean), NF(surface_momentum_flux.drag_land))
+        NF(surface_momentum_flux.drag_ocean), NF(surface_momentum_flux.drag_land),
+        NF(diffusivity_scale), Bool(mix_heat), Bool(mix_humidity))
 end
 
-_atmosphere_vertical_diffusion_provenance(::KProfileBoundaryLayerMixing) = PBL_K_PROFILE_PROVENANCE
+"""Provenance: the v1 string, plus a suffix for each non-default strength-screen parameter."""
+function _atmosphere_vertical_diffusion_provenance(scheme::KProfileBoundaryLayerMixing)
+    suffix = ""
+    scheme.diffusivity_scale == 1 ||
+        (suffix *= "_scale" * replace(string(round(Float64(scheme.diffusivity_scale); digits = 4)), "." => "p"))
+    scheme.mix_humidity || (suffix *= "_heat_only")
+    scheme.mix_heat || (suffix *= "_humidity_only")
+    return PBL_K_PROFILE_PROVENANCE * suffix
+end
 
 SpeedyWeather.variables(::KProfileBoundaryLayerMixing) = (
     SpeedyWeather.ParameterizationVariable(:pbl_height, SpeedyWeather.Grid2D();
@@ -140,7 +159,12 @@ struct _PBLFaceCoefficients{Z, T, Q, S, H, A, NF} <: AbstractVector{NF}
     thetav_reference::NF
     gravity::NF
     gas_constant::NF
+    scale::NF
 end
+_PBLFaceCoefficients(heights, temperature, humidity, sigma_full, sigma_half, atmosphere, ij, h::NF, ustar,
+                     buoyancy_flux, thetav_reference, gravity, gas_constant) where {NF} =
+    _PBLFaceCoefficients(heights, temperature, humidity, sigma_full, sigma_half, atmosphere, ij, h, ustar,
+                         buoyancy_flux, thetav_reference, gravity, gas_constant, one(NF))
 Base.size(x::_PBLFaceCoefficients) = (length(x.sigma_full) - 1,)
 Base.@propagate_inbounds function Base.getindex(x::_PBLFaceCoefficients{Z, T, Q, S, H, A, NF}, k::Int) where {Z, T, Q, S, H, A, NF}
     ij = x.ij
@@ -150,7 +174,8 @@ Base.@propagate_inbounds function Base.getindex(x::_PBLFaceCoefficients{Z, T, Q,
     K = pbl_diffusivity(z_face, x.h, x.ustar, x.buoyancy_flux, x.thetav_reference, x.gravity)
     tv_face = (tv_above + tv_below) / 2
     metric = (x.sigma_half[k + 1] * x.gravity / (x.gas_constant * tv_face))^2
-    return NF(metric * K / (x.sigma_full[k + 1] - x.sigma_full[k]))
+    # The scale multiplies the finished coefficient, so a scale of 1 leaves it bitwise unchanged.
+    return NF(metric * K / (x.sigma_full[k + 1] - x.sigma_full[k])) * x.scale
 end
 
 """Momentum drag coefficient exactly as the surface momentum flux scheme selects it, read from the lagged state."""
@@ -252,24 +277,28 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
     h = pbl_height(z_full, thetav, wind2, ustar, buoyancy_flux, thetav_reference, gravity, z_lowest_face, z_maximum;
                    critical = scheme.critical_richardson)
     a = _PBLFaceCoefficients(heights, temperature, humidity, sigma, sigma_half, atmosphere, ij, NF(h), ustar,
-                             buoyancy_flux, thetav_reference, gravity, gas_constant)
+                             buoyancy_flux, thetav_reference, gravity, gas_constant, scheme.diffusivity_scale)
 
     vars.parameterizations.pbl_height[ij] = h
     vars.parameterizations.pbl_friction_velocity[ij] = ustar
     vars.parameterizations.pbl_buoyancy_flux[ij] = buoyancy_flux
     vars.parameterizations.pbl_drag_coefficient[ij] = drag
     vars.parameterizations.pbl_lowest_face_diffusivity[ij] =
-        pbl_diffusivity(z_lowest_face, h, ustar, buoyancy_flux, thetav_reference, gravity)
+        NF(pbl_diffusivity(z_lowest_face, h, ustar, buoyancy_flux, thetav_reference, gravity)) * scheme.diffusivity_scale
 
     dt = 2 * NF(time_stepping.Δt_sec)
     # Column views of the arrays themselves: Fields on the CPU, plain device matrices in the GPU kernel.
     c = view(vars.scratch.grid.a, ij, :)
     d = view(vars.scratch.grid.b, ij, :)
     x_new = view(vars.parameterizations.pbl_solution_work, ij, :)
-    dry_static_energy = _PBLDryStaticEnergy(temperature, vars.grid.geopotential, heat_capacity, ij, n)
-    pbl_implicit_diffuse!(x_new, dry_static_energy, a, dsigma, dt, c, d)
-    _pbl_add_flux_tendency!(vars.tendencies.grid.temperature, ij, x_new, a, dsigma, inv(heat_capacity))
-    pbl_implicit_diffuse!(x_new, view(humidity, ij, :), a, dsigma, dt, c, d)
-    _pbl_add_flux_tendency!(vars.tendencies.grid.humidity, ij, x_new, a, dsigma, one(NF))
+    if scheme.mix_heat
+        dry_static_energy = _PBLDryStaticEnergy(temperature, vars.grid.geopotential, heat_capacity, ij, n)
+        pbl_implicit_diffuse!(x_new, dry_static_energy, a, dsigma, dt, c, d)
+        _pbl_add_flux_tendency!(vars.tendencies.grid.temperature, ij, x_new, a, dsigma, inv(heat_capacity))
+    end
+    if scheme.mix_humidity
+        pbl_implicit_diffuse!(x_new, view(humidity, ij, :), a, dsigma, dt, c, d)
+        _pbl_add_flux_tendency!(vars.tendencies.grid.humidity, ij, x_new, a, dsigma, one(NF))
+    end
     return nothing
 end
