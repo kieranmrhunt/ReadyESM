@@ -83,6 +83,18 @@ end
         @test method(both_model).line > method(fixed_model).line   # the combined copy, defined second
     end
 
+    @testset "restart record" begin
+        sim(scheme) = (; model = (; vertical_advection = scheme))
+        fixed, default = sim(R.FullTemperatureCenteredVerticalAdvection(grid)), sim(S.CenteredVerticalAdvection(grid))
+        @test R._full_temperature_restart_state(default) == (;)            # default checkpoints are unchanged
+        @test R._full_temperature_restart_state(fixed) == (; full_temperature_vertical_advection = true)
+        @test R._validate_full_temperature_restart(default, (; variables = 1)) === nothing      # legacy checkpoint
+        @test R._validate_full_temperature_restart(fixed, R._full_temperature_restart_state(fixed)) === nothing
+        @test_throws ArgumentError R._validate_full_temperature_restart(fixed, (; variables = 1))
+        @test_throws ArgumentError R._validate_full_temperature_restart(default, (; full_temperature_vertical_advection = true))
+        @test_throws ArgumentError R._validate_full_temperature_restart(fixed, (; full_temperature_vertical_advection = 1))
+    end
+
     @testset "upstream reference-profile test, adapted to 0.21.1" begin
         sg = S.SpectralGrid(; NF = Float32, trunc = 15, nlayers = 8)
         for (label, scheme, fixed) in (("centred (0.21.1 default)", S.CenteredVerticalAdvection(sg), false),

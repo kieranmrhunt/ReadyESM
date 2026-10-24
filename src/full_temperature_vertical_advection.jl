@@ -81,6 +81,24 @@ const FullTemperatureAdvectionModel =
 const MoistMassFullTemperatureModel = _restricted_wet_model_type(
     :vertical_advection => FullTemperatureCenteredVerticalAdvection, :stochastic_physics => MoistMassCoupling)
 
+"""Restart record: present (and true) only when the full-temperature advection is on, so default checkpoints do not
+change. Restoring refuses a checkpoint written under the other setting."""
+_full_temperature_restart_state(simulation) =
+    simulation.model.vertical_advection isa FullTemperatureCenteredVerticalAdvection ?
+        (; full_temperature_vertical_advection = true) : (;)
+
+function _validate_full_temperature_restart(simulation, state)
+    saved = hasproperty(state, :full_temperature_vertical_advection) ? state.full_temperature_vertical_advection : false
+    saved isa Bool || throw(ArgumentError("checkpoint full-temperature vertical advection setting must be Boolean"))
+    active = simulation.model.vertical_advection isa FullTemperatureCenteredVerticalAdvection
+    saved == active || throw(ArgumentError(
+        "checkpoint and reconstructed atmosphere use different vertical advection " *
+        "(checkpoint $(saved ? "full temperature" : "0.21.1 anomaly"), " *
+        "configuration $(active ? "full temperature" : "0.21.1 anomaly"))",
+    ))
+    return nothing
+end
+
 # BEGIN PR1286 COPY: dynamics_tendencies!
 # SpeedyWeather 0.21.1 dynamics/tendencies.jl dynamics_tendencies!(vars, lf, model::PrimitiveEquation), with the
 # subtraction of the reference profile moved after vertical_advection! (upstream PR #1286). No other change.
