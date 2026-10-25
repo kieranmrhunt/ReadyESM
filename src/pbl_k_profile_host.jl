@@ -96,6 +96,8 @@ SpeedyWeather.variables(::KProfileBoundaryLayerMixing) = (
         desc = "Lagged momentum drag coefficient used by the K-profile", units = "1"),
     SpeedyWeather.ParameterizationVariable(:pbl_lowest_face_diffusivity, SpeedyWeather.Grid2D();
         desc = "K-profile eddy diffusivity at the top face of the lowest layer", units = "m^2/s"),
+    SpeedyWeather.ParameterizationVariable(:pbl_lowest_face_height, SpeedyWeather.Grid2D();
+        desc = "Height of the top face of the lowest layer, the lower bound of the K-profile depth", units = "m"),
     SpeedyWeather.ParameterizationVariable(:pbl_momentum_dissipation_face, SpeedyWeather.Grid2D();
         desc = "Kinetic-energy loss rate of the K-profile momentum update, face term (zero if momentum is off)",
         units = "W/m^2"),
@@ -352,15 +354,21 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
                                   gas_constant, gravity)
     h = pbl_height(z_full, thetav, wind2, ustar, buoyancy_flux, thetav_reference, gravity, z_lowest_face, z_maximum;
                    critical = scheme.critical_richardson)
-    a = _PBLFaceCoefficients(heights, temperature, humidity, sigma, sigma_half, atmosphere, ij, NF(h), ustar,
+    # One rounded depth and face height for the coefficients and every stored diagnostic, so that the reported
+    # lowest-face K is the applied K (h == z_face gives K == 0 in both).
+    h_stored = NF(h)
+    z_face_stored = NF(z_lowest_face)
+    a = _PBLFaceCoefficients(heights, temperature, humidity, sigma, sigma_half, atmosphere, ij, h_stored, ustar,
                              buoyancy_flux, thetav_reference, gravity, gas_constant, scheme.diffusivity_scale)
 
-    vars.parameterizations.pbl_height[ij] = h
+    vars.parameterizations.pbl_height[ij] = h_stored
+    vars.parameterizations.pbl_lowest_face_height[ij] = z_face_stored
     vars.parameterizations.pbl_friction_velocity[ij] = ustar
     vars.parameterizations.pbl_buoyancy_flux[ij] = buoyancy_flux
     vars.parameterizations.pbl_drag_coefficient[ij] = drag
     vars.parameterizations.pbl_lowest_face_diffusivity[ij] =
-        NF(pbl_diffusivity(z_lowest_face, h, ustar, buoyancy_flux, thetav_reference, gravity)) * scheme.diffusivity_scale
+        NF(pbl_diffusivity(z_face_stored, h_stored, ustar, buoyancy_flux, thetav_reference, gravity)) *
+        scheme.diffusivity_scale
 
     dt = 2 * NF(time_stepping.Δt_sec)
     # Column views of the arrays themselves: Fields on the CPU, plain device matrices in the GPU kernel.

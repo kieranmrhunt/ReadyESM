@@ -142,6 +142,14 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
         end
     end
 
+    @testset "lowest-face rounding contract" begin
+        z = 331f0
+        h_raw = Float64(z) + 1e-7
+        @test Float32(h_raw) == z
+        @test R.pbl_diffusivity(Float64(z), h_raw, 0.3, 0.01, 300.0, 9.81) > 0        # unrounded: tiny but nonzero
+        @test R.pbl_diffusivity(z, Float32(h_raw), 0.3f0, 0.01f0, 300f0, 9.81f0) == 0  # stored values: exactly zero
+    end
+
     @testset "compact coupled model, 27 layers" begin
         mktempdir() do dir
             config = compact_l27(joinpath(dir, "out"))
@@ -201,6 +209,21 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                     " (unweighted means over reduced-grid points)")
             @test worst_momentum < 1e-4
             @test worst_energy < 1e-2
+            # Lowest-face diagnostics (v3): one rounded depth and face height for the coefficients and the reports.
+            hs = Array(p.pbl_height.data); zf = Array(p.pbl_lowest_face_height.data)
+            Kf = Array(p.pbl_lowest_face_diffusivity.data)
+            @test all(isfinite, zf) && all(>(0), zf) && all(hs .>= zf)
+            @test all(Kf[ij] == 0 for ij in eachindex(hs) if hs[ij] == zf[ij])     # implication only, not iff
+            ustar_s, buoy_s = Array(p.pbl_friction_velocity.data), Array(p.pbl_buoyancy_flux.data)
+            g32 = Float32(model.planet.gravity)
+            for ij in eachindex(hs)
+                thetav = R._PBLThetaV(vars.grid.temperature_prev, vars.grid.humidity_prev, model.geometry.σ_levels_full,
+                                      model.atmosphere, Float32(model.atmosphere.κ), ij)
+                @test Kf[ij] == Float32(R.pbl_diffusivity(zf[ij], hs[ij], ustar_s[ij], buoy_s[ij], thetav[n], g32)) *
+                               with_momentum.diffusivity_scale
+            end
+            println("PBL_MOMENTUM_LOWEST_FACE active_fraction=", count(>(0), Kf) / length(Kf),
+                    " clamped_fraction=", count(hs .== zf) / length(hs))
             # Fixture diagnostic only (not an invariant of the implicit solve, which the column algebra tests exactly):
             # the fraction of columns whose lowest-layer tendency has the sign of the old bottom-face difference.
             n = model.geometry.nlayers
@@ -219,7 +242,7 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                         geopotential = plain(g.geopotential)),
                 parameterizations = (; (name => plain(getproperty(p, name)) for name in
                     (:pbl_height, :pbl_friction_velocity, :pbl_buoyancy_flux, :pbl_drag_coefficient,
-                     :pbl_lowest_face_diffusivity, :pbl_momentum_dissipation_face, :pbl_momentum_dissipation_implicit,
+                     :pbl_lowest_face_diffusivity, :pbl_lowest_face_height, :pbl_momentum_dissipation_face, :pbl_momentum_dissipation_implicit,
                      :pbl_height_work, :pbl_solution_work, :boundary_layer_drag))...),
                 prognostic = (; land = (; sensible_heat_flux = plain(vars.prognostic.land.sensible_heat_flux),
                                         surface_humidity_flux = plain(vars.prognostic.land.surface_humidity_flux)),

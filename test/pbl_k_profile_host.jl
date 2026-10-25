@@ -158,7 +158,7 @@ end
                         geopotential = plain(g.geopotential)),
                 parameterizations = (; (name => plain(getproperty(p, name)) for name in
                     (:pbl_height, :pbl_friction_velocity, :pbl_buoyancy_flux, :pbl_drag_coefficient,
-                     :pbl_lowest_face_diffusivity, :pbl_height_work, :pbl_solution_work, :boundary_layer_drag))...),
+                     :pbl_lowest_face_diffusivity, :pbl_lowest_face_height, :pbl_height_work, :pbl_solution_work, :boundary_layer_drag))...),
                 prognostic = (; land = (; sensible_heat_flux = plain(vars.prognostic.land.sensible_heat_flux),
                                         surface_humidity_flux = plain(vars.prognostic.land.surface_humidity_flux)),
                               ocean = (; sensible_heat_flux = plain(vars.prognostic.ocean.sensible_heat_flux),
