@@ -60,7 +60,8 @@ function _atmosphere_vertical_diffusion(config::ExperimentConfig, spectral_grid)
     config.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1 &&
         return KProfileBoundaryLayerMixing(spectral_grid;
             diffusivity_scale = config.atmosphere_pbl_diffusivity_scale,
-            mix_heat = config.atmosphere_pbl_mix_heat, mix_humidity = config.atmosphere_pbl_mix_humidity)
+            mix_heat = config.atmosphere_pbl_mix_heat, mix_humidity = config.atmosphere_pbl_mix_humidity,
+            mix_momentum = config.atmosphere_pbl_mix_momentum)
     error(
         "unsupported atmosphere vertical diffusion " *
         "$(config.atmosphere_vertical_diffusion)",

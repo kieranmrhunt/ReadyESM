@@ -52,6 +52,9 @@ Base.@kwdef struct ExperimentConfig
     atmosphere_pbl_diffusivity_scale::Float64 = 1.0
     atmosphere_pbl_mix_heat::Bool = true
     atmosphere_pbl_mix_humidity::Bool = true
+    # Opt-in boundary-layer momentum mixing with the same K-profile coefficients (default false keeps the scheme
+    # bitwise). It requires atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1.
+    atmosphere_pbl_mix_momentum::Bool = false
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
@@ -377,6 +380,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         atmosphere_pbl_mix_humidity = Bool(
             _mapping_value(raw, "atmosphere_pbl_mix_humidity", true),
         ),
+        atmosphere_pbl_mix_momentum = Bool(
+            _mapping_value(raw, "atmosphere_pbl_mix_momentum", false),
+        ),
         atmosphere_large_scale_precipitation = Symbol(
             _mapping_value(
                 raw,
@@ -654,18 +660,20 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
             "atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1 requires ocean_model=oceananigans and " *
             "land_model=terrarium (it reads their coupled surface flux inputs)",
         ))
-    # Strength-screen parameters: finite scale in (0, 1], at least one mixed scalar, and only with the K-profile.
+    # Strength-screen parameters: finite scale in (0, 1], at least one mixed quantity (heat, humidity or momentum),
+    # and non-default values only with the K-profile.
     0 < config.atmosphere_pbl_diffusivity_scale <= 1 || throw(ArgumentError(
         "atmosphere_pbl_diffusivity_scale must be in (0, 1]",
     ))
-    (config.atmosphere_pbl_mix_heat || config.atmosphere_pbl_mix_humidity) || throw(ArgumentError(
-        "atmosphere_pbl_mix_heat and atmosphere_pbl_mix_humidity cannot both be false",
-    ))
+    (config.atmosphere_pbl_mix_heat || config.atmosphere_pbl_mix_humidity || config.atmosphere_pbl_mix_momentum) ||
+        throw(ArgumentError(
+            "atmosphere_pbl_mix_heat, atmosphere_pbl_mix_humidity and atmosphere_pbl_mix_momentum cannot all be false",
+        ))
     config.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1 ||
         (config.atmosphere_pbl_diffusivity_scale == 1 && config.atmosphere_pbl_mix_heat &&
-         config.atmosphere_pbl_mix_humidity) || throw(ArgumentError(
-            "atmosphere_pbl_diffusivity_scale, atmosphere_pbl_mix_heat and atmosphere_pbl_mix_humidity require " *
-            "atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1",
+         config.atmosphere_pbl_mix_humidity && !config.atmosphere_pbl_mix_momentum) || throw(ArgumentError(
+            "atmosphere_pbl_diffusivity_scale, atmosphere_pbl_mix_heat, atmosphere_pbl_mix_humidity and " *
+            "atmosphere_pbl_mix_momentum require atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1",
         ))
     config.atmosphere_large_scale_precipitation in (
         :upstream_observed,

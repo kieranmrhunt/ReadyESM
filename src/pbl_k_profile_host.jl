@@ -48,6 +48,7 @@ struct KProfileBoundaryLayerMixing{NF} <: SpeedyWeather.AbstractVerticalDiffusio
     diffusivity_scale::NF        # strength screen: multiplies the face coefficients (default 1, exact)
     mix_heat::Bool               # strength screen: mix dry static energy (default true)
     mix_humidity::Bool           # strength screen: mix humidity (default true)
+    mix_momentum::Bool           # opt-in: mix u and v with the same coefficients (default false)
 end
 
 Adapt.@adapt_structure KProfileBoundaryLayerMixing
@@ -56,15 +57,17 @@ function KProfileBoundaryLayerMixing(spectral_grid::SpeedyWeather.SpectralGrid;
                                      critical_richardson = PBL_CRITICAL_RICHARDSON, maximum_sigma = PBL_MAXIMUM_SIGMA,
                                      surface_condition = SpeedyWeather.SurfaceCondition(spectral_grid),
                                      surface_momentum_flux = SpeedyWeather.SurfaceMomentumFlux(spectral_grid),
-                                     diffusivity_scale = 1, mix_heat = true, mix_humidity = true)
+                                     diffusivity_scale = 1, mix_heat = true, mix_humidity = true,
+                                     mix_momentum = false)
     0 < diffusivity_scale <= 1 || throw(ArgumentError("diffusivity_scale must be in (0, 1], got $diffusivity_scale"))
-    (mix_heat || mix_humidity) || throw(ArgumentError("the K-profile must mix heat, humidity or both"))
+    (mix_heat || mix_humidity || mix_momentum) ||
+        throw(ArgumentError("the K-profile must mix at least one of heat, humidity and momentum"))
     NF = spectral_grid.NF
     return KProfileBoundaryLayerMixing{NF}(NF(critical_richardson), NF(maximum_sigma),
         NF(surface_condition.wind_slowdown), NF(surface_condition.gust_speed),
         NF(surface_momentum_flux.wind_slowdown), Bool(surface_momentum_flux.use_boundary_layer_drag),
         NF(surface_momentum_flux.drag_ocean), NF(surface_momentum_flux.drag_land),
-        NF(diffusivity_scale), Bool(mix_heat), Bool(mix_humidity))
+        NF(diffusivity_scale), Bool(mix_heat), Bool(mix_humidity), Bool(mix_momentum))
 end
 
 """Provenance: the v1 string, plus a suffix for each non-default strength-screen parameter."""
@@ -72,8 +75,13 @@ function _atmosphere_vertical_diffusion_provenance(scheme::KProfileBoundaryLayer
     suffix = ""
     scheme.diffusivity_scale == 1 ||
         (suffix *= "_scale" * replace(string(round(Float64(scheme.diffusivity_scale); digits = 4)), "." => "p"))
-    scheme.mix_humidity || (suffix *= "_heat_only")
-    scheme.mix_heat || (suffix *= "_humidity_only")
+    if scheme.mix_momentum && !scheme.mix_heat && !scheme.mix_humidity
+        suffix *= "_momentum_only"
+    else
+        scheme.mix_humidity || (suffix *= "_heat_only")
+        scheme.mix_heat || (suffix *= "_humidity_only")
+        scheme.mix_momentum && (suffix *= "_with_momentum")
+    end
     return PBL_K_PROFILE_PROVENANCE * suffix
 end
 
@@ -88,6 +96,12 @@ SpeedyWeather.variables(::KProfileBoundaryLayerMixing) = (
         desc = "Lagged momentum drag coefficient used by the K-profile", units = "1"),
     SpeedyWeather.ParameterizationVariable(:pbl_lowest_face_diffusivity, SpeedyWeather.Grid2D();
         desc = "K-profile eddy diffusivity at the top face of the lowest layer", units = "m^2/s"),
+    SpeedyWeather.ParameterizationVariable(:pbl_momentum_dissipation_face, SpeedyWeather.Grid2D();
+        desc = "Kinetic-energy loss rate of the K-profile momentum update, face term (zero if momentum is off)",
+        units = "W/m^2"),
+    SpeedyWeather.ParameterizationVariable(:pbl_momentum_dissipation_implicit, SpeedyWeather.Grid2D();
+        desc = "Kinetic-energy loss rate of the K-profile momentum update, backward-Euler term (zero if off)",
+        units = "W/m^2"),
     SpeedyWeather.ParameterizationVariable(:pbl_height_work, SpeedyWeather.Grid3D();
         desc = "K-profile full-level heights above the surface (work column)", units = "m"),
     SpeedyWeather.ParameterizationVariable(:pbl_solution_work, SpeedyWeather.Grid3D();
@@ -207,6 +221,24 @@ Base.@propagate_inbounds function _pbl_sigma_height(heights, temperature, humidi
     return heights[ij, 1] + gas_constant * tv(1) / gravity * log(sigma[1] / target)
 end
 
+"""
+Mix one wind component: backward-Euler solve of `wind` into `x_new`, add the flux-form tendency (m/s2) to
+`tendency[ij, :]`, and return the face sum sum_k a[k] (x_new[k+1] - x_new[k])^2 and the implicit sum
+sum_k dsigma[k] (x_new[k] - wind[k])^2 used by the kinetic-energy diagnostics.
+"""
+Base.@propagate_inbounds function _pbl_mix_wind!(tendency, wind, ij, x_new, a, dsigma, dt, c, d)
+    pbl_implicit_diffuse!(x_new, wind, a, dsigma, dt, c, d)
+    _pbl_add_flux_tendency!(tendency, ij, x_new, a, dsigma, one(eltype(x_new)))
+    n = length(dsigma)
+    face_sum = zero(eltype(x_new))
+    implicit_sum = zero(eltype(x_new))
+    for k in 1:n
+        k < n && (face_sum += a[k] * (x_new[k + 1] - x_new[k])^2)
+        implicit_sum += dsigma[k] * (x_new[k] - wind[k])^2
+    end
+    return face_sum, implicit_sum
+end
+
 """Add the flux-form tendency of the solved column `x_new` (times `scale`) to `tendency[ij, :]`."""
 Base.@propagate_inbounds function _pbl_add_flux_tendency!(tendency, ij, x_new, a, dsigma, scale)
     n = length(dsigma)
@@ -299,6 +331,17 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
     if scheme.mix_humidity
         pbl_implicit_diffuse!(x_new, view(humidity, ij, :), a, dsigma, dt, c, d)
         _pbl_add_flux_tendency!(vars.tendencies.grid.humidity, ij, x_new, a, dsigma, one(NF))
+    end
+    if scheme.mix_momentum
+        # Momentum uses the same coefficients a (HB93 K_m = K, which the scalars already use: Pr = 1), with no flux
+        # at the top and at the surface. SpeedyWeather's surface drag stays the only column momentum sink.
+        face_sum, implicit_sum = _pbl_mix_wind!(vars.tendencies.grid.u, view(u, ij, :), ij, x_new, a, dsigma, dt, c, d)
+        face_v, implicit_v = _pbl_mix_wind!(vars.tendencies.grid.v, view(v, ij, :), ij, x_new, a, dsigma, dt, c, d)
+        # Kinetic-energy loss of this frozen-coefficient solve of length dt, per unit area (W/m2):
+        # E_old - E_new = dt * D_face + (p_s / 2g) sum dsigma (x_new - x_old)^2 = dt * (D_face + D_implicit).
+        mass = surface_pressure / gravity
+        vars.parameterizations.pbl_momentum_dissipation_face[ij] = mass * (face_sum + face_v)
+        vars.parameterizations.pbl_momentum_dissipation_implicit[ij] = mass * (implicit_sum + implicit_v) / (2 * dt)
     end
     return nothing
 end
