@@ -8,6 +8,7 @@ start_date: "1993-01-01T00:00:00"
 atmosphere_timestep_at_t31_minutes: 15
 atmosphere_hyperdiffusion_hours: 4
 atmosphere_divergence_hyperdiffusion_hours: 1
+atmosphere_vertical_advection: centered_full_temperature
 atmosphere_vertical_diffusion: speedyweather_0_21_1_zero_operator_control
 atmosphere_large_scale_precipitation: net_column_conservative
 atmosphere_saturation_law: mixed_phase

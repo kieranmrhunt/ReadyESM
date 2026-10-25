@@ -40,9 +40,11 @@ end
     grid = S.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
 
     @testset "configuration and dispatch" begin
-        @test production.atmosphere_vertical_advection == :speedyweather_0_21_1_centered
-        # The default is SpeedyWeather's own scheme object, so the default model type is unchanged.
-        @test R._atmosphere_vertical_advection_scheme(production, grid) === S.CenteredVerticalAdvection(grid)
+        @test production.atmosphere_vertical_advection == :centered_full_temperature
+        @test R.ExperimentConfig().atmosphere_vertical_advection == :speedyweather_0_21_1_centered
+        # Explicit legacy settings and configurations without the key retain the old dynamics.
+        legacy = with(production; atmosphere_vertical_advection = :speedyweather_0_21_1_centered)
+        @test R._atmosphere_vertical_advection_scheme(legacy, grid) === S.CenteredVerticalAdvection(grid)
         on = with(production; atmosphere_vertical_advection = :centered_full_temperature)
         @test R.validate(on; check_input_files = false) === on
         scheme = R._atmosphere_vertical_advection_scheme(on, grid)
@@ -54,10 +56,14 @@ end
         @test_throws ArgumentError R.validate(with(production; atmosphere_vertical_advection = :upwind);
                                               check_input_files = false)
         mktempdir() do dir
-            lines = readlines(joinpath(R.PROJECT_ROOT, "config/production.yml"))
-            push!(lines, "atmosphere_vertical_advection: centered_full_temperature")
+            lines = filter(line -> !startswith(line, "atmosphere_vertical_advection:"),
+                           readlines(joinpath(R.PROJECT_ROOT, "config/production.yml")))
             path = joinpath(dir, "fix.yml"); write(path, join(lines, "\n") * "\n")
-            @test R.load_config(path; check_input_files = false).atmosphere_vertical_advection == :centered_full_temperature
+            @test R.load_config(path; check_input_files = false).atmosphere_vertical_advection == :speedyweather_0_21_1_centered
+            for option in (:centered_full_temperature, :speedyweather_0_21_1_centered)
+                write(path, join([lines; "atmosphere_vertical_advection: $option"], "\n") * "\n")
+                @test R.load_config(path; check_input_files = false).atmosphere_vertical_advection == option
+            end
         end
         # Face reconstruction is exactly the centred one.
         xi = reshape(Float32[1, 4, 9, 16, 25], 1, 5)

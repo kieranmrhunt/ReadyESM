@@ -26,6 +26,7 @@ config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml")
 @test config.terrarium_soil_layers == 16
 @test config.atmosphere_vertical_diffusion ==
       :speedyweather_0_21_1_zero_operator_control
+@test config.atmosphere_vertical_advection == :centered_full_temperature
 @test config.atmosphere_large_scale_precipitation == :net_column_conservative
 @test config.atmosphere_saturation_law == :mixed_phase
 @test config.atmosphere_convection == :betts_miller_sigma_rh_v1
@@ -100,3 +101,4 @@ include("land_precision.jl")
 include("mixed_phase_saturation.jl")
 include("atmosphere_spectral_truncation.jl")
 include("moist_mass_coupling.jl")
+include("full_temperature_vertical_advection.jl")
