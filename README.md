@@ -8,10 +8,10 @@ The standard setup has a T31 atmosphere with 27 vertical levels, a 1° tripolar
 ocean with 60 levels, and 16 soil layers. ERA5 supplies the initial atmosphere
 and land state. ECCO supplies the ocean and sea ice.
 
-![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.14-snapshot.png)
+![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.15-snapshot.png)
 
-A 31-day initialised run with the v0.1.14 configuration, starting 1 January 1993.
-[Figure details](docs/readiesm-v0.1.14-snapshot.json).
+A 31-day initialised run with the v0.1.15 configuration, starting 1 January 1993.
+[Figure details](docs/readiesm-v0.1.15-snapshot.json).
 
 ## Speed
 
@@ -89,6 +89,9 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `truncation`, `nlayers` | `31`, `27` | Atmospheric horizontal truncation and vertical levels. |
 | `duration_days`, `analysis_start_day` | `730`, `365` | Run length and start of the diagnostic averaging period. |
 | `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Use `speedyweather_0_21_1_centered` to continue an older production checkpoint. |
+| `atmosphere_vertical_diffusion` | `holtslag_boville_k_profile_v1` | Mix momentum vertically in the atmospheric boundary layer. Requires Oceananigans and Terrarium. |
+| `atmosphere_pbl_diffusivity_scale` | `1.0` | Multiply the boundary-layer mixing coefficient by a value greater than 0 and at most 1. |
+| `atmosphere_pbl_mix_heat`, `atmosphere_pbl_mix_humidity`, `atmosphere_pbl_mix_momentum` | `false`, `false`, `true` | Select the fields mixed by the boundary-layer scheme. |
 | `atmosphere_convection` | `betts_miller_sigma_rh_v1` | Betts–Miller with a vertical humidity profile. Use `betts_miller_constant_rh` for the previous scheme. |
 | `atmosphere_convection_upper_relative_humidity`, `atmosphere_convection_lower_relative_humidity` | `0.5`, `0.7` | Reference relative humidity above and below the transition. |
 | `atmosphere_convection_transition_top_sigma`, `atmosphere_convection_transition_bottom_sigma` | `0.3`, `0.7` | Bounds of the linear transition in pressure fraction. |
@@ -107,6 +110,18 @@ The standard setup uses prescribed CO2 and aerosol forcing. Optional
 For CH4/N2O restart settings, see the [trace-gas notes](docs/validation-runoff-trace-gases.md#scope).
 Land vegetation is prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
 has separate configuration instructions.
+
+For the optional moist-mass coupling, or to restore the v0.1.14 vertical
+diffusion settings, use all five entries below. Heat and humidity mixing
+are inactive with this operator. Keep the original settings on restart.
+
+```yaml
+atmosphere_vertical_diffusion: speedyweather_0_21_1_zero_operator_control
+atmosphere_pbl_diffusivity_scale: 1.0
+atmosphere_pbl_mix_heat: true
+atmosphere_pbl_mix_humidity: true
+atmosphere_pbl_mix_momentum: false
+```
 
 See [setup and tests](docs/running.md), [known limitations](NOTES.md) and
 [version history](HISTORY.md).

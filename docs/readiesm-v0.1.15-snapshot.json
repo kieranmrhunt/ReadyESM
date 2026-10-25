@@ -1,0 +1,21 @@
+{
+  "status": "accepted_configuration",
+  "release_version": "0.1.15",
+  "release_port_commit": "73aef734d2c381faf63934ac37eaef67a62e93e5",
+  "release_gpu_restart_job": "62105211",
+  "release_gpu_restart_result_sha256": "455eb1cea5929816d389ece7ee60647f0d4428afad015b3679cdaff7713efa3f",
+  "model_day": 31,
+  "start_date": "1993-01-01T00:00:00",
+  "run": "K-profile momentum mixing at scale 1, January member 2, native implicit solver",
+  "model_job": "62078754_0",
+  "model_source_commit": "f5572aab934f87cdea0d55199f04ae4a460d3e52",
+  "model_source_note": "The month was run on experimental branch f5572aa. Release port 73aef73 applies the same momentum patch to v0.1.14 and passed exact CPU/GPU reference comparisons and fresh-process restart tests.",
+  "matching_v0114_figure_job": "62063727_1",
+  "diagnostics_path": "/work/scratch-nopw2/kieran/readiesm_recovery/pbl_momentum_repeat_v1/jobs/62078754_0_JAN_m2_momentum/output/diagnostics.nc",
+  "diagnostics_sha256": "c8310b5471201117cd0d476069f4e5119e5810ce10e4586fd93cd71572e38c5c",
+  "input_seal_sha256": "791e6045fa1054c373c3f1126185c90d5cc3e975d4abf20d4bac18fb7bf5e525",
+  "snapshot_sha256": "1a6768bc5e914f3c5a895eef36a409787e7878183142d49bd1170b82c0e40350",
+  "renderer_sha256": "62b77088280c84f6cf0e100a5266d6eb3fdb9dcd22935881380aa30e576968da",
+  "production_diagnostics_pass": true,
+  "scope": "Final saved maps from one 31-day run. Precipitation is instantaneous. The paired three-member v4 gate 62078821 and physical review 62105048 are recorded separately. The accepted configuration retains the documented ice-area regression."
+}

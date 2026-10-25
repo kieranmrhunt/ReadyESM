@@ -1,11 +1,23 @@
 # Version history
 
-Latest tagged version: [v0.1.14](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.14),
+Latest tagged version: [v0.1.15](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.15),
 25 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.15 — 2026-10-25
+
+- Added vertical momentum mixing in the atmospheric boundary layer.
+  Production uses the K-profile scheme at scale 1, with heat and humidity
+  mixing off. Convection and cloud settings are unchanged.
+- Three paired January and July runs reduce the v4 normalised error by
+  11.9% and 9.5%. Both CMIP6 positions and all radiation checks improve.
+  The large tropical low-level wind jump is much smaller.
+- Global ice-area bias rises in both months. Local ice accumulation and
+  the heat lost through momentum mixing remain open.
+  [Tests](docs/validation-v0.1.15.md).
 
 ## 0.1.14 — 2026-10-25
 

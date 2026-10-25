@@ -6,6 +6,8 @@
 - Production removes the extra `l = lmax + 1` row from the ERA5 spectral
   launch before the first grid transform. The generic option remains off.
 - Full-temperature vertical advection, ported from SpeedyWeather PR #1286.
+- K-profile boundary-layer momentum mixing at scale 1. Heat and humidity
+  mixing are off in production.
 - Two-hour Betts–Miller convection with reference RH 0.5 above sigma 0.3,
   increasing to 0.7 at sigma 0.7, then constant below. Net-column rain diagnosis.
 - Mixed liquid/ice saturation and net-column large-scale rain diagnosis:
@@ -35,6 +37,14 @@ Their source and licences are included under `vendor/`.
 The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
 
 ## Main known limitations
+
+- v0.1.15 improves January/July climate scores and low-level
+  winds, but increases monthly global ice-area bias by 0.19 and 0.33 million
+  km². Two January members exceed the day-31 ice-area change allowance.
+  Local ice accumulation remains, with mixed changes in July maxima.
+  A consistent heat return for momentum mixing remains to be implemented.
+  Its energy effect at production resolution needs further testing.
+  See the [comparison](docs/validation-v0.1.15.md).
 
 - v0.1.14 improves the initialized January/July climate scores and SST, but
   strengthens low-level winds. Tropical January SST becomes slightly too cold.
