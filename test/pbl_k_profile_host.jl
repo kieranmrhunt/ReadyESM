@@ -27,7 +27,11 @@ function compact_coupled(output)
         era5_pressure_levels_path = joinpath(era5, "era5_pressure_levels_stratosphere_19930101T0000Z.nc"),
         era5_single_levels_path = joinpath(era5, "era5_single_levels_19930101T0000Z.nc"),
         era5_land_state_path = joinpath(era5, "era5_land_state_19930101T0000Z.nc"),
-        atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1)
+        atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1,
+        # Keep the dynamics this L8 case was qualified with. Under the v0.1.14 full-temperature default no L8 column
+        # has its boundary-layer top above the high lowest face after four steps, so the K > 0 check would have no
+        # active column. The full-temperature path is tested at L27 in pbl_k_profile_momentum.jl and the anchors.
+        atmosphere_vertical_advection = :speedyweather_0_21_1_centered)
 end
 
 """Call the scheme on every column with zeroed temperature/humidity tendencies; return the tendencies."""
