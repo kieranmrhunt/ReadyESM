@@ -11,6 +11,7 @@ fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
 bits(x::Float32) = reinterpret(UInt32, x)
 bits(x::Float64) = reinterpret(UInt64, x)
+bits(x::Complex) = (bits(real(x)), bits(imag(x)))   # spectral prognostics are ComplexF32
 same_bits(a, b) = size(a) == size(b) && all(bits(x) == bits(y) for (x, y) in zip(a, b))
 
 function compact_l27(output; steps = 4, kwargs...)
