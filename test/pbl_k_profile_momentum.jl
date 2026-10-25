@@ -12,7 +12,7 @@ with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs..
 bits(x::Float32) = reinterpret(UInt32, x)
 bits(x::Float64) = reinterpret(UInt64, x)
 bits(x::Complex) = (bits(real(x)), bits(imag(x)))   # spectral prognostics are ComplexF32
-same_bits(a, b) = size(a) == size(b) && all(bits(x) == bits(y) for (x, y) in zip(a, b))
+same_bits(a, b) = size(a) == size(b) && eltype(a) == eltype(b) && all(bits(x) == bits(y) for (x, y) in zip(a, b))
 
 function compact_l27(output; steps = 4, kwargs...)
     base = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
@@ -59,6 +59,21 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
     grid = S.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
     on = with(production; atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1)
+
+    @testset "bitwise comparison helper" begin
+        a = ComplexF32[1 + 2im, -3.5f0 + 0.25f0im, 0 + 0im]
+        @test same_bits(a, copy(a))
+        b = copy(a); b[2] = complex(real(b[2]), nextfloat(imag(b[2])))
+        @test !same_bits(a, b)                                            # changed imaginary part
+        @test !same_bits(ComplexF32[complex(0f0, 0f0)], ComplexF32[complex(-0f0, 0f0)])   # signed zero, real
+        @test !same_bits(ComplexF32[complex(0f0, 0f0)], ComplexF32[complex(0f0, -0f0)])   # signed zero, imaginary
+        @test same_bits(ComplexF32[complex(NaN32, 1f0)], ComplexF32[complex(NaN32, 1f0)]) # same NaN bits
+        @test !same_bits(a, a[1:2])                                       # different length
+        @test !same_bits(reshape([a; a], 3, 2), reshape([a; a], 2, 3))    # different shape
+        @test !same_bits(a, ComplexF64.(a))                               # different element type
+        @test !same_bits(Float32[1, 2], Float64[1, 2])
+        @test same_bits(Float32[1, -0f0], Float32[1, -0f0]) && !same_bits(Float32[0], Float32[-0f0])
+    end
 
     @testset "configuration, provenance and refusals" begin
         @test production.atmosphere_pbl_mix_momentum == false
