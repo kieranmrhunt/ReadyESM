@@ -121,6 +121,50 @@ function SpeedyWeather.initialize!(scheme::KProfileBoundaryLayerMixing, model::S
     return nothing
 end
 
+const PBL_K_PROFILE_RESTART_SCHEMA = "readiesm_pbl_k_profile_restart_v1"
+
+"""
+Restart record of the K-profile settings, versioned, with exact values (not the rounded provenance suffix). It is
+present only when the K-profile is the vertical diffusion, so checkpoints of the production zero operator and of the
+bulk Richardson option do not change.
+"""
+function _pbl_k_profile_restart_state(simulation)
+    scheme = simulation.model.vertical_diffusion
+    scheme isa KProfileBoundaryLayerMixing || return (;)
+    return (; pbl_k_profile_restart_schema = PBL_K_PROFILE_RESTART_SCHEMA,
+            pbl_diffusivity_scale = Float64(scheme.diffusivity_scale), pbl_mix_heat = scheme.mix_heat,
+            pbl_mix_humidity = scheme.mix_humidity, pbl_mix_momentum = scheme.mix_momentum)
+end
+
+"""
+Refuse a checkpoint whose K-profile record differs from the reconstructed scheme: K-profile on to off, off to on, an
+unknown record version, or any change of the scale or of the heat, humidity or momentum flags. A K-profile
+configuration also refuses a checkpoint without the record. Callers run this before any component state is copied.
+"""
+function _validate_pbl_k_profile_restart(simulation, state)
+    scheme = simulation.model.vertical_diffusion
+    active = scheme isa KProfileBoundaryLayerMixing
+    saved = hasproperty(state, :pbl_k_profile_restart_schema)
+    if !active
+        saved && throw(ArgumentError(
+            "checkpoint was written with the K-profile vertical diffusion, but the configuration does not use it"))
+        return nothing
+    end
+    saved || throw(ArgumentError(
+        "the configuration uses the K-profile vertical diffusion, but the checkpoint has no K-profile restart record"))
+    state.pbl_k_profile_restart_schema == PBL_K_PROFILE_RESTART_SCHEMA || throw(ArgumentError(
+        "unknown K-profile restart record $(state.pbl_k_profile_restart_schema)"))
+    expected = _pbl_k_profile_restart_state(simulation)
+    for key in (:pbl_diffusivity_scale, :pbl_mix_heat, :pbl_mix_humidity, :pbl_mix_momentum)
+        hasproperty(state, key) || throw(ArgumentError("K-profile restart record lacks $key"))
+        value = getproperty(state, key)
+        typeof(value) == typeof(getproperty(expected, key)) && value == getproperty(expected, key) ||
+            throw(ArgumentError("checkpoint and configuration differ in $key " *
+                                "(checkpoint $value, configuration $(getproperty(expected, key)))"))
+    end
+    return nothing
+end
+
 """Lazy column of virtual potential temperature referenced to the surface pressure, Tv sigma^-kappa."""
 struct _PBLThetaV{T, Q, S, A, NF} <: AbstractVector{NF}
     temperature::T

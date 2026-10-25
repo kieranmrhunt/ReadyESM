@@ -126,6 +126,11 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
             @test face >= 0 && implicit >= 0
             @test abs(loss - (Float64(dt) * face + implicit / 2)) <= (NF == Float32 ? 1e-3 : 1e-9) * (abs(loss) + 1e-6)
             @test loss >= -tol
+            # Bottom face, exactly: the lowest-layer tendency is a[n-1] (x_new[n-1] - x_new[n]) / dsigma[n], so its
+            # sign is that of the solved gradient across the lowest face (down the solved gradient).
+            bottom = a[n - 1] * (x_new[n - 1] - x_new[n]) / dsigma[n]
+            @test tendency[1, n] == bottom
+            @test sign(tendency[1, n]) == sign(x_new[n - 1] - x_new[n]) || a[n - 1] == 0
             if all(iszero, a)
                 @test all(iszero, tendency) && x_new == wind && face == 0 && implicit == 0
             end
@@ -177,7 +182,12 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
             for ij in active
                 for (x, dx) in ((u, du1), (v, dv1))
                     total = sum(Float64.(dx[ij, :]) .* dsigma)
-                    worst_momentum = max(worst_momentum, abs(total) / sum(abs.(Float64.(dx[ij, :])) .* dsigma))
+                    magnitude = sum(abs.(Float64.(dx[ij, :])) .* dsigma)
+                    if magnitude == 0
+                        @test total == 0      # a component with no tendency in this column
+                    else
+                        worst_momentum = max(worst_momentum, abs(total) / magnitude)
+                    end
                 end
                 # Kinetic-energy loss of the isolated update, from the flux-form tendencies, against D_face + D_implicit.
                 mass = ps[ij] / gravity
@@ -187,17 +197,17 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                 worst_energy = max(worst_energy, abs(loss - expected) / max(abs(expected), 1e-6))
             end
             println("PBL_MOMENTUM_COLUMN_CHECKS worst_momentum=$worst_momentum worst_energy=$worst_energy ",
-                    "global_mean_D_face=", sum(Dface) / npoints, " global_mean_D_implicit=", sum(Dimpl) / npoints)
+                    "point_mean_D_face=", sum(Dface) / npoints, " point_mean_D_implicit=", sum(Dimpl) / npoints,
+                    " (unweighted means over reduced-grid points)")
             @test worst_momentum < 1e-4
             @test worst_energy < 1e-2
-            # Down the gradient: where the lowest layer is slower than the one above, mixing mostly speeds it up. The
-            # tendency follows the solved column, so a few columns may differ from the sign of the old difference.
+            # Fixture diagnostic only (not an invariant of the implicit solve, which the column algebra tests exactly):
+            # the fraction of columns whose lowest-layer tendency has the sign of the old bottom-face difference.
             n = model.geometry.nlayers
             slower = [ij for ij in active if abs(u[ij, n]) < abs(u[ij, n - 1]) && sign(u[ij, n]) == sign(u[ij, n - 1])]
-            @test !isempty(slower)
-            agree = count(sign(du1[ij, n]) == sign(u[ij, n - 1] - u[ij, n]) for ij in slower) / length(slower)
-            println("PBL_MOMENTUM_DOWNGRADIENT_FRACTION ", agree, " of ", length(slower))
-            @test agree >= 0.9
+            agree = isempty(slower) ? NaN :
+                count(sign(du1[ij, n]) == sign(u[ij, n - 1] - u[ij, n]) for ij in slower) / length(slower)
+            println("PBL_MOMENTUM_OLD_GRADIENT_SIGN_FRACTION ", agree, " of ", length(slower))
             # The CPU form of the GPU interface: device model fields and plain arrays give bitwise the same result.
             device_model = (; geometry = model.geometry, planet = model.planet, atmosphere = model.atmosphere,
                             time_stepping = model.time_stepping, land_sea_mask = model.land_sea_mask)
@@ -229,6 +239,36 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
         end
     end
 
+    @testset "K-profile restart record" begin
+        sim(vd) = (; model = (; vertical_diffusion = vd))
+        zero_operator = R._atmosphere_vertical_diffusion(production, grid)
+        @test !(zero_operator isa R.KProfileBoundaryLayerMixing)
+        @test R._pbl_k_profile_restart_state(sim(zero_operator)) == (;)     # production checkpoints do not change
+        @test R._validate_pbl_k_profile_restart(sim(zero_operator), (;)) === nothing
+        scalar = R.KProfileBoundaryLayerMixing(grid)
+        momentum = R.KProfileBoundaryLayerMixing(grid; mix_momentum = true)
+        only = R.KProfileBoundaryLayerMixing(grid; mix_heat = false, mix_humidity = false, mix_momentum = true)
+        scaled = R.KProfileBoundaryLayerMixing(grid; diffusivity_scale = 0.3f0)
+        record(x) = R._pbl_k_profile_restart_state(sim(x))
+        @test record(momentum) == (; pbl_k_profile_restart_schema = R.PBL_K_PROFILE_RESTART_SCHEMA,
+            pbl_diffusivity_scale = 1.0, pbl_mix_heat = true, pbl_mix_humidity = true, pbl_mix_momentum = true)
+        @test record(scaled).pbl_diffusivity_scale === Float64(0.3f0)      # exact value, not the rounded suffix
+        for x in (scalar, momentum, only, scaled)
+            @test R._validate_pbl_k_profile_restart(sim(x), record(x)) === nothing    # same mode
+        end
+        for (target, source) in ((scalar, momentum), (momentum, scalar), (momentum, only), (scalar, scaled))
+            @test_throws ArgumentError R._validate_pbl_k_profile_restart(sim(target), record(source))
+        end
+        @test_throws ArgumentError R._validate_pbl_k_profile_restart(sim(zero_operator), record(scalar))  # on -> off
+        @test_throws ArgumentError R._validate_pbl_k_profile_restart(sim(momentum), (;))                 # off -> on
+        @test_throws ArgumentError R._validate_pbl_k_profile_restart(sim(momentum),
+            merge(record(momentum), (; pbl_k_profile_restart_schema = "readiesm_pbl_k_profile_restart_v0")))
+        @test_throws ArgumentError R._validate_pbl_k_profile_restart(sim(momentum),
+            Base.structdiff(record(momentum), NamedTuple{(:pbl_mix_momentum,)}))
+        @test_throws ArgumentError R._validate_pbl_k_profile_restart(sim(scaled),
+            merge(record(scaled), (; pbl_diffusivity_scale = 0.3)))         # 0.3 differs from Float64(0.3f0)
+    end
+
     @testset "coupled run, and save, restore and continue, momentum only" begin
         # The save happens inside the run (callback at iteration 2). The continuation follows the initialized-restart
         # stepping path of scripts/validate_coupled_restart.jl, because native run! would initialize a second time.
@@ -257,6 +297,29 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
             end
             @test continued.model.clock.iteration == 4
             @test all(same_bits(x, y) for (x, y) in zip(prognostic(continued.model.atmosphere.variables), final))
+            # On to off: a scalar-only K-profile configuration refuses the momentum checkpoint before any copy.
+            scalar_settings = merge(settings, (; atmosphere_pbl_mix_momentum = false, atmosphere_pbl_mix_heat = true,
+                                               atmosphere_pbl_mix_humidity = true))
+            scalar_run = R.build_dynamic_esm(compact_l27(joinpath(dir, "scalar"); scalar_settings...); steps = 4)
+            scalar_path = joinpath(dir, "scalar_step1.jld2")
+            function save_at_one(sim)
+                sim.model.clock.iteration == 1 && R.save_dynamic_restart_state(sim, scalar_path)
+                return nothing
+            end
+            O.add_callback!(scalar_run, save_at_one, O.IterationInterval(1); name = :scalar_restart_save)
+            scalar_run.stop_iteration = 1
+            O.run!(scalar_run)
+            @test isfile(scalar_path)
+            before = prognostic(scalar_run.model.atmosphere.variables)
+            @test_throws ArgumentError R.restore_dynamic_restart_state!(scalar_run, path)
+            @test scalar_run.model.clock.iteration == 1
+            @test all(same_bits(x, y) for (x, y) in zip(prognostic(scalar_run.model.atmosphere.variables), before))
+            # Off to on: the momentum configuration refuses the scalar-only checkpoint, and keeps its state.
+            fresh = R.build_dynamic_esm(compact_l27(joinpath(dir, "fresh"); settings...); steps = 4)
+            initial = prognostic(fresh.model.atmosphere.variables)
+            @test_throws ArgumentError R.restore_dynamic_restart_state!(fresh, scalar_path)
+            @test fresh.model.clock.iteration == 0
+            @test all(same_bits(x, y) for (x, y) in zip(prognostic(fresh.model.atmosphere.variables), initial))
         end
     end
 end
