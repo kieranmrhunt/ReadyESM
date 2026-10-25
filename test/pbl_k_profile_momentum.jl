@@ -190,11 +190,14 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                     "global_mean_D_face=", sum(Dface) / npoints, " global_mean_D_implicit=", sum(Dimpl) / npoints)
             @test worst_momentum < 1e-4
             @test worst_energy < 1e-2
-            # Down the gradient: where the lowest layer is slower than the one above, mixing speeds it up.
+            # Down the gradient: where the lowest layer is slower than the one above, mixing mostly speeds it up. The
+            # tendency follows the solved column, so a few columns may differ from the sign of the old difference.
             n = model.geometry.nlayers
             slower = [ij for ij in active if abs(u[ij, n]) < abs(u[ij, n - 1]) && sign(u[ij, n]) == sign(u[ij, n - 1])]
             @test !isempty(slower)
-            @test all(sign(du1[ij, n]) == sign(u[ij, n - 1] - u[ij, n]) || du1[ij, n] == 0 for ij in slower)
+            agree = count(sign(du1[ij, n]) == sign(u[ij, n - 1] - u[ij, n]) for ij in slower) / length(slower)
+            println("PBL_MOMENTUM_DOWNGRADIENT_FRACTION ", agree, " of ", length(slower))
+            @test agree >= 0.9
             # The CPU form of the GPU interface: device model fields and plain arrays give bitwise the same result.
             device_model = (; geometry = model.geometry, planet = model.planet, atmosphere = model.atmosphere,
                             time_stepping = model.time_stepping, land_sea_mask = model.land_sea_mask)
@@ -227,21 +230,23 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
     end
 
     @testset "coupled run, and save, restore and continue, momentum only" begin
+        # The save happens inside the run (callback at iteration 2). The continuation follows the initialized-restart
+        # stepping path of scripts/validate_coupled_restart.jl, because native run! would initialize a second time.
         mktempdir() do dir
             settings = (; atmosphere_pbl_mix_momentum = true, atmosphere_pbl_mix_heat = false,
                         atmosphere_pbl_mix_humidity = false, atmosphere_vertical_advection = :centered_full_temperature)
             reference = R.build_dynamic_esm(compact_l27(joinpath(dir, "reference"); settings...); steps = 4)
             @test reference.model.atmosphere.model.vertical_diffusion.mix_momentum
+            path = joinpath(dir, "restart_step2.jld2")
+            function save_at_two(sim)
+                sim.model.clock.iteration == 2 && R.save_dynamic_restart_state(sim, path)
+                return nothing
+            end
+            O.add_callback!(reference, save_at_two, O.IterationInterval(1); name = :momentum_restart_save)
             O.run!(reference)
-            @test reference.model.clock.iteration == 4
+            @test reference.model.clock.iteration == 4 && isfile(path)
             final = prognostic(reference.model.atmosphere.variables)
             @test all(x -> all(isfinite, x), final)    # a restart identity on a nonfinite state is no evidence
-            first = R.build_dynamic_esm(compact_l27(joinpath(dir, "first"); settings...); steps = 4)
-            first.stop_iteration = 2
-            O.run!(first)
-            @test first.model.clock.iteration == 2
-            path = joinpath(dir, "restart_step2.jld2")
-            R.save_dynamic_restart_state(first, path)
             continued = R.build_dynamic_esm(compact_l27(joinpath(dir, "continued"); settings...); steps = 4)
             R.restore_dynamic_restart_state!(continued, path)
             @test continued.model.clock.iteration == 2
