@@ -5,7 +5,9 @@
 - SpeedyWeather 0.21.1, T31/L27, ERA5 initial atmosphere.
 - Production removes the extra `l = lmax + 1` row from the ERA5 spectral
   launch before the first grid transform. The generic option remains off.
-- Two-hour Betts–Miller convection, reference RH0.7, net-column rain diagnosis.
+- Full-temperature vertical advection, ported from SpeedyWeather PR #1286.
+- Two-hour Betts–Miller convection with reference RH 0.5 above sigma 0.3,
+  increasing to 0.7 at sigma 0.7, then constant below. Net-column rain diagnosis.
 - Mixed liquid/ice saturation and net-column large-scale rain diagnosis:
   surface precipitation equals that scheme's net column water removal,
   while transport, filtering and coupling remain in separate ledgers. The
@@ -34,6 +36,11 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
 
 ## Main known limitations
 
+- v0.1.14 improves the initialized January/July climate scores and SST, but
+  strengthens low-level winds. Tropical January SST becomes slightly too cold.
+  July ice thickness increases locally near 72.4°S, 170.5°E, with daily peaks
+  of 5.7–6.0 m area-equivalent thickness across three runs. Global ice area
+  and volume decrease. See the [release comparison](docs/validation-v0.1.14.md).
 - Earlier versions intermittently failed with GPU illegal access during
   sea-ice stepping. v0.1.6 and the v0.1.7 convection branch subsequently passed
   through day120 with native Float64 land and exact restored

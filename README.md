@@ -8,14 +8,15 @@ The standard setup has a T31 atmosphere with 27 vertical levels, a 1° tripolar
 ocean with 60 levels, and 16 soil layers. ERA5 supplies the initial atmosphere
 and land state. ECCO supplies the ocean and sea ice.
 
-![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.13-snapshot.png)
+![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.14-snapshot.png)
 
-A 31-day initialised v0.1.13 run, starting 1 January 1993.
-[Figure details](docs/readiesm-v0.1.13-snapshot.json).
+A 31-day initialised run with the v0.1.14 configuration, starting 1 January 1993.
+[Figure details](docs/readiesm-v0.1.14-snapshot.json).
 
 ## Speed
 
-Measured on JASMIN with one NVIDIA A100 40 GB and four CPU threads.
+Measured on 20 October 2026, before v0.1.14, on JASMIN with one NVIDIA
+A100 40 GB and four CPU threads.
 Two fresh processes each timed three model days after warm-up.
 
 | Atmosphere | Ocean cells | Simulated years per day | Start-up |
@@ -73,7 +74,7 @@ The first model build and GPU compilation can take hours. Results are written
 to the configured output directory. To plot the final day:
 
 ```bash
-julia --project=. scripts/plot_final_day_summary.jl \
+READYESM_EXPECTED_DAYS=30 julia --project=. scripts/plot_final_day_summary.jl \
     artifacts/my_run/diagnostics.nc artifacts/my_run/final_day.png
 ```
 
@@ -87,6 +88,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `device` | `gpu` | Use `gpu` or `cpu`. |
 | `truncation`, `nlayers` | `31`, `27` | Atmospheric horizontal truncation and vertical levels. |
 | `duration_days`, `analysis_start_day` | `730`, `365` | Run length and start of the diagnostic averaging period. |
+| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Use `speedyweather_0_21_1_centered` to continue an older production checkpoint. |
 | `atmosphere_convection` | `betts_miller_sigma_rh_v1` | Betts–Miller with a vertical humidity profile. Use `betts_miller_constant_rh` for the previous scheme. |
 | `atmosphere_convection_upper_relative_humidity`, `atmosphere_convection_lower_relative_humidity` | `0.5`, `0.7` | Reference relative humidity above and below the transition. |
 | `atmosphere_convection_transition_top_sigma`, `atmosphere_convection_transition_bottom_sigma` | `0.3`, `0.7` | Bounds of the linear transition in pressure fraction. |

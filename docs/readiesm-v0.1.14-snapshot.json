@@ -1,0 +1,16 @@
+{
+  "status": "accepted_configuration",
+  "release_version": "0.1.14",
+  "model_day": 31,
+  "start_date": "1993-01-01T00:00:00",
+  "run": "v0.1.14 configuration, January member 2, native implicit solver",
+  "model_job": "62063727_1",
+  "model_source_commit": "718528b6091cdab3cef2115ab1be10935d72a17d",
+  "diagnostics_path": "/work/scratch-nopw2/kieran/readiesm_recovery/dynamics_repeat_v1/jobs/62063727_1_JAN_m2_full/output/diagnostics.nc",
+  "diagnostics_sha256": "3e7f9053727968f2d93ef0b9c0bcd61a558d71940ad0666406234d6361b8a868",
+  "input_seal_sha256": "4934d960bf9f0c9a58c2982716f53f34d9040fb2480d9ef4b643109d955008e1",
+  "snapshot_sha256": "57267dacc0379391ad287904f120e5f97da0955931d801481f368ef9c9cff6f0",
+  "renderer_sha256": "62b77088280c84f6cf0e100a5266d6eb3fdb9dcd22935881380aa30e576968da",
+  "production_diagnostics_pass": true,
+  "scope": "Final saved maps from one 31-day run. Precipitation is instantaneous. Paired seasonal validation is documented in validation-v0.1.14.md."
+}

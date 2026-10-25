@@ -1,11 +1,23 @@
 # Version history
 
-Latest tagged version: [v0.1.13](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.13),
-23 October 2026.
+Latest tagged version: [v0.1.14](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.14),
+25 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.14 — 2026-10-25
+
+- Fixed vertical temperature transport by porting SpeedyWeather PR #1286.
+  Production now transports the background temperature profile as well as
+  local variations. Convection and cloud settings are unchanged.
+- Three paired runs in each of January and July improve both v4 climate
+  scores, radiation, SST and global ice-area bias. Stronger low-level winds
+  and local July ice thickening remain. [Tests](docs/validation-v0.1.14.md).
+- Older production checkpoints need
+  `atmosphere_vertical_advection: speedyweather_0_21_1_centered`.
+  Start a fresh run to use the corrected transport.
 
 ## 0.1.13 — 2026-10-23
 
