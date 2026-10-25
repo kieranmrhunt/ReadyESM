@@ -209,6 +209,7 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                     " (unweighted means over reduced-grid points)")
             @test worst_momentum < 1e-4
             @test worst_energy < 1e-2
+            n = model.geometry.nlayers
             # Lowest-face diagnostics (v3): one rounded depth and face height for the coefficients and the reports.
             hs = Array(p.pbl_height.data); zf = Array(p.pbl_lowest_face_height.data)
             Kf = Array(p.pbl_lowest_face_diffusivity.data)
@@ -226,7 +227,6 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                     " clamped_fraction=", count(hs .== zf) / length(hs))
             # Fixture diagnostic only (not an invariant of the implicit solve, which the column algebra tests exactly):
             # the fraction of columns whose lowest-layer tendency has the sign of the old bottom-face difference.
-            n = model.geometry.nlayers
             slower = [ij for ij in active if abs(u[ij, n]) < abs(u[ij, n - 1]) && sign(u[ij, n]) == sign(u[ij, n - 1])]
             agree = isempty(slower) ? NaN :
                 count(sign(du1[ij, n]) == sign(u[ij, n - 1] - u[ij, n]) for ij in slower) / length(slower)
