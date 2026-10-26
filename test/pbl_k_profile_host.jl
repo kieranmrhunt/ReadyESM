@@ -17,17 +17,18 @@ column_cap(vars, model, ij) = R._pbl_sigma_height(vars.parameterizations.pbl_hei
     vars.grid.humidity_prev, model.geometry.σ_levels_full, model.atmosphere, ij, model.vertical_diffusion.maximum_sigma,
     Float32(model.atmosphere.R_dry), Float32(model.planet.gravity))
 
-"""Compact coupled CPU configuration (as Codex's carbon/BS08 combination checks): T7/L8, 32x16x4 idealized ocean."""
+"""Compact analytic CPU fixture: T7/L27 with a 32x16x4 ocean."""
 function compact_coupled(output)
     base = analytic_pbl_test_config()
-    return with(base; device = :cpu, truncation = 7, nlayers = 8, ocean_grid = :idealized,
+    return with(base; device = :cpu, truncation = 7, nlayers = 27, ocean_grid = :idealized,
         ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
         ecco_initial_conditions_directory = "", duration_days = 4 * 3600 / 86_400, analysis_start_day = 0.0,
         output_dir = output,
         atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1,
-        # Keep the dynamics this L8 case was qualified with. Under the v0.1.14 full-temperature default no L8 column
-        # has its boundary-layer top above the high lowest face after four steps, so the K > 0 check would have no
-        # active column. The full-temperature path is tested at L27 in pbl_k_profile_momentum.jl and the anchors.
+        # The analytic L8 launch has no active mixing face after four steps.
+        # L27 resolves the boundary layer without weakening the K > 0 check.
+        # Keep this legacy-advection fixture separate from the full-temperature
+        # strength and momentum tests, which also use L27.
         atmosphere_vertical_advection = :speedyweather_0_21_1_centered)
 end
 
