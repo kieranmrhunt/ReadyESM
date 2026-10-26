@@ -9,13 +9,14 @@ const O = R.Oceananigans
 
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
+include("pbl_test_config.jl")
 bits(x::Float32) = reinterpret(UInt32, x)
 bits(x::Float64) = reinterpret(UInt64, x)
 bits(x::Complex) = (bits(real(x)), bits(imag(x)))   # spectral prognostics are ComplexF32
 same_bits(a, b) = size(a) == size(b) && eltype(a) == eltype(b) && all(bits(x) == bits(y) for (x, y) in zip(a, b))
 
 function compact_l27(output; steps = 4, kwargs...)
-    base = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
+    base = legacy_pbl_test_config()
     era5 = joinpath(R.PROJECT_ROOT, "data/era5_initial_state")
     return with(base; device = :cpu, truncation = 7, nlayers = 27, ocean_grid = :idealized,
         ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
@@ -56,7 +57,7 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                        (:temperature, :humidity, :vorticity, :divergence, :pressure))
 
 @testset "PBL K-profile momentum mixing" begin
-    production = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
+    production = legacy_pbl_test_config()
     grid = S.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
     on = with(production; atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1)
 
@@ -105,7 +106,7 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
                                                    atmosphere_pbl_mix_momentum = true); check_input_files = false)
         @test R.validate(production; check_input_files = false) === production
         mktempdir() do dir
-            lines = readlines(joinpath(R.PROJECT_ROOT, "config/production.yml"))
+            lines = pbl_fixture_yaml()
             index = findall(l -> startswith(l, "atmosphere_vertical_diffusion:"), lines)
             @test length(index) == 1
             lines[only(index)] = "atmosphere_vertical_diffusion: holtslag_boville_k_profile_v1"

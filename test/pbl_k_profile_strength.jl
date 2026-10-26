@@ -8,9 +8,10 @@ const S = R.SpeedyWeather
 
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
+include("pbl_test_config.jl")
 
 function compact_l27(output)
-    base = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
+    base = legacy_pbl_test_config()
     era5 = joinpath(R.PROJECT_ROOT, "data/era5_initial_state")
     return with(base; device = :cpu, truncation = 7, nlayers = 27, ocean_grid = :idealized,
         ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
@@ -57,7 +58,7 @@ face_coefficients(vars, model, ij, scale...) = begin
 end
 
 @testset "PBL K-profile strength-screen parameters" begin
-    production = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
+    production = legacy_pbl_test_config()
     grid = S.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
     on = with(production; atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1)
 
@@ -97,11 +98,12 @@ end
         @test R.validate(production; check_input_files = false) === production
         # YAML keys are parsed.
         mktempdir() do dir
-            lines = readlines(joinpath(R.PROJECT_ROOT, "config/production.yml"))
+            lines = pbl_fixture_yaml()
             index = findall(l -> startswith(l, "atmosphere_vertical_diffusion:"), lines)
             @test length(index) == 1
             lines[only(index)] = "atmosphere_vertical_diffusion: holtslag_boville_k_profile_v1"
-            push!(lines, "atmosphere_pbl_diffusivity_scale: 0.3", "atmosphere_pbl_mix_heat: false")
+            push!(lines, "atmosphere_pbl_diffusivity_scale: 0.3", "atmosphere_pbl_mix_heat: false",
+                  "atmosphere_pbl_mix_humidity: true", "atmosphere_pbl_mix_momentum: false")
             path = joinpath(dir, "screen.yml"); write(path, join(lines, "\n") * "\n")
             parsed = R.load_config(path; check_input_files = false)
             @test parsed.atmosphere_pbl_diffusivity_scale == 0.3

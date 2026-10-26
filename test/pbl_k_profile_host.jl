@@ -5,6 +5,7 @@ const S = R.SpeedyWeather
 
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
+include("pbl_test_config.jl")
 
 """A tile field that must never be read (Codex: a zero-area tile is not read, not only weighted by zero)."""
 struct AbsentTile <: AbstractVector{Float32} end
@@ -18,7 +19,7 @@ column_cap(vars, model, ij) = R._pbl_sigma_height(vars.parameterizations.pbl_hei
 
 """Compact coupled CPU configuration (as Codex's carbon/BS08 combination checks): T7/L8, 32x16x4 idealized ocean."""
 function compact_coupled(output)
-    base = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
+    base = legacy_pbl_test_config()
     era5 = joinpath(R.PROJECT_ROOT, "data/era5_initial_state")
     return with(base; device = :cpu, truncation = 7, nlayers = 8, ocean_grid = :idealized,
         ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
@@ -87,7 +88,7 @@ function check_columns(vars, model; label)
 end
 
 @testset "PBL K-profile host wiring" begin
-    production = R.load_config(joinpath(R.PROJECT_ROOT, "config/production.yml"); check_input_files = false)
+    production = legacy_pbl_test_config()
     grid = S.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
 
     @testset "off and validation" begin
