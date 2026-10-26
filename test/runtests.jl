@@ -1,6 +1,7 @@
 using ReadyESM
 using Test
 
+include("production_config.jl")
 include("ordered_ocean_grid.jl")
 include("solar_forcing.jl")
 include("standalone_atmosphere_restart.jl")
@@ -11,32 +12,6 @@ include("carbon_emissions.jl")
 include("carbon_diagnostics.jl")
 include("carbon_inventory_geometry.jl")
 
-config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
-    check_input_files = false)
-
-@test config.device == :gpu
-@test (config.truncation, config.nlayers) == (31, 27)
-@test config.ocean_grid == :tripolar_1degree
-@test (config.ocean_nlongitude, config.ocean_nlatitude, config.ocean_nlayers) ==
-      (360, 180, 60)
-@test config.ocean_dynamics
-@test config.sea_ice_dynamics
-@test config.land_model == :terrarium
-@test config.terrarium_precision == :float64
-@test config.terrarium_soil_layers == 16
-@test config.atmosphere_vertical_diffusion ==
-      :speedyweather_0_21_1_zero_operator_control
-@test config.atmosphere_vertical_advection == :centered_full_temperature
-@test config.atmosphere_large_scale_precipitation == :net_column_conservative
-@test config.atmosphere_saturation_law == :mixed_phase
-@test config.atmosphere_convection == :betts_miller_sigma_rh_v1
-@test config.atmosphere_convection_upper_relative_humidity == 0.5
-@test config.atmosphere_convection_lower_relative_humidity == 0.7
-@test config.atmosphere_convection_transition_top_sigma == 0.3
-@test config.atmosphere_convection_transition_bottom_sigma == 0.7
-@test config.atmosphere_convection_timescale_seconds == 7200
-@test config.atmosphere_initial_spectral_truncation
-@test !ExperimentConfig().atmosphere_initial_spectral_truncation
 include("convection_timescale.jl")
 include("finite_multiplume_convection.jl")
 include("convective_momentum_transport.jl")
@@ -44,11 +19,8 @@ include("optional_land.jl")
 include("rrtmgp_trace_gases.jl")
 include("pbl_k_profile.jl")
 include("pbl_k_profile_host.jl")
-@test config.forcing.radiation == :rrtmgp_all_sky
-@test config.forcing.co2_ppm == 420
-@test config.forcing.cloud_liquid_water_path_gm2 == 75
-@test config.forcing.cloud_ice_water_path_gm2 == 25
-@test config.forcing.aerosol_optical_depth_550nm == 0
+include("pbl_k_profile_strength.jl")
+include("pbl_k_profile_momentum.jl")
 
 diagnostic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "diagnostics.jl"), String)
 dynamic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "dynamic_ocean.jl"), String)
@@ -104,3 +76,4 @@ include("mixed_phase_saturation.jl")
 include("atmosphere_spectral_truncation.jl")
 include("moist_mass_coupling.jl")
 include("full_temperature_vertical_advection.jl")
+println("READYESM_CPU_SUITE_PASS")

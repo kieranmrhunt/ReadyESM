@@ -12,6 +12,12 @@ function legacy_pbl_test_config()
         atmosphere_pbl_mix_heat=true, atmosphere_pbl_mix_humidity=true)
 end
 
+function analytic_pbl_test_config()
+    return with(legacy_pbl_test_config(); atmosphere_initial_conditions=:analytic,
+        terrarium_initial_conditions=:hydrostatic, terrarium_evapotranspiration=:bare_ground,
+        era5_pressure_levels_path="", era5_single_levels_path="", era5_land_state_path="")
+end
+
 function pbl_fixture_yaml()
     # Remove keys before adding explicit test settings, so YAML has no duplicates.
     keys = ("atmosphere_pbl_diffusivity_scale:", "atmosphere_pbl_mix_momentum:",

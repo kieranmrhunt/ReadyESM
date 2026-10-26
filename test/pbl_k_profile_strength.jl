@@ -11,15 +11,11 @@ with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs..
 include("pbl_test_config.jl")
 
 function compact_l27(output)
-    base = legacy_pbl_test_config()
-    era5 = joinpath(R.PROJECT_ROOT, "data/era5_initial_state")
+    base = analytic_pbl_test_config()
     return with(base; device = :cpu, truncation = 7, nlayers = 27, ocean_grid = :idealized,
         ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
         ecco_initial_conditions_directory = "", duration_days = 4 * 3600 / 86_400, analysis_start_day = 0.0,
         output_dir = output,
-        era5_pressure_levels_path = joinpath(era5, "era5_pressure_levels_stratosphere_19930101T0000Z.nc"),
-        era5_single_levels_path = joinpath(era5, "era5_single_levels_19930101T0000Z.nc"),
-        era5_land_state_path = joinpath(era5, "era5_land_state_19930101T0000Z.nc"),
         atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1)
 end
 

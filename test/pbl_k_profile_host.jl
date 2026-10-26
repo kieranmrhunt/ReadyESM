@@ -19,15 +19,11 @@ column_cap(vars, model, ij) = R._pbl_sigma_height(vars.parameterizations.pbl_hei
 
 """Compact coupled CPU configuration (as Codex's carbon/BS08 combination checks): T7/L8, 32x16x4 idealized ocean."""
 function compact_coupled(output)
-    base = legacy_pbl_test_config()
-    era5 = joinpath(R.PROJECT_ROOT, "data/era5_initial_state")
+    base = analytic_pbl_test_config()
     return with(base; device = :cpu, truncation = 7, nlayers = 8, ocean_grid = :idealized,
         ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
         ecco_initial_conditions_directory = "", duration_days = 4 * 3600 / 86_400, analysis_start_day = 0.0,
         output_dir = output,
-        era5_pressure_levels_path = joinpath(era5, "era5_pressure_levels_stratosphere_19930101T0000Z.nc"),
-        era5_single_levels_path = joinpath(era5, "era5_single_levels_19930101T0000Z.nc"),
-        era5_land_state_path = joinpath(era5, "era5_land_state_19930101T0000Z.nc"),
         atmosphere_vertical_diffusion = :holtslag_boville_k_profile_v1,
         # Keep the dynamics this L8 case was qualified with. Under the v0.1.14 full-temperature default no L8 column
         # has its boundary-layer top above the high lowest face after four steps, so the K > 0 check would have no
