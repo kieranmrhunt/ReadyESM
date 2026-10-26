@@ -60,8 +60,17 @@ end
     production = load_config(production_path; check_input_files = false)
     @test R.ExperimentConfig().atmosphere_moist_mass_coupling == false
     @test production.atmosphere_moist_mass_coupling == false
+    # Moist-mass coupling remains limited to the legacy zero-mixing host.
+    # The released momentum-mixing configuration must reject that combination.
+    @test_throws ArgumentError R.validate(with(production; atmosphere_moist_mass_coupling=true);
+                                          check_input_files=false)
     raw = R.YAML.load_file(production_path)
     raw["atmosphere_moist_mass_coupling"] = true
+    raw["atmosphere_vertical_diffusion"] = "speedyweather_0_21_1_zero_operator_control"
+    raw["atmosphere_pbl_diffusivity_scale"] = 1.0
+    raw["atmosphere_pbl_mix_momentum"] = false
+    raw["atmosphere_pbl_mix_heat"] = true
+    raw["atmosphere_pbl_mix_humidity"] = true
     path = tempname() * ".yml"
     R.YAML.write_file(path, raw)
     coupled = load_config(path; check_input_files = false)

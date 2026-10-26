@@ -8,6 +8,7 @@ const S = R.SpeedyWeather
 
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
+include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
 
 """Grid temperature tendency of the dynamical core alone (as in the upstream test)."""
 function grid_temperature_tendency(vars, model; method = nothing)
@@ -146,16 +147,7 @@ end
 
     @testset "coupled ReadyESM model with the fix" begin
         mktempdir() do dir
-            base = production
-            era5 = joinpath(R.PROJECT_ROOT, "data/era5_initial_state")
-            config = with(base; device = :cpu, truncation = 7, nlayers = 8, ocean_grid = :idealized,
-                ocean_nlongitude = 32, ocean_nlatitude = 16, ocean_nlayers = 4, ocean_initial_conditions = :analytic,
-                ecco_initial_conditions_directory = "", duration_days = 4 * 3600 / 86_400, analysis_start_day = 0.0,
-                output_dir = joinpath(dir, "out"),
-                era5_pressure_levels_path = joinpath(era5, "era5_pressure_levels_stratosphere_19930101T0000Z.nc"),
-                era5_single_levels_path = joinpath(era5, "era5_single_levels_19930101T0000Z.nc"),
-                era5_land_state_path = joinpath(era5, "era5_land_state_19930101T0000Z.nc"),
-                atmosphere_vertical_advection = :centered_full_temperature)
+            config = analytic_coupled_test_config(production; output_dir=joinpath(dir,"out"))
             R.validate(config)
             simulation = R.build_dynamic_esm(config; steps = 4)
             model = simulation.model.atmosphere.model
