@@ -2,6 +2,7 @@ using ReadyESM
 using Test
 
 include("production_config.jl")
+include("calendar_centred_ecco.jl")
 include("ordered_ocean_grid.jl")
 include("solar_forcing.jl")
 include("standalone_atmosphere_restart.jl")
@@ -58,7 +59,6 @@ land_dispatch = which(
 @test land_dispatch.module === ReadyESM
 
 include("config_input_files.jl")
-include("calendar_centred_ecco.jl")
 include("darcy_boundary.jl")
 include("sampled_global_diagnostics.jl")
 include("sampled_history_output.jl")

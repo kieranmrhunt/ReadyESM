@@ -1,4 +1,8 @@
+using ReadyESM, Test
+
 @testset "Calendar-centred ECCO launch bundle" begin
+    config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
+        check_input_files=false)
     include(joinpath(
         ReadyESM.PROJECT_ROOT,
         "scripts",
