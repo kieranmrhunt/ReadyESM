@@ -36,7 +36,7 @@ using Dates, Statistics
         flush(io)
         @test R.load_config(path;check_input_files=false).forcing.solar_distance_correction
     end
-    @test !R.load_config(joinpath(R.PROJECT_ROOT,"config/production.yml");check_input_files=false).forcing.solar_distance_correction
+    @test R.load_config(joinpath(R.PROJECT_ROOT,"config/production.yml");check_input_files=false).forcing.solar_distance_correction
     for solar in (false,true), carbon in (:off,:emissions_driven)
         config = R.ExperimentConfig(forcing=R.ForcingConfig(solar_distance_correction=solar),
             carbon=R.CarbonConfig(mode=carbon))

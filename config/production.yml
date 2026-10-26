@@ -58,6 +58,7 @@ output_dir: artifacts/production
 forcing:
   radiation: rrtmgp_all_sky
   radiation_every_n_steps: 4
+  solar_distance_correction: true
   co2_ppm: 420.0
   cloud_scheme: diagnostic
   cloud_liquid_water_path_gm2: 75.0
