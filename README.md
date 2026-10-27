@@ -8,11 +8,16 @@ The standard setup has a T31 atmosphere with 27 vertical levels, a 1° tripolar
 ocean with 60 levels, and 16 soil layers. ERA5 supplies the initial atmosphere
 and land state. ECCO supplies the ocean and sea ice.
 
-![Sea-surface temperature, sea ice, precipitation and soil saturation after 31 days](docs/solar-candidate-compact.png)
+![Nine maps of the ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.16-maps.png)
 
 A 31-day initialised run with the v0.1.16 configuration, starting 1 January 1993.
-[Full figure](docs/solar-candidate-day31.png) ·
-[Figure details](docs/solar-candidate-compact.json).
+Grey marks inactive cells. Ice-free ocean is white.
+
+![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture](docs/readiesm-v0.1.16-timelines.png)
+
+The same run from day 0 to day 31. Radiation shows daily means. Other panels
+show daily samples. Ocean extremes cover all depths.
+[Figure data and details](docs/readiesm-v0.1.16-figures.json).
 
 ## Speed
 
@@ -39,7 +44,7 @@ initialization, for timing only.
 
 ## Run
 
-Use Julia 1.12 and Python 3. The standard configuration uses an NVIDIA GPU
+Use Julia 1.12 and Python 3.11 or newer. The standard configuration uses an NVIDIA GPU
 with CUDA. CPU runs are also supported.
 
 ```bash
@@ -72,11 +77,11 @@ julia --project=. scripts/run_dynamic_esm.jl config/my_run.yml
 ```
 
 The first model build and GPU compilation can take hours. Results are written
-to the configured output directory. To plot the final day:
+to the configured output directory. To plot the final day and timelines:
 
 ```bash
-READYESM_EXPECTED_DAYS=30 julia --project=. scripts/plot_final_day_summary.jl \
-    artifacts/my_run/diagnostics.nc artifacts/my_run/final_day.png
+python scripts/plot_readme.py artifacts/my_run/diagnostics.nc \
+    artifacts/my_run/summary --version v0.1.16 --expected-days 30
 ```
 
 ## Configuration
