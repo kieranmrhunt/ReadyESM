@@ -8,10 +8,11 @@ The standard setup has a T31 atmosphere with 27 vertical levels, a 1° tripolar
 ocean with 60 levels, and 16 soil layers. ERA5 supplies the initial atmosphere
 and land state. ECCO supplies the ocean and sea ice.
 
-![Ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.15-snapshot.png)
+![Sea-surface temperature, sea ice, precipitation and soil saturation after 31 days](docs/solar-candidate-compact.png)
 
-A 31-day initialised run with the v0.1.15 configuration, starting 1 January 1993.
-[Figure details](docs/readiesm-v0.1.15-snapshot.json).
+A 31-day initialised run with the v0.1.16 configuration, starting 1 January 1993.
+[Full figure](docs/solar-candidate-day31.png) ·
+[Figure details](docs/solar-candidate-compact.json).
 
 ## Speed
 
@@ -101,7 +102,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
 | `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
 | `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Prescribed CH4 and N2O for RRTMGP. Omitted values use 1900 and 340 ppb. Keep these settings unchanged on restart. |
-| `forcing.solar_distance_correction` | `false` | Vary incoming sunlight with seasonal Earth–Sun distance. Requires RRTMGP. See the [solar guide](docs/solar-forcing.md). |
+| `forcing.solar_distance_correction` | `true` | Vary incoming sunlight with seasonal Earth–Sun distance. Requires RRTMGP. See the [solar guide](docs/solar-forcing.md). |
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Prescribed sulfate aerosol optical depth. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
 

@@ -1,6 +1,6 @@
 # Seasonal solar forcing
 
-Add this setting under the existing `forcing` section:
+The standard configuration enables this setting under `forcing`:
 
 ```yaml
 forcing:
@@ -12,8 +12,9 @@ The calculation uses the model date and a present-day orbital approximation.
 It follows the fraction of each Gregorian year, including leap years.
 The solar constant and radiation interval stay unchanged.
 
-The default is `false`, which retains constant-distance forcing. The
-option requires RRTMGP. Long-term orbital changes require a separate scheme.
+Set it to `false` for constant-distance forcing. Configuration files that omit
+the setting also use `false`. The option requires RRTMGP. Long-term orbital
+changes require a separate scheme.
 
 ## Restart
 
@@ -22,7 +23,7 @@ it before copying saved state. Older checkpoints restore with the option off.
 CH4 and N2O have separate checks. See the
 [trace-gas notes](validation-runoff-trace-gases.md#scope).
 
-## Checks
+## Earlier option tests
 
 The full CPU suite passes. Three coupled CPU tests check unchanged results
 with the option off, agreement with the earlier solar calculation when on,

@@ -1,11 +1,23 @@
 # Version history
 
-Latest tagged version: [v0.1.15](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.15),
-25 October 2026.
+Latest tagged version: [v0.1.16](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.16),
+27 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.16 — 2026-10-27
+
+- Enable seasonal Earth–Sun distance in the standard configuration.
+  Other production settings and model equations stay unchanged.
+- In three paired runs per season, January normalised error changes from
+  0.89050 to 0.88447 and mean CMIP6 position from 53.67 to 54.67 of 59.
+  July changes from 1.03108 to 1.03048 and from 31.00 to 31.67.
+  January improves beyond the repeat spread. July stays within it.
+- The two-season radiation checks, CPU suite and GPU restart checks pass.
+  Test fixtures now match the production defaults and cover the ERA5 launch.
+  Local ice accumulation remains open. See the [test results](docs/validation-v0.1.16.md).
 
 ## 0.1.15 — 2026-10-25
 

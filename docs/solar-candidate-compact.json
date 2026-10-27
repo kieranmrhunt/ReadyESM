@@ -1,0 +1,76 @@
+{
+  "status": "candidate_preview_not_released",
+  "target_release": "0.1.16",
+  "model_day": 31,
+  "start_date": "1993-01-01T00:00:00",
+  "final_date": "1993-02-01T00:00:00",
+  "run": "Canonical January 1993 launch with solar-distance correction",
+  "model_job": "62146350_1",
+  "model_source_commit": "a2f2ac4d4d6cf8fadd17d43808acf54d87c7f91d",
+  "solar_distance_correction": true,
+  "release_candidate_commit": "cc588b2958acd5caf39f8d53beef800889e6cf2e",
+  "model_source_note": "Run on v0.1.15 source with solar correction enabled. The release candidate makes that setting the production default.",
+  "diagnostics_path": "/work/scratch-nopw2/kieran/readiesm_recovery/solar_distance_v015_v1/jobs/62146350_1_JAN_on/output/diagnostics.nc",
+  "diagnostics_sha256": "2694423296801e2f047cde58113d8a1307ae453fa8ef43699bcd120357673e84",
+  "model_result_sha256": "5278209003b664eea78c835db29066d362ce65079f60f553cf9ddb9ba07276c6",
+  "model_input_sha256": "f921d86535aa923458a3453f24a23f1ad7eb2a8e79e7e715c217ca4c316407fa",
+  "snapshot_sha256": "951c6a4bcb9b1ef56371d673b8b368e38cc56d94322da9e4f597809dbd9a2dd5",
+  "renderer_sha256": "ee8e5abad9b1e3a40ec46dd444deb17b6cc92478e1544ea3c40c104fa6c94ba5",
+  "render_project_commit": "0792497ec407d381ae2a43cf4d692e7e3516b031",
+  "production_diagnostics_pass": true,
+  "display_values": {
+    "model_day": 31,
+    "final_date": "1993-02-01T00:00:00",
+    "surface_ocean_max_c": 30.721885681152344,
+    "surface_salinity_min": 22.20893096923828,
+    "area_equivalent_ice_max_m": 4.473830926991695,
+    "instantaneous_precipitation_max_mm_day": 76.43769204150885,
+    "precipitation_negative_cell_count": 0,
+    "precipitation_raw_min_mm_day": 0.0,
+    "precipitation_colour_floor_mm_day": 0.01,
+    "active_ocean_cell_count": 40573,
+    "finite_land_cell_count": 2123,
+    "unavailable_initial_diagnostics": [
+      "toa_net_downward",
+      "global_surface_air_temperature"
+    ],
+    "toa_net_down_w_m2": 16.820556640625,
+    "global_surface_air_k": 286.5501708984375,
+    "full_depth_ocean_max_c": 31.73906707763672,
+    "full_depth_salinity_min": 22.20893096923828,
+    "physical_area_equivalent_ice_max_m": 4.473830926991695,
+    "land_water_residual_kg_m2_land": 2.9818636448908364e-10,
+    "global_instantaneous_precipitation_mm_day": 2.7737526121200062
+  },
+  "scope": "Four final-state maps from one 31-day run. Precipitation is instantaneous. Candidate release and visual review are pending.",
+  "renderer_base_sha256": "62b77088280c84f6cf0e100a5266d6eb3fdb9dcd22935881380aa30e576968da",
+  "atlas_snapshot_sha256": "b94598859290ce95d21bc0d5e4e6cbdd8b65b31705fb6084715bf5b97b68a037",
+  "panels": [
+    "sea_surface_temperature",
+    "sea_ice_concentration",
+    "instantaneous_precipitation",
+    "land_surface_soil_saturation"
+  ],
+  "percentage_fields": [
+    "sea_ice_concentration",
+    "land_surface_soil_saturation"
+  ],
+  "colour_ranges": {
+    "sea_surface_temperature_c": [
+      -2,
+      32
+    ],
+    "sea_ice_percent": [
+      0,
+      100
+    ],
+    "soil_saturation_percent": [
+      0,
+      100
+    ],
+    "instantaneous_precipitation_mm_day_log": [
+      0.01,
+      100
+    ]
+  }
+}
