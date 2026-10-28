@@ -2493,6 +2493,8 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
             name = :bs08_diagnostics,
         )
     end
+    # Scored output files exist only with the option on. The option-off build is unchanged.
+    config.scored_outputs && install_scored_outputs!(simulation, config)
     return simulation
 end
 

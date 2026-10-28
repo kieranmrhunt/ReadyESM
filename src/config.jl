@@ -130,6 +130,8 @@ Base.@kwdef struct ExperimentConfig
     # Opt-in mixed precision: atmosphere/ocean allocations are unaffected.
     terrarium_precision::Symbol = :float32
     output_dir::String = joinpath(PROJECT_ROOT, "artifacts", "baseline")
+    # Opt-in: write the files the release scorer reads (monthly.nc, wind.nc, toa_monthly.nc, eddy_6hourly.nc).
+    scored_outputs::Bool = false
     forcing::ForcingConfig = ForcingConfig()
     carbon::CarbonConfig = CarbonConfig()
 end
@@ -615,6 +617,7 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         ),
         terrarium_precision = Symbol(_mapping_value(raw, "terrarium_precision", "float32")),
         output_dir = output_dir,
+        scored_outputs = Bool(_mapping_value(raw, "scored_outputs", false)),
         forcing = forcing,
         carbon = carbon,
     )
@@ -1175,6 +1178,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         throw(ArgumentError("radiation_every_n_steps must be positive"))
     if config.forcing.solar_distance_correction && !rrtmgp_active
         throw(ArgumentError("solar_distance_correction requires RRTMGP radiation"))
+    end
+    if config.scored_outputs && !rrtmgp_active
+        throw(ArgumentError("scored_outputs requires RRTMGP radiation for the top-of-atmosphere file"))
     end
     config.forcing.cloud_scheme in (
         :none,

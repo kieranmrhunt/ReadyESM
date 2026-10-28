@@ -60,6 +60,12 @@ if guard_production_ecco
     )
 end
 ReadyESM.Oceananigans.run!(simulation)
+if config.scored_outputs
+    scored = ReadyESM.save_scored_outputs(simulation, config)
+    println("SCORED_OUTPUTS_WRITTEN files=monthly.nc,wind.nc,toa_monthly.nc,eddy_6hourly.nc " *
+            "hourly_samples=$(scored["monthly"]["state_samples"]) sixhourly_samples=$(scored["sixhourly"]["samples"])")
+    flush(stdout)
+end
 diagnostics = collect_dynamic_diagnostics(simulation, config)
 paths = save_dynamic_diagnostics(diagnostics, config; render_figure = false)
 println("SIMULATION_COMPLETION_PASS iteration=$(simulation.model.clock.iteration) " *

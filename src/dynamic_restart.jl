@@ -981,6 +981,10 @@ function save_dynamic_restart_state(simulation, path::AbstractString)
 end
 
 function restore_dynamic_restart_state!(simulation, path::AbstractString)
+    # The scored-output captures average from the run's start and are not saved in a checkpoint.
+    haskey(simulation.callbacks, :readyesm_scored_outputs) && throw(ArgumentError(
+        "scored_outputs cannot continue a restarted run. Run the full window from its start, or switch scored_outputs off.",
+    ))
     state = Oceananigans.OutputWriters.load_checkpoint_state(
         abspath(path);
         base_path = "simulation",
