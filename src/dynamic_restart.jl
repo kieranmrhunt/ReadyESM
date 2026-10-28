@@ -865,7 +865,8 @@ function Oceananigans.restore_prognostic_state!(
     model::_ReadyESMRadiativeSpeedyEarthSystem,
     state,
 )
-    # Check the moist-mass coupling record before any atmosphere, ocean or land state is overwritten.
+    # Check constructed physics before any atmosphere, ocean or land state is overwritten.
+    _validate_horizontal_diffusion_restart(model.atmosphere, state.atmosphere)
     _validate_moist_mass_restart(model.atmosphere, state.atmosphere)
     _validate_full_temperature_restart(model.atmosphere, state.atmosphere)
     _validate_pbl_k_profile_restart(model.atmosphere, state.atmosphere)
@@ -1360,6 +1361,40 @@ function _speedy_time_stepping_restart_state(time_stepping)
     return (; first_step_euler = time_stepping.first_step_euler)
 end
 
+# Horizontal diffusion is a constructed operator, not a prognostic variable.
+# Check its effective inputs before restoring a checkpoint into a new model.
+function _horizontal_diffusion_restart_state(simulation)
+    diffusion = simulation.model.horizontal_diffusion
+    diffusion isa HyperDiffusion || throw(ArgumentError(
+        "ReadyESM restart requires SpeedyWeather HyperDiffusion",
+    ))
+    stepping = simulation.model.time_stepping
+    return (
+        trunc = Int(diffusion.trunc),
+        nlayers = Int(diffusion.nlayers),
+        power = diffusion.power,
+        time_scale_seconds = Dates.value(Second(diffusion.time_scale)),
+        divergence_time_scale_seconds = Dates.value(Second(diffusion.time_scale_div)),
+        resolution_scaling = diffusion.resolution_scaling,
+        power_stratosphere = diffusion.power_stratosphere,
+        tapering_sigma = diffusion.tapering_σ,
+        step_milliseconds = Dates.value(stepping.Δt_millisec),
+        radius = stepping.radius,
+    )
+end
+
+function _validate_horizontal_diffusion_restart(simulation, state)
+    hasproperty(state, :horizontal_diffusion) || throw(ArgumentError(
+        "checkpoint lacks horizontal-diffusion identity; its damping settings cannot be verified",
+    ))
+    actual = state.horizontal_diffusion
+    expected = _horizontal_diffusion_restart_state(simulation)
+    isequal(actual, expected) || throw(ArgumentError(
+        "checkpoint horizontal diffusion differs from the constructed receiver",
+    ))
+    return nothing
+end
+
 function _restore_speedy_time_stepping_restart_state!(time_stepping, state)
     time_stepping.first_step_euler = state.first_step_euler
     return time_stepping
@@ -1378,6 +1413,7 @@ function Oceananigans.prognostic_state(simulation::SpeedyWeather.Simulation)
         time_stepping = _speedy_time_stepping_restart_state(
             simulation.model.time_stepping,
         ),
+        horizontal_diffusion = _horizontal_diffusion_restart_state(simulation),
         implicit = _speedy_implicit_restart_state(simulation.model.implicit),
         radiation = _rrtmgp_radiation_state(radiation),
         callbacks = _speedy_callback_state(simulation.model.callbacks),
@@ -1391,6 +1427,7 @@ function Oceananigans.restore_prognostic_state!(
     simulation::SpeedyWeather.Simulation,
     state,
 )
+    _validate_horizontal_diffusion_restart(simulation, state)
     _validate_atmosphere_radiation_restart(simulation, state)
     _validate_moist_mass_restart(simulation, state)
     _validate_full_temperature_restart(simulation, state)

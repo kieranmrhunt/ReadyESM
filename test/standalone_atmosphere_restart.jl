@@ -25,6 +25,9 @@ end
     end
     expected = map(copy, arrays)
     saved = O.prognostic_state(simulation)
+    @test saved.horizontal_diffusion.divergence_time_scale_seconds == 3600
+    @test isequal(saved.horizontal_diffusion,
+                  R._horizontal_diffusion_restart_state(simulation))
     mktempdir() do directory
         file = joinpath(directory, "atmosphere.jld2")
         R.JLD2.jldsave(file; state=saved)
@@ -42,6 +45,28 @@ end
                 simulation.model.spectral_transform.scratch_memory
         end
     end
+end
+
+@testset "Standalone atmosphere refuses changed damping before state copy" begin
+    base = R.ExperimentConfig(;
+        truncation=7, nlayers=8, duration_days=1,
+        forcing=R.ForcingConfig(radiation=:rrtmgp_clear_sky))
+    donor = R.build_rrtmgp(base)
+    saved = O.prognostic_state(donor)
+    changed_divergence = R.build_rrtmgp(R.ExperimentConfig(;
+        truncation=7, nlayers=8, duration_days=1,
+        atmosphere_divergence_hyperdiffusion_hours=4.0,
+        forcing=R.ForcingConfig(radiation=:rrtmgp_clear_sky)))
+    before = map(copy, work_arrays(changed_divergence))
+    @test_throws ArgumentError O.restore_prognostic_state!(changed_divergence, saved)
+    @test all(isequal(actual, original) for (actual, original) in
+              zip(work_arrays(changed_divergence), before))
+
+    changed_vorticity = R.build_rrtmgp(R.ExperimentConfig(;
+        truncation=7, nlayers=8, duration_days=1,
+        atmosphere_hyperdiffusion_hours=8.0,
+        forcing=R.ForcingConfig(radiation=:rrtmgp_clear_sky)))
+    @test_throws ArgumentError O.restore_prognostic_state!(changed_vorticity, saved)
 end
 println("STANDALONE_ATMOSPHERE_RESTART_PASS")
 end

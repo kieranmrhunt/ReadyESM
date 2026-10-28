@@ -1,4 +1,4 @@
-using ReadyESM, Test
+using ReadyESM, Test, Dates
 
 @testset "Released production configuration" begin
     config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
@@ -18,6 +18,16 @@ using ReadyESM, Test
     @test !config.atmosphere_pbl_mix_heat
     @test !config.atmosphere_pbl_mix_humidity
     @test config.atmosphere_vertical_advection == :centered_full_temperature
+    @test config.atmosphere_hyperdiffusion_hours == 4
+    @test config.atmosphere_divergence_hyperdiffusion_hours == 4
+    @test ExperimentConfig().atmosphere_divergence_hyperdiffusion_hours == 1
+    spectral_grid = ReadyESM.SpeedyWeather.SpectralGrid(;
+        NF = Float32, trunc = 7,
+        Grid = ReadyESM.SpeedyWeather.RingGrids.FullGaussianGrid,
+        nlayers = 8)
+    horizontal_diffusion = ReadyESM._atmosphere_horizontal_diffusion(config, spectral_grid)
+    @test Second(horizontal_diffusion.time_scale) == Second(14_400)
+    @test Second(horizontal_diffusion.time_scale_div) == Second(14_400)
     @test config.atmosphere_large_scale_precipitation == :net_column_conservative
     @test config.atmosphere_saturation_law == :mixed_phase
     @test config.atmosphere_convection == :betts_miller_sigma_rh_v1
