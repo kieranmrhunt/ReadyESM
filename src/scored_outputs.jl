@@ -558,8 +558,9 @@ end
 
 function (s::ScoredOutputs)(sim)
     i = sim.model.clock.iteration
-    # The captures average from the start of the window and are not saved in checkpoints. So a run that does not
-    # start at iteration 0 (any restart or pickup route) is refused before its first step.
+    # The captures average from the start of the window and are not saved in checkpoints, so a run that does not
+    # start at iteration 0 cannot give complete files. This check refuses such a run at the writer's first call. On a
+    # native pickup the atmosphere skill callback can stop the run first, during the first step. Either way it fails.
     if !s.started
         i == 0 || throw(ArgumentError(
             "scored_outputs cannot continue a restarted run. Run the full window from its start, or switch scored_outputs off."))
