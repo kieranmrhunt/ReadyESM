@@ -4,20 +4,35 @@ ReadyESM is a global climate model written in Julia. It couples SpeedyWeather
 for the atmosphere, RRTMGP for radiation, Oceananigans for the ocean,
 ClimaSeaIce for sea ice and Terrarium for land.
 
-The standard setup has a T31 atmosphere with 27 vertical levels, a 1° tripolar
-ocean with 60 levels, and 16 soil layers. ERA5 supplies the initial atmosphere
-and land state. ECCO supplies the ocean and sea ice.
+In the standard setup, the atmosphere has a grid spacing of about 400 km
+(spectral resolution T31) and 27 levels. The ocean has a grid spacing of
+about 1 degree and 60 levels. The land has 16 soil layers. ERA5 supplies the
+initial atmosphere and land state. ECCO supplies the ocean and sea ice.
 
-![Nine maps of the ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.16-maps.png)
+![Nine maps of the ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.17-maps.png)
 
-A 31-day initialised run with the v0.1.16 configuration, starting 1 January 1993.
+January 1993 member 1 after 31 days with the v0.1.17 configuration. This is
+one run that starts from observations, rather than a long-term climate mean.
 Grey marks inactive cells. Ice-free ocean is white.
 
-![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture](docs/readiesm-v0.1.16-timelines.png)
+![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture](docs/readiesm-v0.1.17-timelines.png)
 
 The same run from day 0 to day 31. Radiation shows daily means. Other panels
-show daily samples. Ocean extremes cover all depths.
-[Figure data and details](docs/readiesm-v0.1.16-figures.json).
+show daily samples. Ocean extrema cover all active depths and can move between
+cells.
+[Figure data and details](docs/readiesm-v0.1.17-figures.json).
+
+## Comparison with v0.1.16
+
+![Six paired changes in the original seven-field score and the separate upper-level eddy screen against its target](docs/readiesm-v0.1.17-comparison.png)
+
+The original score fell for four of six matched 31-day members. Lower is
+better. The three-member January mean was neutral under the release rule,
+and the July mean improved. The separate upper-level eddy screen used one
+matched member per season. Its improvement missed the predeclared target
+in both seasons. See the [validation results](docs/validation-v0.1.17.md),
+the [figure values and source hashes](docs/readiesm-v0.1.17-comparison.json)
+and the [plot recipe](docs/plot-v0.1.17-comparison.py).
 
 ## Speed
 
@@ -81,7 +96,7 @@ to the configured output directory. To plot the final day and timelines:
 
 ```bash
 python scripts/plot_readme.py artifacts/my_run/diagnostics.nc \
-    artifacts/my_run/summary --version v0.1.16 --expected-days 30
+    artifacts/my_run/summary --version v0.1.17 --expected-days 30
 ```
 
 ## Configuration
@@ -93,8 +108,10 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | --- | --- | --- |
 | `device` | `gpu` | Use `gpu` or `cpu`. |
 | `truncation`, `nlayers` | `31`, `27` | Atmospheric horizontal truncation and vertical levels. |
-| `duration_days`, `analysis_start_day` | `730`, `365` | Run length and start of the diagnostic averaging period. |
-| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Use `speedyweather_0_21_1_centered` to continue an older production checkpoint. |
+| `duration_days`, `analysis_start_day` | `730`, `365` | Run length and a recorded analysis-start day. The current runner saves `analysis_start_day` in the metadata. It does not use it to choose which days to average. It must be less than `duration_days`. |
+| `atmosphere_hyperdiffusion_hours` | `4` | Time over which the model smooths small-scale noise in wind, temperature and humidity. A longer time gives weaker smoothing. |
+| `atmosphere_divergence_hyperdiffusion_hours` | `4` | Time over which the model smooths the divergent part of the wind. v0.1.16 used 1 hour. A restart from a saved state with a different value stops with an error. |
+| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Select `speedyweather_0_21_1_centered` for the older advection behaviour in a new run. Checkpoints from earlier releases cannot be restarted directly in v0.1.17. |
 | `atmosphere_vertical_diffusion` | `holtslag_boville_k_profile_v1` | Mix momentum vertically in the atmospheric boundary layer. Requires Oceananigans and Terrarium. |
 | `atmosphere_pbl_diffusivity_scale` | `1.0` | Multiply the boundary-layer mixing coefficient by a value greater than 0 and at most 1. |
 | `atmosphere_pbl_mix_heat`, `atmosphere_pbl_mix_humidity`, `atmosphere_pbl_mix_momentum` | `false`, `false`, `true` | Select the fields mixed by the boundary-layer scheme. |
@@ -133,3 +150,9 @@ See [setup and tests](docs/running.md), [known limitations](NOTES.md) and
 [version history](HISTORY.md).
 
 Developed by Kieran Hunt with AI coding assistance from Claude and OpenAI Codex.
+
+## Licence
+
+ReadyESM is released under the European Union Public Licence v1.2
+(EUPL-1.2). See [LICENSE](LICENSE). The bundled packages in `vendor/` keep
+their own licences. The [third-party licences](THIRD_PARTY.md) list them.

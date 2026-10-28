@@ -1,11 +1,37 @@
 # Version history
 
-Latest tagged version: [v0.1.16](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.16),
-27 October 2026.
+Latest tagged version: [v0.1.17](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.17),
+28 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.17 — 2026-10-28
+
+- Make one part of the atmosphere's numerical smoothing weaker. The model
+  smooths the divergent part of the wind, which is air that spreads out or
+  flows together, to remove small-scale noise. This smoothing now acts over
+  four hours instead of one hour. The smoothing of the other wind,
+  temperature and humidity fields stays at four hours.
+- The tests used three pairs of month-long January runs and three pairs of
+  July runs. The two runs in each pair start from the same state and differ
+  only in this setting. The release score compares seven weather fields with
+  observations, relative to the CMIP6 climate models, an international set
+  of comparison models. A lower score is better. In July the mean score
+  falls from 1.00332 to 0.99175, and on average ReadyESM is better than 36
+  of 60 CMIP6 models instead of 33. In January the mean score changes from
+  0.82418 to 0.81848, which is within the spread of the repeat runs. One
+  January pair became worse, from 0.79986 to 0.83093. In one July pair, the
+  small error in the atmosphere's water budget rose from 0.009 to 0.016 kg
+  per square metre.
+- A run that restarts from a saved state now checks that the smoothing
+  settings are the same as when the state was saved. It stops if they
+  differ. Saved states from earlier versions do not contain these settings,
+  so this version cannot restart from them.
+- The change does not reach a separate target for stronger storms high in
+  the atmosphere. The [test results](docs/validation-v0.1.17.md) give the
+  details.
 
 ## 0.1.16 — 2026-10-27
 

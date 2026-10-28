@@ -1,0 +1,82 @@
+{
+  "schema": "readiesm_v017_comparison_figure_v1",
+  "scope": "Original seven-field score: three matched 31-day initialised members in each season. Separate EKE250 screen: one matched member per season.",
+  "control": "v0.1.16",
+  "candidate": "v0.1.17",
+  "score_job": "62719569",
+  "score_result_manifest_sha256": "068baa8b7cce44599bc6e38cf068be393ffb7dd0b6337f02ca01c4c87dee3e53",
+  "members": [
+    {
+      "season": "JAN",
+      "member": 1,
+      "control": 0.8527329283330584,
+      "candidate": 0.8048283677916982,
+      "source_file": "readout/JAN_m1/v3/scorecard.json",
+      "source_sha256": "ff5f623f1ae1b155837f2305e29b1f0c2c19a37486201485bba1a94e765bb535"
+    },
+    {
+      "season": "JAN",
+      "member": 2,
+      "control": 0.8199311062692487,
+      "candidate": 0.8196896453982264,
+      "source_file": "readout/JAN_m2/v3/scorecard.json",
+      "source_sha256": "7bb30cf8b52f1fc5f1fdd7e2505fc1aab6c804454ab54fb2fbea4468f109c161"
+    },
+    {
+      "season": "JAN",
+      "member": 3,
+      "control": 0.7998617041304324,
+      "candidate": 0.8309286270985877,
+      "source_file": "readout/JAN_m3/v3/scorecard.json",
+      "source_sha256": "43572f7ad0511b3217392bb13402c77ed59b97452894858024903aabfcf461ec"
+    },
+    {
+      "season": "JUL",
+      "member": 1,
+      "control": 1.0084925204238304,
+      "candidate": 0.9854962437028468,
+      "source_file": "readout/JUL_m1/v3/scorecard.json",
+      "source_sha256": "a44269982b71a59a3b9951051776f37914e58c5657a0f2fa6373050785787037"
+    },
+    {
+      "season": "JUL",
+      "member": 2,
+      "control": 1.0088306920579972,
+      "candidate": 0.9861634494087647,
+      "source_file": "readout/JUL_m2/v3/scorecard.json",
+      "source_sha256": "f1c0af0ade30cca39f6acd7b544b21fb664d4c6176d8b88383c4a98df118f29b"
+    },
+    {
+      "season": "JUL",
+      "member": 3,
+      "control": 0.9926492158365446,
+      "candidate": 1.0035965298590426,
+      "source_file": "readout/JUL_m3/v3/scorecard.json",
+      "source_sha256": "c8bce8819114d7c5fef1c602e0006fe45d6169305fdf8c13e91a1d2b6520b657"
+    }
+  ],
+  "means": {
+    "JAN": {
+      "control": 0.8241752462442465,
+      "candidate": 0.8184822134295041
+    },
+    "JUL": {
+      "control": 1.0033241427727908,
+      "candidate": 0.9917520743235514
+    }
+  },
+  "eddy_screen": {
+    "source_file": "docs/validation-v0.1.17-eddy-screen.json",
+    "source_sha256": "58687d4a064df83a3af2acaefad5bbf4204c0698ef3d84ae9ffdeb4d25fd414f",
+    "members_per_season": 1,
+    "target_fall": 0.1,
+    "fall": {
+      "JAN": 0.03412403918824336,
+      "JUL": 0.058526767542173785
+    },
+    "target_passed": false
+  },
+  "renderer": "docs/plot-v0.1.17-comparison.py",
+  "renderer_sha256": "4e75da043818818494fe35ca75d7d96fb84fe0faf848e9a67e87a69eebc334db",
+  "image_sha256": "540db56e3b33e66cb36f2aaa9f971d134a02cb720c3918371df2024f50f40da6"
+}

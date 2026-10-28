@@ -1,0 +1,255 @@
+{
+ "schema": "hyperdiffusion_postfix_decision_v1",
+ "rule": "Decision rule of the post-fix hyperdiffusion screen, as fixed in PLAN.md before any result (Claude, 2026-10-27).\n\nAn arm PASSES when all of these are true:\n1. Eddies: the mean over NH and SH mid-latitudes of |ln(model EKE250 / T31 ERA5 EKE250)| (transient) falls by at\n   least 0.10 against the control, in both seasons.\n2. Score: v4 ONR9 improves in at least one season by more than that season's floor and does not worsen in the other\n   by more than its floor. Floors: 0.0225 January, 0.01 July (three v0.1.16 members, v4 floor 0.01).\n3. Guards, both seasons: noise guard (change of the global 2-6 day EKE250 ratio minus change of the transient EKE250\n   ratio <= 0.10), runs complete with production diagnostics (verify_arms.py), v4 two-season radiation guards\n   (version_gate floors: OLR 0.5 W/m2, albedo 0.002, net 0.5 W/m2, one member so the allowance is the floor) and\n   the gross breakage bounds of the physical-safety addendum (one control, so the bound is 5 % of control ice area\n   and 0.25 K for SST).",
+ "arms": {
+  "d4": {
+   "seasons": {
+    "JAN": {
+     "onr9_control": 0.9087768567046653,
+     "onr9_arm": 0.864563261223685,
+     "onr9_change": -0.04421359548098036,
+     "cmip6_position_control": 53,
+     "cmip6_position_arm": 58,
+     "eddy_metric_control": 0.3468048863596962,
+     "eddy_metric_arm": 0.31268084717145284,
+     "eddy_metric_fall": 0.03412403918824336,
+     "eke250_t31_ratio_arm": {
+      "nh_mid": 0.758300249575052,
+      "sh_mid": 0.7056147783099727
+     },
+     "noise_guard_value": 0.011577347563793583,
+     "noise_guard_pass": true,
+     "ice_area_change": -90821361664.0,
+     "ice_area_bound": 931298122137.6001,
+     "sst_change_K": 0.01575232373024349,
+     "breakage_pass": true
+    },
+    "JUL": {
+     "onr9_control": 1.0342806068752202,
+     "onr9_arm": 1.012997477503791,
+     "onr9_change": -0.021283129371429066,
+     "cmip6_position_control": 31,
+     "cmip6_position_arm": 33,
+     "eddy_metric_control": 0.3881517995853929,
+     "eddy_metric_arm": 0.32962503204321913,
+     "eddy_metric_fall": 0.058526767542173785,
+     "eke250_t31_ratio_arm": {
+      "nh_mid": 0.7923481467550402,
+      "sh_mid": 0.6527926989715671
+     },
+     "noise_guard_value": -0.04994589012283457,
+     "noise_guard_pass": true,
+     "ice_area_change": 43390074880.0,
+     "ice_area_bound": 1286637355008.0,
+     "sst_change_K": -0.03224226525856011,
+     "breakage_pass": true
+    }
+   },
+   "radiation_guards": {
+    "olr": {
+     "control_mean": 7.542991469729614,
+     "candidate_mean": 7.500855235847823,
+     "deterioration": -0.04213623388179144,
+     "allowance": 0.5,
+     "passing": true
+    },
+    "albedo": {
+     "control_mean": 0.02328909589516545,
+     "candidate_mean": 0.022461115840532064,
+     "deterioration": -0.0008279800546333871,
+     "allowance": 0.002,
+     "passing": true
+    },
+    "net": {
+     "control_mean": 0.4156148736009442,
+     "candidate_mean": 0.6613904930156664,
+     "deterioration": 0.24577561941472226,
+     "allowance": 0.5,
+     "passing": true
+    }
+   },
+   "improve": {
+    "JAN": true,
+    "JUL": true
+   },
+   "worsen": {
+    "JAN": false,
+    "JUL": false
+   },
+   "criteria": {
+    "eddies": false,
+    "score": true,
+    "noise_guard": true,
+    "radiation_guards": true,
+    "breakage": true
+   },
+   "verdict": "FAIL"
+  },
+  "h12_d4": {
+   "seasons": {
+    "JAN": {
+     "onr9_control": 0.9087768567046653,
+     "onr9_arm": 0.923568009143756,
+     "onr9_change": 0.014791152439090682,
+     "cmip6_position_control": 53,
+     "cmip6_position_arm": 50,
+     "eddy_metric_control": 0.3468048863596962,
+     "eddy_metric_arm": 0.5017542029558064,
+     "eddy_metric_fall": -0.15494931659611022,
+     "eke250_t31_ratio_arm": {
+      "nh_mid": 0.5917547024315443,
+      "sh_mid": 0.6194983000748602
+     },
+     "noise_guard_value": 0.056282004677735586,
+     "noise_guard_pass": true,
+     "ice_area_change": -93528784896.0,
+     "ice_area_bound": 931298122137.6001,
+     "sst_change_K": -0.11777899274473924,
+     "breakage_pass": true
+    },
+    "JUL": {
+     "onr9_control": 1.0342806068752202,
+     "onr9_arm": 1.008826996910309,
+     "onr9_change": -0.025453609964911195,
+     "cmip6_position_control": 31,
+     "cmip6_position_arm": 34,
+     "eddy_metric_control": 0.3881517995853929,
+     "eddy_metric_arm": 0.36611701296788335,
+     "eddy_metric_fall": 0.022034786617509572,
+     "eke250_t31_ratio_arm": {
+      "nh_mid": 0.8541842001889496,
+      "sh_mid": 0.5629155801281348
+     },
+     "noise_guard_value": 0.0419764869260254,
+     "noise_guard_pass": true,
+     "ice_area_change": 410509115392.0,
+     "ice_area_bound": 1286637355008.0,
+     "sst_change_K": -0.051585694056271336,
+     "breakage_pass": true
+    }
+   },
+   "radiation_guards": {
+    "olr": {
+     "control_mean": 7.542991469729614,
+     "candidate_mean": 7.085679059307765,
+     "deterioration": -0.45731241042184934,
+     "allowance": 0.5,
+     "passing": true
+    },
+    "albedo": {
+     "control_mean": 0.02328909589516545,
+     "candidate_mean": 0.023444084875282767,
+     "deterioration": 0.00015498898011731543,
+     "allowance": 0.002,
+     "passing": true
+    },
+    "net": {
+     "control_mean": 0.4156148736009442,
+     "candidate_mean": 0.08716067953984918,
+     "deterioration": -0.328454194061095,
+     "allowance": 0.5,
+     "passing": true
+    }
+   },
+   "improve": {
+    "JAN": false,
+    "JUL": true
+   },
+   "worsen": {
+    "JAN": false,
+    "JUL": false
+   },
+   "criteria": {
+    "eddies": false,
+    "score": true,
+    "noise_guard": true,
+    "radiation_guards": true,
+    "breakage": true
+   },
+   "verdict": "FAIL"
+  },
+  "h24_d24": {
+   "seasons": {
+    "JAN": {
+     "onr9_control": 0.9087768567046653,
+     "onr9_arm": 0.9021461417697968,
+     "onr9_change": -0.0066307149348685535,
+     "cmip6_position_control": 53,
+     "cmip6_position_arm": 53,
+     "eddy_metric_control": 0.3468048863596962,
+     "eddy_metric_arm": 0.41884614502928497,
+     "eddy_metric_fall": -0.07204125866958877,
+     "eke250_t31_ratio_arm": {
+      "nh_mid": 0.6564941530352109,
+      "sh_mid": 0.6591192541817195
+     },
+     "noise_guard_value": 0.06821987928423412,
+     "noise_guard_pass": true,
+     "ice_area_change": 543441289216.0,
+     "ice_area_bound": 931298122137.6001,
+     "sst_change_K": -0.12044070835180065,
+     "breakage_pass": true
+    },
+    "JUL": {
+     "onr9_control": 1.0342806068752202,
+     "onr9_arm": 1.0405229609045685,
+     "onr9_change": 0.006242354029348363,
+     "cmip6_position_control": 31,
+     "cmip6_position_arm": 31,
+     "eddy_metric_control": 0.3881517995853929,
+     "eddy_metric_arm": 0.35466523796587546,
+     "eddy_metric_fall": 0.03348656161951746,
+     "eke250_t31_ratio_arm": {
+      "nh_mid": 0.8759579859045538,
+      "sh_mid": 0.5616404932864054
+     },
+     "noise_guard_value": -0.007252827497090886,
+     "noise_guard_pass": true,
+     "ice_area_change": 594064441344.0,
+     "ice_area_bound": 1286637355008.0,
+     "sst_change_K": -0.08622171569103898,
+     "breakage_pass": true
+    }
+   },
+   "radiation_guards": {
+    "olr": {
+     "control_mean": 7.542991469729614,
+     "candidate_mean": 6.813805605483466,
+     "deterioration": -0.7291858642461477,
+     "allowance": 0.5,
+     "passing": true
+    },
+    "albedo": {
+     "control_mean": 0.02328909589516545,
+     "candidate_mean": 0.02507703635120842,
+     "deterioration": 0.001787940456042969,
+     "allowance": 0.002,
+     "passing": true
+    },
+    "net": {
+     "control_mean": 0.4156148736009442,
+     "candidate_mean": 0.9220339954495884,
+     "deterioration": 0.5064191218486442,
+     "allowance": 0.5,
+     "passing": false
+    }
+   },
+   "improve": {
+    "JAN": false,
+    "JUL": false
+   },
+   "worsen": {
+    "JAN": false,
+    "JUL": false
+   },
+   "criteria": {
+    "eddies": false,
+    "score": false,
+    "noise_guard": true,
+    "radiation_guards": false,
+    "breakage": true
+   },
+   "verdict": "FAIL"
+  }
+ }
+}

@@ -64,9 +64,11 @@ the run stops at that check. See the
 julia --project=. scripts/run_dynamic_esm.jl config/production.yml
 ```
 
-The supplied configuration requests 730 days, with diagnostics averaged from
-day 365. For a shorter run, copy the file and set `analysis_start_day` below
-`duration_days`. Also set a separate `name` and `output_dir`.
+The supplied configuration requests 730 days. It records
+`analysis_start_day: 365` in the output metadata, but the current runner
+does not use that setting to select an averaging period. For a shorter
+run, copy the file and set `analysis_start_day` below `duration_days`.
+Also set a separate `name` and `output_dir`.
 
 The runner writes NetCDF diagnostics, checks the simulated fields, then plots
 the results. The [README](../README.md#configuration) lists common
