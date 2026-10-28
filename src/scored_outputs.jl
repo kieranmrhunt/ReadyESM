@@ -543,6 +543,7 @@ end
 # The coupled-simulation side: one Oceananigans callback that takes the initial skill sample at iteration 0, the
 # hourly top-of-atmosphere sample and the six-hourly sample, in that order, as the release harness did.
 mutable struct ScoredOutputs
+    started::Bool
     skill::ScoredSkillObserver
     toa::ScoredTOACapture
     sixhour::ScoredSixHourlyCapture
@@ -557,6 +558,13 @@ end
 
 function (s::ScoredOutputs)(sim)
     i = sim.model.clock.iteration
+    # The captures average from the start of the window and are not saved in checkpoints. So a run that does not
+    # start at iteration 0 (any restart or pickup route) is refused before its first step.
+    if !s.started
+        i == 0 || throw(ArgumentError(
+            "scored_outputs cannot continue a restarted run. Run the full window from its start, or switch scored_outputs off."))
+        s.started = true
+    end
     if i == 0
         _scored_initialize_skill!(s.skill, sim.model.atmosphere.variables, sim.model.atmosphere.model)
     end
@@ -596,7 +604,7 @@ function install_scored_outputs!(simulation, config::ExperimentConfig)
     skill = ScoredSkillObserver(monthly, wind, false, 0, 0, String[])
     SpeedyWeather.add!(model.callbacks, SCORED_OUTPUTS_CALLBACK => skill)
     sixhour = ScoredSixHourlyCapture(start, stop, Array(model.geometry.σ_levels_full), longitude, latitude, weights)
-    outputs = ScoredOutputs(skill, ScoredTOACapture(length(weights)), sixhour, start, stop,
+    outputs = ScoredOutputs(false, skill, ScoredTOACapture(length(weights)), sixhour, start, stop,
         3600000 ÷ step_ms, duration_ms ÷ step_ms, longitude, latitude, weights)
     Oceananigans.add_callback!(simulation, outputs, Oceananigans.IterationInterval(1); name = SCORED_OUTPUTS_CALLBACK)
     return outputs

@@ -71,7 +71,20 @@ run, copy the file and set `analysis_start_day` below `duration_days`.
 Also set a separate `name` and `output_dir`.
 
 The runner writes NetCDF diagnostics, checks the simulated fields, then plots
-the results. The [README](../README.md#configuration) lists common
+the results.
+
+With `scored_outputs: true` the runner also writes the four files that the
+release scores read: `monthly.nc` (temperature at 200, 500 and 850 hPa,
+column water, surface pressure and precipitation), `wind.nc` (wind at the
+same levels), `toa_monthly.nc` (top-of-atmosphere radiation) and
+`eddy_6hourly.nc` (six-hourly wind, temperature and sea-level pressure for
+storm statistics). Each file holds means or samples over the whole run, from
+`start_date` for `duration_days`. So the switch is meant for runs of about
+one month. The run length must be a whole number of six-hour periods, and
+the atmosphere timestep must divide one hour. The release scores check the
+number of samples for the production timestep of 900 s. So keep that
+timestep for any run that you will score. A run with this switch on
+cannot be restarted, because the means are not saved in checkpoints. The [README](../README.md#configuration) lists common
 switches. The complete standard settings are in
 [`config/production.yml`](../config/production.yml).
 

@@ -67,7 +67,13 @@ end
     R.validate(config; check_input_files = false)
     simulation = R.build_dynamic_esm(config)
     @test haskey(simulation.callbacks, R.SCORED_OUTPUTS_CALLBACK)
-    @test_throws ArgumentError R.restore_dynamic_restart_state!(simulation, joinpath(output, "missing.jld2"))
+    restore_error = try
+        R.restore_dynamic_restart_state!(simulation, joinpath(output, "missing.jld2"))
+        nothing
+    catch e
+        e
+    end
+    @test restore_error isa ArgumentError && occursin("scored_outputs cannot continue a restarted run", restore_error.msg)
     O.run!(simulation)
     summary = R.save_scored_outputs(simulation, config)
     @test summary["monthly"]["state_samples"] == 6
@@ -87,5 +93,15 @@ end
     @test_throws ErrorException R.save_scored_outputs(simulation, config)  # refuses to overwrite
     off = R.build_dynamic_esm(with(config; scored_outputs = false, output_dir = mktempdir()))
     @test !haskey(off.callbacks, R.SCORED_OUTPUTS_CALLBACK)
+    # A run that resumes at a later iteration, by any route, is refused at the writer's first call.
+    resumed = R.build_dynamic_esm(with(config; output_dir = mktempdir()))
+    resumed.model.clock.iteration = 5
+    first_call_error = try
+        resumed.callbacks[R.SCORED_OUTPUTS_CALLBACK].func(resumed)
+        nothing
+    catch e
+        e
+    end
+    @test first_call_error isa ArgumentError && occursin("scored_outputs cannot continue a restarted run", first_call_error.msg)
 end
 end
