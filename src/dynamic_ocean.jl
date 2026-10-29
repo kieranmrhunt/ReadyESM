@@ -2454,6 +2454,8 @@ function _check_dynamic_prognostic_tree!(path, value, simulation)
         for (index, item) in enumerate(value)
             _check_dynamic_prognostic_tree!("$path[$index]", item, simulation)
         end
+    elseif value isa Terrarium.StateVariables
+        _check_dynamic_prognostic_tree!("$path.prognostic", value.prognostic, simulation)
     elseif hasproperty(value, :data)
         data = getproperty(value, :data)
         data isa AbstractArray{<:Number} &&

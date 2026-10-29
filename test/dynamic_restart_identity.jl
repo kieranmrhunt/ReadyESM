@@ -3,8 +3,20 @@
     changed_config = ReadyESM.ExperimentConfig(name = "identity-test")
     @test ReadyESM._dynamic_config_identity_hash(config) ==
           ReadyESM._dynamic_config_identity_hash(config)
-    @test ReadyESM._dynamic_config_identity_hash(config) !=
+    @test ReadyESM._dynamic_config_identity_hash(config) ==
           ReadyESM._dynamic_config_identity_hash(changed_config)
+    for field in ReadyESM._DYNAMIC_RESTART_RUN_CONTROL_FIELDS
+        changed = ReadyESM.ExperimentConfig(; merge(
+            (; (name => getfield(config, name) for name in fieldnames(typeof(config)))...),
+            (; field => field == :duration_days ? 20.0 : "changed"),
+        )...)
+        @test ReadyESM._dynamic_config_identity_hash(config) ==
+              ReadyESM._dynamic_config_identity_hash(changed)
+    end
+    @test ReadyESM._dynamic_config_identity_hash(config) !=
+          ReadyESM._dynamic_config_identity_hash(ReadyESM.ExperimentConfig(
+              atmosphere_divergence_hyperdiffusion_hours = 4.0,
+          ))
 
     model = Ref{Nothing}(nothing)
     fixture_commit = repeat("a", 40)

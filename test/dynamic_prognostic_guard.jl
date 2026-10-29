@@ -26,4 +26,23 @@
         ComplexF64[0 + 1im, NaN + 0im],
         simulation,
     )
+
+    # The callback must descend through Terrarium.StateVariables, whose
+    # prognostic fields are neither a NamedTuple at this level nor `.data`.
+    terrarium = ReadyESM.Terrarium.StateVariables(
+        Float64, (),
+        (; soil_moisture = [NaN]),
+        (; soil_moisture = [0.0]),
+        (;), (;), (;), nothing, nothing,
+    )
+    nested = (model = (
+        clock = (iteration = 3, time = 12.5),
+        atmosphere = (variables = (
+            prognostic = (land = (terrarium = terrarium,),),
+            grid = (;),
+        ),),
+        ocean = (model = nothing,),
+        sea_ice = (model = nothing,),
+    ),)
+    @test_throws ErrorException ReadyESM.DynamicPrognosticGuardCallback()(nested)
 end

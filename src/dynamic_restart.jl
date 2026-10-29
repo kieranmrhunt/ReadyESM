@@ -12,13 +12,15 @@ mutable RRTMGP and ReadyESM callback state consumed after a restart.
 const _DYNAMIC_RESTART_IDENTITY_BY_MODEL = IdDict{Any, NamedTuple}()
 const _DYNAMIC_RESTART_IDENTITY_LOCK = ReentrantLock()
 const _DYNAMIC_RESTART_IDENTITY_OVERRIDE = Ref(false)
+const _DYNAMIC_RESTART_RUN_CONTROL_FIELDS = (:name, :output_dir, :duration_days)
 
 function _dynamic_config_identity_hash(config::ExperimentConfig)
-    # ExperimentConfig fields are declared in a fixed order. `repr` preserves
-    # scalar types (including Symbols and Dates) and nested config values.
+    # Segments may change their label, output destination and final horizon.
+    # Every other declared field remains part of the restart contract.
     canonical = join((
         string(name, "=", repr(getfield(config, name)))
         for name in fieldnames(typeof(config))
+        if name ∉ _DYNAMIC_RESTART_RUN_CONTROL_FIELDS
     ), "\n")
     bytes = codeunits("readiesm-experiment-config-v1\n" * canonical)
     return bytes2hex(SHA.sha256(bytes))
