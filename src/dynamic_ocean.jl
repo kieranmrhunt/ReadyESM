@@ -2421,25 +2421,38 @@ function _dynamic_guard_invalid_index(values, bounds)
     end
 end
 
+_dynamic_guard_storage(values) = values
+_dynamic_guard_storage(values::SpeedyWeather.LowerTriangularArray) = _dynamic_guard_storage(parent(values))
+_dynamic_guard_storage(values::SpeedyWeather.RingGrids.AbstractField) = _dynamic_guard_storage(parent(values))
+_dynamic_guard_storage(values::Oceananigans.Fields.OffsetArray) = _dynamic_guard_storage(parent(values))
+
 function _check_dynamic_prognostic_array!(path, values, simulation)
+    # Spectral and grid-space wrappers iterate by scalar indexing. OffsetArray
+    # wrappers around CuArrays may also choose a host iteration. Reduce over
+    # their actual storage, but retain SubArray views so the ocean and ice
+    # checks keep their original interior-only domain. The packed spectral
+    # storage contains every coefficient; structural zeros are finite.
+    storage = _dynamic_guard_storage(values)
     bounds = _dynamic_guard_bounds(path)
     valid = if isnothing(bounds) || !(eltype(values) <: Real)
-        all(isfinite, values)
+        all(isfinite, storage)
     else
         lower, upper = bounds
-        all(value -> isfinite(value) && lower <= value <= upper, values)
+        all(value -> isfinite(value) && lower <= value <= upper, storage)
     end
     valid && return nothing
 
-    host_values = Array(values)
+    host_values = Array(storage)
     invalid_index = _dynamic_guard_invalid_index(host_values, bounds)
     invalid_value = isnothing(invalid_index) ? missing : host_values[invalid_index]
     allowed = isnothing(bounds) ? "finite" : "finite and in [$((bounds[1])), $((bounds[2]))]"
+    index_note = values isa SpeedyWeather.LowerTriangularArray ? " (index in packed spectral storage)" :
+                 storage === values ? "" : " (index in underlying storage)"
     iteration = simulation.model.clock.iteration
     time = simulation.model.clock.time
     error(
         "dynamic prognostic $path is not $allowed at iteration $iteration " *
-        "(time=$time s); first invalid index=$invalid_index value=$invalid_value",
+        "(time=$time s); first invalid index=$invalid_index value=$invalid_value$index_note",
     )
 end
 

@@ -27,6 +27,52 @@
         simulation,
     )
 
+    # Spectral prognostics use a packed wrapper. Check its stored coefficients
+    # rather than iterating the wrapper, which scalar-indexes a GPU parent.
+    spectral = ReadyESM.SpeedyWeather.LowerTriangularArray(
+        ComplexF32[1 + 0im, 2 + 0im, 3 + 0im], 2, 2,
+    )
+    @test ReadyESM._dynamic_guard_storage(spectral) === parent(spectral)
+    @test isnothing(ReadyESM._check_dynamic_prognostic_array!(
+        "atmosphere.prognostic.vorticity", spectral, simulation,
+    ))
+    bad_spectral = ReadyESM.SpeedyWeather.LowerTriangularArray(
+        ComplexF32[1 + 0im, NaN + 0im, 3 + 0im], 2, 2,
+    )
+    spectral_error = try
+        ReadyESM._check_dynamic_prognostic_array!(
+            "atmosphere.prognostic.vorticity", bad_spectral, simulation,
+        )
+        ""
+    catch caught
+        sprint(showerror, caught)
+    end
+    @test occursin("first invalid index=2", spectral_error)
+    @test occursin("index in packed spectral storage", spectral_error)
+
+    grid = ReadyESM.SpeedyWeather.RingGrids.FullGaussianGrid(2)
+    ring_field = ReadyESM.SpeedyWeather.RingGrids.Field(grid)
+    fill!(ring_field.data, 250.0)
+    @test ReadyESM._dynamic_guard_storage(ring_field) === parent(ring_field)
+    @test isnothing(ReadyESM._check_dynamic_prognostic_array!(
+        "atmosphere.grid.temperature", ring_field, simulation,
+    ))
+    ring_field.data[1] = 401.0
+    @test_throws ErrorException ReadyESM._check_dynamic_prognostic_array!(
+        "atmosphere.grid.temperature", ring_field, simulation,
+    )
+
+    offset = ReadyESM.Oceananigans.Fields.OffsetArray([0.0, 1.0], -1:0)
+    @test ReadyESM._dynamic_guard_storage(offset) === parent(offset)
+    @test isnothing(ReadyESM._check_dynamic_prognostic_array!(
+        "sea_ice.ℵ", offset, simulation,
+    ))
+    interior = @view [999.0, 0.0, 1.0, 999.0][2:3]
+    @test ReadyESM._dynamic_guard_storage(interior) === interior
+    @test isnothing(ReadyESM._check_dynamic_prognostic_array!(
+        "sea_ice.ℵ", interior, simulation,
+    ))
+
     # The callback must descend through Terrarium.StateVariables, whose
     # prognostic fields are neither a NamedTuple at this level nor `.data`.
     terrarium = ReadyESM.Terrarium.StateVariables(
