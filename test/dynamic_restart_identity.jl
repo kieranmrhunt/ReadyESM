@@ -33,11 +33,15 @@
             (; restart_identity = identity),
         )
 
+        changed_config_hash = merge(identity, (; config_sha256 = repeat("0", 64)))
+        changed_commit = merge(identity, (; source_commit = repeat("b", 40)))
         changed_manifest = merge(identity, (; manifest_sha256 = repeat("0", 64)))
-        @test_throws ErrorException ReadyESM._validate_dynamic_restart_identity!(
-            model,
-            (; restart_identity = changed_manifest),
-        )
+        for changed_identity in (changed_config_hash, changed_commit, changed_manifest)
+            @test_throws ErrorException ReadyESM._validate_dynamic_restart_identity!(
+                model,
+                (; restart_identity = changed_identity),
+            )
+        end
         @test_throws ErrorException ReadyESM._validate_dynamic_restart_identity!(
             model,
             (;),
