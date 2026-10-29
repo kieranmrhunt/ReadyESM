@@ -9,13 +9,20 @@ for test results and earlier work.
 
 ## 0.1.18 — 2026-10-29
 
-- Add opt-in scored-output files for the release scorer. The writer refuses
-  late starts and restarted runs, preserving full-window score-series
-  semantics.
-- Check physical run identity and prognostic values before continuing a
-  restart. Output-control settings no longer count as physical identity.
-- Fix top-level TKE flux handling for the four- and five-closure CATKE
-  production tuples.
+- Restore the wind and surface-cooling energy that drives ocean mixing. The
+  standard ocean uses four or five mixing schemes. In that setup, the model
+  dropped the energy input to surface turbulence. It now adds that energy.
+- Add optional output files for the release scores. The four files cover the
+  full run, so this writer cannot continue from a saved state.
+- Restart files now record the model settings and source and package versions.
+  A restart stops if these values differ. The run name, output folder, run
+  length and output options do not count. Checkpoints from earlier versions
+  lack this record and cannot be used by v0.1.18.
+- The model checks its atmosphere, ocean, sea-ice and land state after each
+  step. It stops and names the first field with an invalid value.
+- The project pins the NVIDIA CUDA runtime to 13.2. This avoids a start-up
+  failure with driver 615 when CUDA packages were cached on a machine without
+  a GPU.
 
 ## 0.1.17 — 2026-10-28
 
