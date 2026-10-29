@@ -88,6 +88,17 @@ scores check the number of samples for the production timestep of 900 s.
 Keep that timestep for any run that you will score. A run with this switch
 on cannot be restarted, because the means are not saved in checkpoints.
 
+## Restart identity
+
+Restart checkpoints record a hash of the model settings, the exact source
+commit and the package versions. A normal restore requires all three to
+match. Checkpoints made before this identity record was added have no record
+to compare. To deliberately accept an older or mismatched checkpoint, pass
+`allow_identity_mismatch=true` to `restore_dynamic_restart_state!`, or wrap an
+`Oceananigans.run!(simulation; pickup=path)` call in
+`with_dynamic_restart_identity_override() do ... end`. Use this only when you
+intend to accept the mismatch.
+
 ## Tests
 
 The CPU regression suite uses synthetic initial conditions. It needs neither

@@ -9,20 +9,26 @@ for test results and earlier work.
 
 ## 0.1.18 — 2026-10-29
 
-- Restore the wind and surface-cooling energy that drives ocean mixing. The
-  standard ocean uses four or five mixing schemes. In that setup, the model
-  dropped the energy input to surface turbulence. It now adds that energy.
-- Add optional output files for the release scores. The four files cover the
-  full run, so this writer cannot continue from a saved state.
-- Restart files now record the model settings and source and package versions.
-  A restart stops if these values differ. The run name, output folder, run
-  length and output options do not count. Checkpoints from earlier versions
-  lack this record and cannot be used by v0.1.18.
-- The model checks its atmosphere, ocean, sea-ice and land state after each
-  step. It stops and names the first field with an invalid value.
-- The project pins the NVIDIA CUDA runtime to 13.2. This avoids a start-up
-  failure with driver 615 when CUDA packages were cached on a machine without
-  a GPU.
+- Add the energy from the wind and from surface cooling that drives ocean
+  mixing near the surface. The standard ocean combines four or five mixing
+  schemes. With four or more, the energy input to surface turbulence was lost.
+  The model now adds it.
+- Add optional output files for the release scores: three files of means over
+  the whole run, and one file of six-hourly values. The option needs RRTMGP
+  radiation and a run length that is a whole number of six-hour periods. A run
+  with this option on cannot continue from a saved state.
+- Restart files now record the model settings, the exact source commit and the
+  package versions. A restart stops if any of them differ. The run name,
+  output folder, run length, analysis start day and output options do not
+  count. Any new commit, even one that changes only the documentation, stops a
+  restart. Saved states from earlier versions lack this record. To continue
+  from one, use `allow_identity_mismatch=true` when restoring it, or wrap the
+  `run!` call in `with_dynamic_restart_identity_override`.
+- After each step the model checks its atmosphere, ocean, sea-ice and land
+  state. It stops and names the first field that is not a finite number or is
+  outside a fixed limit, for example an ocean temperature above 40 °C.
+- The README example now runs for 31 days, and the figure data are named by
+  release files and hashes, not by local paths.
 
 ## 0.1.17 — 2026-10-28
 
