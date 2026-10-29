@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use ReadyESM, please cite it using this metadata."
+title: ReadyESM
+authors:
+  - family-names: Hunt
+    given-names: Kieran
+version: 0.1.18
+date-released: 2026-10-29
+url: https://github.com/kieranmrhunt/ReadyESM
+license: EUPL-1.2

@@ -1,11 +1,21 @@
 # Version history
 
-Latest tagged version: [v0.1.17](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.17),
-28 October 2026.
+Latest tagged version: [v0.1.18](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.18),
+29 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.18 — 2026-10-29
+
+- Add opt-in scored-output files for the release scorer. The writer refuses
+  late starts and restarted runs, preserving full-window score-series
+  semantics.
+- Check physical run identity and prognostic values before continuing a
+  restart. Output-control settings no longer count as physical identity.
+- Fix top-level TKE flux handling for the four- and five-closure CATKE
+  production tuples.
 
 ## 0.1.17 — 2026-10-28
 

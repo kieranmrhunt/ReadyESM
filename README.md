@@ -76,11 +76,11 @@ ECCO for 1 January 1993. Then copy the standard configuration:
 cp config/production.yml config/my_run.yml
 ```
 
-For a 30-day run, change these entries in the copied file:
+For a 31-day run, change these entries in the copied file:
 
 ```yaml
 name: my_run
-duration_days: 30
+duration_days: 31
 analysis_start_day: 0
 output_dir: artifacts/my_run
 ```
@@ -96,7 +96,7 @@ to the configured output directory. To plot the final day and timelines:
 
 ```bash
 python scripts/plot_readme.py artifacts/my_run/diagnostics.nc \
-    artifacts/my_run/summary --version v0.1.17 --expected-days 30
+    artifacts/my_run/summary --version v0.1.18 --expected-days 31
 ```
 
 ## Configuration
