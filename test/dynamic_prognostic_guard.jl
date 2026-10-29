@@ -73,6 +73,37 @@
         "sea_ice.ℵ", interior, simulation,
     ))
 
+    O = ReadyESM.Oceananigans
+    ocean_grid = O.RectilinearGrid(O.CPU(), Float64;
+        size=(4, 4, 2), x=(0, 4), y=(0, 4), z=(-2, 0),
+        halo=(3, 3, 3), topology=(O.Periodic, O.Periodic, O.Bounded))
+    ocean_field = O.CenterField(ocean_grid)
+    checked_interior = O.interior(ocean_field)
+    checked_interior .= 0.3
+    @test ReadyESM._dynamic_guard_storage(ocean_field) isa SubArray
+    @test size(ReadyESM._dynamic_guard_storage(ocean_field)) == size(checked_interior)
+    @test isnothing(ReadyESM._check_dynamic_prognostic_array!(
+        "ocean.T", ocean_field, simulation,
+    ))
+    checked_interior[1, 1, 1] = NaN
+    field_error = try
+        ReadyESM._check_dynamic_prognostic_array!("ocean.T", ocean_field, simulation)
+        ""
+    catch caught
+        sprint(showerror, caught)
+    end
+    @test occursin("index in checked field interior", field_error)
+    checked_interior[1, 1, 1] = 1.5
+    bounded_field_error = try
+        ReadyESM._check_dynamic_prognostic_array!(
+            "atmosphere.prognostic.land.saturation_water_ice", ocean_field, simulation,
+        )
+        ""
+    catch caught
+        sprint(showerror, caught)
+    end
+    @test occursin("index in checked field interior", bounded_field_error)
+
     # The callback must descend through Terrarium.StateVariables, whose
     # prognostic fields are neither a NamedTuple at this level nor `.data`.
     terrarium = ReadyESM.Terrarium.StateVariables(

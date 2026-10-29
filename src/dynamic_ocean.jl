@@ -2424,6 +2424,7 @@ end
 _dynamic_guard_storage(values) = values
 _dynamic_guard_storage(values::SpeedyWeather.LowerTriangularArray) = _dynamic_guard_storage(parent(values))
 _dynamic_guard_storage(values::SpeedyWeather.RingGrids.AbstractField) = _dynamic_guard_storage(parent(values))
+_dynamic_guard_storage(values::Oceananigans.Fields.Field) = Oceananigans.interior(values)
 _dynamic_guard_storage(values::Oceananigans.Fields.OffsetArray) = _dynamic_guard_storage(parent(values))
 
 function _check_dynamic_prognostic_array!(path, values, simulation)
@@ -2447,6 +2448,7 @@ function _check_dynamic_prognostic_array!(path, values, simulation)
     invalid_value = isnothing(invalid_index) ? missing : host_values[invalid_index]
     allowed = isnothing(bounds) ? "finite" : "finite and in [$((bounds[1])), $((bounds[2]))]"
     index_note = values isa SpeedyWeather.LowerTriangularArray ? " (index in packed spectral storage)" :
+                 values isa Oceananigans.Fields.Field ? " (index in checked field interior)" :
                  storage === values ? "" : " (index in underlying storage)"
     iteration = simulation.model.clock.iteration
     time = simulation.model.clock.time
