@@ -8,7 +8,8 @@
     for field in ReadyESM._DYNAMIC_RESTART_RUN_CONTROL_FIELDS
         changed = ReadyESM.ExperimentConfig(; merge(
             (; (name => getfield(config, name) for name in fieldnames(typeof(config)))...),
-            (; field => field == :duration_days ? 20.0 : "changed"),
+            (; field => field in (:duration_days, :analysis_start_day) ? 20.0 :
+                field == :scored_outputs ? true : "changed"),
         )...)
         @test ReadyESM._dynamic_config_identity_hash(config) ==
               ReadyESM._dynamic_config_identity_hash(changed)

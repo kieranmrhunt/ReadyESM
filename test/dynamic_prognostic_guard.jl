@@ -44,5 +44,14 @@
         ocean = (model = nothing,),
         sea_ice = (model = nothing,),
     ),)
-    @test_throws ErrorException ReadyESM.DynamicPrognosticGuardCallback()(nested)
+    land_error = try
+        ReadyESM.DynamicPrognosticGuardCallback()(nested)
+        ""
+    catch caught
+        sprint(showerror, caught)
+    end
+    @test occursin(
+        "atmosphere.prognostic.land.terrarium.prognostic.soil_moisture",
+        land_error,
+    )
 end
