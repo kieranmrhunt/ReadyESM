@@ -9,6 +9,110 @@ fallback would, however, try to serialize the complete function-bearing
 mutable RRTMGP and ReadyESM callback state consumed after a restart.
 """
 
+const _DYNAMIC_RESTART_IDENTITY_BY_MODEL = IdDict{Any, NamedTuple}()
+const _DYNAMIC_RESTART_IDENTITY_LOCK = ReentrantLock()
+const _DYNAMIC_RESTART_IDENTITY_OVERRIDE = Ref(false)
+
+function _dynamic_config_identity_hash(config::ExperimentConfig)
+    # ExperimentConfig fields are declared in a fixed order. `repr` preserves
+    # scalar types (including Symbols and Dates) and nested config values.
+    canonical = join((
+        string(name, "=", repr(getfield(config, name)))
+        for name in fieldnames(typeof(config))
+    ), "\n")
+    bytes = codeunits("readiesm-experiment-config-v1\n" * canonical)
+    return bytes2hex(SHA.sha256(bytes))
+end
+
+function _dynamic_source_commit()
+    configured = strip(get(ENV, "READYESM_SOURCE_COMMIT", ""))
+    if !isempty(configured)
+        occursin(r"^[0-9a-fA-F]{40,64}$", configured) || throw(ArgumentError(
+            "READYESM_SOURCE_COMMIT must be a 40- or 64-character Git commit hash",
+        ))
+        return configured
+    end
+    project_root = PROJECT_ROOT
+    try
+        commit = strip(readchomp(`git -C $project_root rev-parse HEAD`))
+        occursin(r"^[0-9a-fA-F]{40,64}$", commit) || error(
+            "git returned an invalid source commit hash",
+        )
+        return commit
+    catch caught
+        throw(ArgumentError(
+            "cannot identify ReadyESM source commit for restart metadata; " *
+            "set READYESM_SOURCE_COMMIT when running from an exported source tree " *
+            "(cause: $(sprint(showerror, caught)))",
+        ))
+    end
+end
+
+function _dynamic_restart_identity(config::ExperimentConfig)
+    manifest_path = joinpath(PROJECT_ROOT, "Manifest.toml")
+    isfile(manifest_path) || throw(ArgumentError(
+        "restart identity requires the active ReadyESM Manifest.toml at $manifest_path",
+    ))
+    return (
+        schema = "readiesm-dynamic-restart-identity-v1",
+        config_sha256 = _dynamic_config_identity_hash(config),
+        source_commit = _dynamic_source_commit(),
+        manifest_sha256 = bytes2hex(SHA.sha256(read(manifest_path))),
+    )
+end
+
+function _bind_dynamic_restart_identity!(model, config::ExperimentConfig)
+    identity = _dynamic_restart_identity(config)
+    lock(_DYNAMIC_RESTART_IDENTITY_LOCK) do
+        _DYNAMIC_RESTART_IDENTITY_BY_MODEL[model] = identity
+    end
+    return model
+end
+
+function _dynamic_restart_identity(model)
+    return lock(_DYNAMIC_RESTART_IDENTITY_LOCK) do
+        get(_DYNAMIC_RESTART_IDENTITY_BY_MODEL, model, nothing)
+    end
+end
+
+function _validate_dynamic_restart_identity!(model, state)
+    expected = _dynamic_restart_identity(model)
+    isnothing(expected) && error(
+        "dynamic model has no restart identity; construct it with build_dynamic_esm",
+    )
+    saved = hasproperty(state, :restart_identity) ? state.restart_identity : nothing
+    valid = !isnothing(saved) && saved == expected
+    if !valid && !_DYNAMIC_RESTART_IDENTITY_OVERRIDE[]
+        detail = isnothing(saved) ? "checkpoint has no identity header" :
+            "checkpoint identity differs from the constructed model"
+        error(
+            "$detail; restart requires matching config SHA-256, source commit, " *
+            "and Manifest SHA-256. Use with_dynamic_restart_identity_override " *
+            "only when intentionally accepting this mismatch",
+        )
+    end
+    if !valid
+        @warn "explicitly overriding dynamic restart identity mismatch" saved expected
+    end
+    return valid
+end
+
+"""
+    with_dynamic_restart_identity_override(f)
+
+Run a restart restore while explicitly allowing a missing or mismatched identity
+header. This escape hatch is intended only for deliberate migrations.
+"""
+function with_dynamic_restart_identity_override(f::Function)
+    previous = _DYNAMIC_RESTART_IDENTITY_OVERRIDE[]
+    _DYNAMIC_RESTART_IDENTITY_OVERRIDE[] = true
+    try
+        return f()
+    finally
+        _DYNAMIC_RESTART_IDENTITY_OVERRIDE[] = previous
+    end
+end
+
 _restart_host_array(values::AbstractArray) = Array(values)
 
 # Surface-radiation diagnostics are not forcings themselves, but retaining them
@@ -855,9 +959,14 @@ function Oceananigans.prognostic_state(
     if !isnothing(carbon)
         extensions = merge(extensions, (; carbon))
     end
+    identity = _dynamic_restart_identity(model)
+    isnothing(identity) && error(
+        "dynamic model has no restart identity; construct it with build_dynamic_esm",
+    )
     return merge(
         state,
         extensions,
+        (; restart_identity = identity),
     )
 end
 
@@ -865,6 +974,7 @@ function Oceananigans.restore_prognostic_state!(
     model::_ReadyESMRadiativeSpeedyEarthSystem,
     state,
 )
+    _validate_dynamic_restart_identity!(model, state)
     # Check constructed physics before any atmosphere, ocean or land state is overwritten.
     _validate_horizontal_diffusion_restart(model.atmosphere, state.atmosphere)
     _validate_moist_mass_restart(model.atmosphere, state.atmosphere)
@@ -980,8 +1090,12 @@ function save_dynamic_restart_state(simulation, path::AbstractString)
     return abspath(path)
 end
 
-function restore_dynamic_restart_state!(simulation, path::AbstractString)
-    # The scored-output captures average from the run's start and are not saved in a checkpoint.
+function restore_dynamic_restart_state!(
+    simulation,
+    path::AbstractString;
+    allow_identity_mismatch::Bool = false,
+)
+    # Scored captures average from the run's start and are not checkpointed.
     haskey(simulation.callbacks, :readyesm_scored_outputs) && throw(ArgumentError(
         "scored_outputs cannot continue a restarted run. Run the full window from its start, or switch scored_outputs off.",
     ))
@@ -989,7 +1103,12 @@ function restore_dynamic_restart_state!(simulation, path::AbstractString)
         abspath(path);
         base_path = "simulation",
     )
-    Oceananigans.restore_prognostic_state!(simulation, state)
+    restore! = () -> Oceananigans.restore_prognostic_state!(simulation, state)
+    if allow_identity_mismatch
+        with_dynamic_restart_identity_override(restore!)
+    else
+        restore!()
+    end
     # Perform the same mandatory post-pickup update as Oceananigans.run!. The
     # ReadyESM-specialized update reconciles native state first, then consumes
     # and reapplies the saved lagged interface state exactly once.
@@ -1552,10 +1671,14 @@ Oceananigans.restore_prognostic_state!(
                                   overwrite_existing=false, cleanup=true)
 
 Install an Oceananigans JLD2 checkpointer whose state methods cover the complete
-ReadyESM dynamic stack. Resume with ordinary `Oceananigans.run!(simulation;
-pickup=path)` after reconstructing the same configuration and final run horizon.
-Oceananigans performs its native pickup `update_state!` before the first resumed
-timestep; ReadyESM then reapplies the checkpointed lagged coupling state once.
+ReadyESM dynamic stack. Each checkpoint carries a configuration SHA-256, source
+commit, and Manifest SHA-256. Restore refuses any mismatch. Resume with ordinary
+`Oceananigans.run!(simulation; pickup=path)` after reconstructing the same
+configuration and final run horizon. To deliberately accept a legacy or
+mismatched checkpoint, wrap the restore or `run!` call in
+`with_dynamic_restart_identity_override() do ... end`. Oceananigans performs its
+native pickup `update_state!` before the first resumed timestep; ReadyESM then
+reapplies the checkpointed lagged coupling state once.
 """
 function install_dynamic_checkpointer!(
     simulation;

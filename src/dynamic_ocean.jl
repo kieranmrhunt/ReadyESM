@@ -2390,6 +2390,111 @@ function (callback::GlobalCoupledBudgetCallback)(simulation)
     return nothing
 end
 
+struct DynamicPrognosticGuardCallback end
+
+function _dynamic_guard_bounds(path::AbstractString)
+    leaf = last(split(path, '.'))
+    if startswith(path, "ocean.")
+        leaf == "T" && return (-5.0, 40.0)
+        leaf == "S" && return (0.0, 50.0)
+    elseif startswith(path, "sea_ice.")
+        leaf in ("ℵ", "ice_concentration") && return (0.0, 1.0)
+        leaf in ("h", "hs", "ice_thickness", "snow_thickness") &&
+            return (0.0, Inf)
+    elseif startswith(path, "atmosphere.")
+        leaf in ("soil_moisture", "saturation_water_ice") &&
+            return (0.0, 1.0)
+        leaf == "surface_excess_water" && return (0.0, 0.05)
+        # SpeedyWeather's grid group is physical space (K and specific
+        # humidity); the prognostic group itself is spectral and gets finite
+        # checks only.
+        path == "atmosphere.grid.temperature" && return (100.0, 400.0)
+        path == "atmosphere.grid.humidity" && return (0.0, 1.0)
+    end
+    return nothing
+end
+
+function _dynamic_guard_invalid_index(values, bounds)
+    lower, upper = isnothing(bounds) ? (-Inf, Inf) : bounds
+    return findfirst(values) do value
+        !isfinite(value) || (value isa Real && !(lower <= value <= upper))
+    end
+end
+
+function _check_dynamic_prognostic_array!(path, values, simulation)
+    bounds = _dynamic_guard_bounds(path)
+    valid = if isnothing(bounds) || !(eltype(values) <: Real)
+        all(isfinite, values)
+    else
+        lower, upper = bounds
+        all(value -> isfinite(value) && lower <= value <= upper, values)
+    end
+    valid && return nothing
+
+    host_values = Array(values)
+    invalid_index = _dynamic_guard_invalid_index(host_values, bounds)
+    invalid_value = isnothing(invalid_index) ? missing : host_values[invalid_index]
+    allowed = isnothing(bounds) ? "finite" : "finite and in [$((bounds[1])), $((bounds[2]))]"
+    iteration = simulation.model.clock.iteration
+    time = simulation.model.clock.time
+    error(
+        "dynamic prognostic $path is not $allowed at iteration $iteration " *
+        "(time=$time s); first invalid index=$invalid_index value=$invalid_value",
+    )
+end
+
+function _check_dynamic_prognostic_tree!(path, value, simulation)
+    if value isa AbstractArray{<:Number}
+        _check_dynamic_prognostic_array!(path, value, simulation)
+    elseif value isa NamedTuple
+        for name in keys(value)
+            _check_dynamic_prognostic_tree!("$path.$name", getproperty(value, name), simulation)
+        end
+    elseif value isa Tuple
+        for (index, item) in enumerate(value)
+            _check_dynamic_prognostic_tree!("$path[$index]", item, simulation)
+        end
+    elseif hasproperty(value, :data)
+        data = getproperty(value, :data)
+        data isa AbstractArray{<:Number} &&
+            _check_dynamic_prognostic_array!(path, data, simulation)
+    end
+    return nothing
+end
+
+function (callback::DynamicPrognosticGuardCallback)(simulation)
+    model = simulation.model
+    atmosphere = model.atmosphere
+    _check_dynamic_prognostic_tree!(
+        "atmosphere.prognostic",
+        atmosphere.variables.prognostic,
+        simulation,
+    )
+    for name in (:temperature, :humidity)
+        hasproperty(atmosphere.variables.grid, name) || continue
+        _check_dynamic_prognostic_tree!(
+            "atmosphere.grid.$name",
+            getproperty(atmosphere.variables.grid, name),
+            simulation,
+        )
+    end
+    for (component_name, component_model) in (
+        (:ocean, model.ocean.model),
+        (:sea_ice, model.sea_ice.model),
+    )
+        fields = Oceananigans.prognostic_fields(component_model)
+        for name in keys(fields)
+            field = getproperty(fields, name)
+            _check_dynamic_prognostic_array!(
+                "$component_name.$name",
+                Oceananigans.interior(field),
+                simulation,
+            )
+        end
+    end
+    return nothing
+end
+
 function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} = nothing)
     validate(config)
     config.ocean_model == :oceananigans || throw(
@@ -2454,6 +2559,7 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
         steps > 0 || throw(ArgumentError("steps must be positive"))
         Oceananigans.Simulation(earth_model; Δt, stop_iteration = steps)
     end
+    _bind_dynamic_restart_identity!(earth_model, config)
     Oceananigans.add_callback!(
         simulation,
         ClimaOcean.Progress(),
@@ -2475,6 +2581,12 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
         Oceananigans.IterationInterval(1);
         name = :global_coupled_budgets,
     )
+    Oceananigans.add_callback!(
+        simulation,
+        DynamicPrognosticGuardCallback(),
+        Oceananigans.IterationInterval(1);
+        name = :dynamic_prognostic_guard,
+    )
     if config.carbon.mode in (:prescribed, :emissions_driven)
         Oceananigans.add_callback!(
             simulation,
@@ -2493,7 +2605,7 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
             name = :bs08_diagnostics,
         )
     end
-    # Scored output files exist only with the option on. The option-off build is unchanged.
+    # Scored output files exist only with the option on.
     config.scored_outputs && install_scored_outputs!(simulation, config)
     return simulation
 end
