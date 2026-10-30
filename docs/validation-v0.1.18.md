@@ -1,11 +1,11 @@
-# v0.1.18 validation — release review draft
+# v0.1.18 validation
 
-**Publication status: review pending; no tag claimed.** This draft records the
-completed exact-source gates available on 30 October 2026. The failed CATKE
+This record describes the exact-source gates completed by 30 October 2026.
+The failed CATKE
 wind-size gate, inherited limitations and neutral skill-rule REJECT are
-disclosed. The final GPU restart passed and the reviewed figures are installed.
-Documentation review and tagged-tree checks remain open. This is a pre-tag
-release draft for review before publication.
+disclosed. The final GPU restart passed and the figures are installed.
+The release tag and remote assets are checked separately by the post-tag
+audit; this source-scoped record does not establish their status.
 
 ## Candidate and changes
 
@@ -37,8 +37,8 @@ that case. The six replacement paired runs completed on exact source
 | Focused CPU tests | `63365948/focused_tests.log`, `V018_COMBINED_FOCUSED_CPU_PASS` | Restart identity 18/18, prognostic guard 22/22, native CATKE surface flux 133/133, scored-output configuration 4/4, accumulators 11/11 and coupled run 18/18. These tests preceded the full one-day qualification. |
 | One-day scored-output CPU qualification | Job `63365948`, `COMPLETED 0:0`, verdict `SCORED_OUTPUT_WRITER_CPU_V5_PASS`, result-manifest SHA-256 `f520ce5b8593d3b35ee09ce8e25d0cfcf5a2fae293fde58e2419be18639f4eea`, frozen input seal `b3f28ae174e4c321f5b7459c8abd5e8c5f4bfdabb8b42a04cde6656e9dbf3502` | Exact source `48c232cc`/tree `eb1ea01c`, January one-day coupled run. All four writer/observer files are byte-identical. The final saved model states match exactly, with zero excluded identity fields. The result manifest and full job inventory were independently verified. |
 | Restart-identity CPU preflight | Job `63368988`, `COMPLETED 0:0`, verdict `V018_RESTART_PREFLIGHT_PASS`, 16-file result-manifest SHA-256 `7797df0942db49326e22837d24f1089796703c625fe6c2b95820695193b0a913` | Bound to the audited CPU qualification receipt `f520ce5b8593d3b35ee09ce8e25d0cfcf5a2fae293fde58e2419be18639f4eea`. The same-identity checkpoint round trip passes. Commit, manifest and config mutations each produce the intended one-field refusal. Verifier tests 16/16 pass. This is a CPU preflight, not the A100 restart gate. |
-| Pre-tag metadata audit | Manifest-aware checker SHA-256 `d565d1a2b7ad1130e537a8bc32cbd915af3d89c6c3636347398be4081d08cced`, clean-b3 check log SHA-256 `53d5431e6cbdcb8018fee50761fab6e1b9965abc38a07137273fc75765ed63a6` | Project and local Manifest ReadyESM versions both read 0.1.18. Manifest path/UUID, changelog, citation date, vendor records and tracked path checks passed on the earlier draft. CITATION now lists Kieran Hunt and the ReadyESM contributors, with no DOI. Recheck the real HISTORY date and CITATION `date-released` against the eventual tag date, 30 October 2026 at the earliest. No tag exists yet. |
-| Release-doc review wrapper fixtures | Isolated wrapper SHA-256 `91630c5309f08cc85112a6d8bf3e318cec3afed78c1e429849e9cf5372ad9107`, 24/24 tests, frozen-input manifest SHA-256 `41e0ce4b4fab5f4f81d3819f0f5ab0943353a0b7c001785809177548432db90f` | Checker fixtures cover both lightweight and annotated tags. One fixture deliberately uses the earlier heading `## 0.1.18 — 2026-10-29`; the real release heading is 30 October. Matching metadata passes, a stale Manifest fails, and an annotated tag that no longer points to HEAD is refused. The real v0.1.18 tag and final substantive review remain pending. No release PASS record exists. |
+| Pre-tag metadata audit | Manifest-aware checker SHA-256 `d565d1a2b7ad1130e537a8bc32cbd915af3d89c6c3636347398be4081d08cced`, clean-b3 check log SHA-256 `53d5431e6cbdcb8018fee50761fab6e1b9965abc38a07137273fc75765ed63a6` | Project and local Manifest ReadyESM versions both read 0.1.18. Manifest path/UUID, changelog, citation date, vendor records and tracked path checks passed on the earlier draft. CITATION lists Kieran Hunt and the ReadyESM contributors, with no DOI. This pre-tag audit did not check a release tag; the tagged tree is checked separately. |
+| Release-doc review wrapper fixtures | Isolated wrapper SHA-256 `91630c5309f08cc85112a6d8bf3e318cec3afed78c1e429849e9cf5372ad9107`, 24/24 tests, frozen-input manifest SHA-256 `41e0ce4b4fab5f4f81d3819f0f5ab0943353a0b7c001785809177548432db90f` | Checker fixtures cover both lightweight and annotated tags. One fixture deliberately uses the earlier heading `## 0.1.18 — 2026-10-29`; the release heading is 30 October. Matching metadata passes, a stale Manifest fails, and an annotated tag that no longer points to HEAD is refused. These fixtures do not establish a release PASS; a separate substantive review and actual tagged-tree check are required. |
 | Production-shaped GPU step | `63365988`, `COMPLETED 0:0` | One A100 step on exact b3 source with scalar indexing disabled and the prognostic guard active. This establishes startup and one-step integration only. |
 | Six paired GPU months | `63369995_[0-5]`, all `COMPLETED 0:0` | Three January and three July 1993 pairs, 31 days each, against matched v0.1.17-equivalent D4 controls. The frozen scorer verified all six candidate outputs and matched-source inputs. |
 | Frozen skill and neutral readout | `63449460`, `COMPLETED 0:0`, result-manifest SHA-256 `3a08fd5990d445be02f417215f35470fcf737bfea4e1f4951cc941769afbd555` | Independently verified with the v3 readout-input seal `31b8f22b532e59ac815831c0d022623dcb00d48195e37eea0b376a63c57fad1c`. Frozen v3 REJECT, v4 UNDECIDED and separate neutral-rule REJECT are preserved below. |
@@ -90,8 +90,8 @@ states exactly at steps 4 and 8 and passed the refusal cases, then failed at
 refusal branch. It is a superseded test-harness failure, not evidence of a
 model restart mismatch. The replacement's strict saved-state comparisons,
 refusal and non-mutation controls passed with a sealed result, closing O-088
-for the b3 default path. The prepared scorecards are installed in the release
-tree. Documentation review, tag and remote audit remain open.
+for the b3 default path. The prepared scorecards are installed in this tree.
+Documentation review, tag and remote audit are separate release checks.
 
 The native-stage six-hour wind-column gate requiring at least 0.1 m of
 mixed-layer-depth change **failed**: the repaired minus zero-source depth was
@@ -276,9 +276,8 @@ the state when each figure was staged, before the tag. The paired and
 development scorecards record the completed GPU gates. The installed PNGs
 match their sealed stages byte for byte.
 The maps, timelines, comparison, reviewed version-history v3 pair, and both
-root scorecards are installed in the isolated release checkout for review.
-The original
-v3/v4 metric and season verdicts remain visible beside the neutral
+root scorecards are installed in this tree. The original v3/v4 metric and
+season verdicts remain visible beside the neutral
 adjudication.
 Every README caption, validation statement, figure alt text and scorecard
 that gives an ONR/CMIP6 rank must carry this scope note: these runs start
@@ -289,6 +288,6 @@ free-running climate skill. The six-field baseline record is
 `initialisation_advantage_v1/baselines.json`, SHA-256
 `417fe8872b678b397b1ae253d91960d313fb0295c813fdaceaff8f6836163aa0`;
 it is not the full v4 release score.
-The final documentation commit must link the exact sealed source data,
-explain the scope of each figure, and pass the post-tag source and asset
-audit. The paired v0.1.18 skill outcome is the REJECT result reported above.
+The release audit checks the final documentation commit, sealed source data,
+figure scope, and post-tag source and asset hashes. The paired v0.1.18 skill
+outcome is the REJECT result reported above.
