@@ -55,13 +55,15 @@ inventory.
 ## Skill results and release disposition
 
 The frozen original seven-field v3 scorer returned **REJECT**: January was
-NEUTRAL, but July was WORSE. July mean ONR7 rose by `0.01154899` against its
-noise bound of `0.01026302`, exceeding it by `0.00128596`. That bound is the
+NEUTRAL, but July was WORSE. July mean seven-field normalised error (ONR7)
+rose by `0.01154899` against its noise bound of `0.01026302`, exceeding it by
+`0.00128596`. That bound is the
 standard deviation of the three matched control members under the frozen v3
 rule, with a floor of `0.01`.
 The nine-field v4 scorer returned **UNDECIDED** in both seasons and overall.
-Its January mean ONR9 changed by `-0.00023490`; July rose by `0.00801674`,
-within the v4 `0.01000000` bound. All frozen v4 global radiation, net and
+Its January mean nine-field normalised error (ONR9) changed by `-0.00023490`;
+July rose by `0.00801674`, within the v4 `0.01000000` bound. All frozen v4
+global radiation, net and
 physical-breakage guards passed. The separate neutral adjudication applied
 its written rule and returned **REJECT**, because July v3 ONR7 was clearly
 worse. This result remains REJECT in the release record; it is not converted
@@ -240,11 +242,11 @@ The public README maps and timelines have been rendered from sealed b3
 January member 1 (`v018_readme_maps_b3_v1`, result-manifest SHA-256
 `92e0ddd80b1ee3dbc297a70f3595bd5847f84a7ffea43576bd79d98097542dde`).
 The six-pair paired skill scorecard is prepared in
-`v018_postgate_evidence_codex_v1/scorecard_prepared_v2`, with
+`v018_postgate_evidence_codex_v1/scorecard_prepared_v4`, with
 `staged_outputs.sha256` SHA-256
-`aadbf2964a564a51b2f3c74c8d08cc97d8798043e48182bfa6cd1a89d5ad6a9e`
+`aded5f53baf212bbefe9ffcde8b63eaf4f32a4f12e685915595c0f794a73f7e4`
 and PNG SHA-256
-`1a322faf08d70117edfe2812392b74f336b05003ee45422379471d79b0e9bc55`.
+`1678b4a442de6a52f17dd3e6b0740456ec25c6869c1d3b4a54ee215349e71a91`.
 The reviewed development scorecard is prepared in
 `development_scorecard_v018_b3_v5_plain/release_stage_63495868_v2`, with
 `result.sha256` SHA-256
@@ -252,6 +254,9 @@ The reviewed development scorecard is prepared in
 and PNG SHA-256
 `49582df30911739c03a0d5d262874595efd22cd652b9849b4db49fcfc9b58685`.
 Both stages include the exact restart and native CATKE GPU gate receipts.
+The development stage used paired v2; v2 and v4 have byte-identical scored
+JSON. The v4 paired figure corrects only the baseline wording and one label
+position.
 The plain-label README comparison is staged in `v018_comparison_figure_plain_v2`
 with SHA-256 manifest
 `286f757095b4d22aae6c161d1d1517394d899b1c1dc3a5b1377abe0347ec180c`.

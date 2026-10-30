@@ -35,7 +35,8 @@ for test results and earlier work.
   per model day than the matched control. The new step check accounted for
   less than 1 percent in a separate timing test.
 - Six 31-day runs, three in January and three in July, were compared with
-  matched runs using the v0.1.17 settings from the same observed starts. In
+  matched runs using the v0.1.17 settings from the same observed starts. The
+  controls used an earlier source commit than the published v0.1.17 tag. In
   January the change in error was within the spread of the matched runs. In
   July the error grew by slightly more than that spread, so the original
   seven-field score rejected this version. The nine-field score did not reach a
@@ -43,9 +44,9 @@ for test results and earlier work.
   radiation and model-state checks passed. These results are reported without
   changing the scores or the rule outcome. Runs that start from observations
   do not show long-term climate skill.
-- The new ocean mixing energy passed its GPU test. In a simple six-hour test
-  with wind over one ocean column, it deepened the mixed layer by 0.06 m
-  against a target of 0.1 m. The [validation record](docs/validation-v0.1.18.md)
+- The new ocean mixing energy ran correctly on the GPU. In a simple six-hour
+  test with wind over one ocean column, it deepened the mixed layer by 0.06 m.
+  The target was 0.1 m. The [validation record](docs/validation-v0.1.18.md)
   describes this, and [NOTES.md](NOTES.md) lists other known limitations.
 
 ## 0.1.17 — 2026-10-28

@@ -9,11 +9,11 @@ In the standard setup, the atmosphere has a grid spacing of about 400 km
 about 1 degree and 60 levels. The land has 16 soil layers. ERA5 supplies the
 initial atmosphere and land state. ECCO supplies the ocean and sea ice.
 
-![Nine maps of the ocean, sea ice, atmosphere and land after 31 days in the observation-initialised v0.1.18 January run](docs/readiesm-v0.1.18-maps.png)
+![Nine maps of the ocean, sea ice, atmosphere and land after 31 days in the v0.1.18 January run that starts from observations](docs/readiesm-v0.1.18-maps.png)
 
 January 1993 member 1 after 31 days with v0.1.18 source `48c232cc`.
-This run starts from observations and is one trajectory, not a long-term
-climate mean. Grey marks inactive cells. Ice-free ocean is white.
+This run starts from observations. It is one run, not a long-term climate
+mean. Grey marks inactive cells. Ice-free ocean is white.
 
 ![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture in the first 31 days of v0.1.18](docs/readiesm-v0.1.18-timelines.png)
 
@@ -40,11 +40,12 @@ These results are reported without changing the scores or the rule outcome. See 
 [plot recipe](docs/plot-v0.1.18-comparison.py).
 
 These runs start from observations. In a separate six-field test, two simple
-guesses (the long-term average and the starting anomaly held fixed) scored
+guesses (the long-term average, and the starting difference from that average
+held fixed) scored
 better than all 59 CMIP6 models. The ranks here show agreement with the
-observed month, not free-running climate skill. The
+observed month, not the skill of the model's own long-term climate. The
 [paired scorecard](scorecard.png), [development scorecard](development_scorecard.png)
-and [canonical-start version history](readyesm_scorecard_versions.png)
+and [version history](readyesm_scorecard_versions.png)
 show the evidence in different ways. The version history uses one start per
 season. The paired comparison estimates the change in this release. The
 [version-history figure record](docs/readyesm_scorecard_versions_v018.json)
