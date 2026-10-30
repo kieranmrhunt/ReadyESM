@@ -5,7 +5,7 @@ The failed CATKE
 wind-size gate, inherited limitations and neutral skill-rule REJECT are
 disclosed. The final GPU restart passed and the figures are installed.
 The release tag and remote assets are checked separately by the post-tag
-audit; this source-scoped record does not establish their status.
+audit. This source-scoped record does not establish their status.
 
 ## Candidate and changes
 
