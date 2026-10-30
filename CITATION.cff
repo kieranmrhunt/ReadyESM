@@ -4,7 +4,8 @@ title: ReadyESM
 authors:
   - family-names: Hunt
     given-names: Kieran
+  - name: ReadyESM contributors
 version: 0.1.18
-date-released: 2026-10-29
+date-released: 2026-10-30
 url: https://github.com/kieranmrhunt/ReadyESM
 license: EUPL-1.2

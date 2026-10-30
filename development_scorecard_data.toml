@@ -1,0 +1,489 @@
+[meta]
+as_of = "2026-10-30T15:47:53.783325+00:00"
+release_source = "HISTORY.md; docs/validation-v0.1.18.md; scorecard_v4_data.json"
+experiment_source = "docs/experiments.md; reviewed programme inventory"
+review_source = "sealed six-pair skill, exact restart and native CATKE GPU receipts"
+release_status = "evidence_verified_for_v018"
+candidate_version = "v0.1.18"
+evidence_note = "Stages and gates describe their named scope; long climate drift is unqualified."
+publication_note = "Source: development_scorecard_data.toml. The original and release rules rejected v0.1.18. The wider score was undecided. Observed starts do not prove long-term climate skill."
+candidate_source_commit = "48c232cc6d313370c9d5c8fd2a52745af4e6c2ac"
+paired_score_result_manifest_sha256 = "3a08fd5990d445be02f417215f35470fcf737bfea4e1f4951cc941769afbd555"
+restart_gpu_result_manifest_sha256 = "2ef4cac0bf6a3421d101b0361eb8606bb46ba2c92610aca224593fefd1a8cf47"
+native_gpu_result_manifest_sha256 = "d5119315152f41c01d09549f5a4534c42ca04aaf58f4b6d1a09b0911bf154539"
+
+[[release]]
+version = "v0.1.0"
+date = "26 Aug"
+change = "First coupled baseline"
+kind = "model"
+direct_label = "component and coupled-step gates"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.1"
+date = "27 Aug"
+change = "Land ET dispatch"
+kind = "model"
+direct_days = 30.0
+direct_label = "30 d"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.2"
+date = "27 Aug"
+change = "Albedo diagnostics"
+kind = "maintenance"
+direct_label = "coupled output smoke"
+inherited_days = 30.0
+inherited_from = "v0.1.1"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.3"
+date = "8 Sep"
+change = "Darcy boundary fix"
+kind = "maintenance"
+direct_label = "component gates"
+inherited_days = 30.0
+inherited_from = "v0.1.1"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.4"
+date = "24 Sep"
+change = "Runoff and GPU fixes"
+kind = "model"
+direct_days = 0.08333333333333333
+direct_label = "2 h"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.5"
+date = "30 Sep"
+change = "Sea-ice GPU restart"
+kind = "maintenance"
+direct_days = 120.0
+direct_label = "day 120"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.6"
+date = "5 Oct"
+change = "Float64 land and cloud path"
+kind = "model"
+direct_days = 30.0
+direct_label = "30 d"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.7"
+date = "7 Oct"
+change = "Two-hour convection"
+kind = "model"
+direct_days = 120.0
+direct_label = "day 120"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.8"
+date = "13 Oct"
+change = "Mixed phase and rain closure"
+kind = "model"
+direct_days = 390.0
+direct_label = "day 390"
+repeat = "not tested"
+status = "released"
+source = "sources/HISTORY.md; sources/development_scorecard_data.toml"
+evidence_scope = "Historical release evidence, retained from the reviewed 16 October inventory."
+
+[[release]]
+version = "v0.1.9"
+date = "14 Oct"
+change = "Spectral launch repair"
+kind = "model"
+direct_days = 30.0
+direct_label = "30 d"
+provisional_days = 390.0
+provisional_label = "390 d prototype: identity FAILED"
+repeat = "long controls not transferable"
+status = "released"
+source = "sources/HISTORY.md; sources/artifacts__development_wave_20261015__v019_native_identity_v1__jobs__59788320__status; sources/artifacts__development_wave_20261015__v019_native_identity_v1__jobs__59788320__cross_source_one_step_compare.log"
+evidence_scope = "Direct 30-day spectral-row repair. Prototype 390-day controls excluded: exact-tag cross-source identity59788320 failed."
+provisional_status = "rejected_identity"
+
+[[release]]
+version = "v0.1.10"
+date = "17 Oct"
+change = "Calendar-centred ocean launch"
+kind = "model"
+direct_days = 30.0
+direct_label = "30 d · 3 January pairs"
+repeat = "three paired January members"
+evidence_scope = "Same physics as v0.1.9; December/January ocean interpolation. CPU and production A100 restart qualification."
+status = "released"
+source = "sources/docs__validation-v0.1.10.md"
+
+[[release]]
+version = "v0.1.11"
+date = "21 Oct"
+change = "Land flux / grid-order repairs"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 1 January pair"
+repeat = "single January pair"
+evidence_scope = "Interval-mean land fluxes, ocean grid ordering and standalone atmosphere restart repairs. Optional carbon, gases, solar and runoff heat have separate scopes."
+status = "released"
+source = "sources/docs__validation-v0.1.11.md"
+
+[[release]]
+version = "v0.1.12"
+date = "21 Oct"
+change = "Optional moist-mass coupling"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · optional ON/OFF pair"
+repeat = "single January pair"
+evidence_scope = "Production remains off, matching v0.1.11. The on/off January pair tests the optional feature; source enthalpy is diagnostic only, with no applied energy debit."
+status = "released"
+source = "sources/docs__validation-v0.1.12.md"
+
+[[release]]
+version = "v0.1.13"
+date = "23 Oct"
+change = "Sigma-RH convection profile"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 3 pairs / season"
+repeat = "three paired members in each of January and July"
+evidence_scope = "Two-season v4/radiation gates pass. Restart evidence is compact T7/L8 at0.125day, not full production-grid GPU restart."
+status = "released"
+source = "sources/docs__validation-v0.1.13.md"
+
+[[release]]
+version = "v0.1.14"
+date = "25 Oct"
+change = "Full temperature transport"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 3 pairs / season"
+provisional_days = 120.0
+provisional_label = "120 d output; drift review pending"
+provisional_status = "unreviewed_drift"
+repeat = "three paired members in each of January and July"
+evidence_scope = "Two-season skill improves; original gross-change physical bounds required a documented override. Exact-tag control62189153_0 reached120days; paired long-drift verdict pending."
+status = "released"
+source = "sources/docs__validation-v0.1.14.md"
+
+[[release]]
+version = "v0.1.15"
+date = "25 Oct"
+change = "Momentum-only K profile"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 3 pairs / season"
+repeat = "three paired members in each of January and July"
+evidence_scope = "Two-season score/radiation improvements. Ice-area bound failed two January pairs and was accepted by documented physical review. Momentum heat return and long drift remain open."
+status = "released"
+source = "sources/docs__validation-v0.1.15.md"
+
+[[release]]
+version = "v0.1.16"
+date = "27 Oct"
+change = "Production solar-distance forcing"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 3 pairs / season"
+repeat = "three paired members in each of January and July"
+evidence_scope = "Published v0.1.16 and CPU, full-suite and GPU restart receipts verified. Six paired31-day runs support the existing solar-distance production setting. Long-term drift remains unqualified."
+status = "released"
+source = "sources/artifacts__development_wave_20261026__oracle_deputy_v1__scorecard_release_v016__draft_evidence_v3__preparation_receipt.json"
+
+[[release]]
+version = "v0.1.17"
+date = "28 Oct"
+change = "Weaker wind-divergence smoothing"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 3 pairs / season"
+repeat = "three paired members in each of January and July"
+evidence_scope = "Published v0.1.17; six paired 31-day runs pass original/v4 score, radiation and physical bounds. Exact-source CPU and GPU restart checks pass. The separate EKE250 improvement target was missed; long drift remains unqualified."
+status = "released"
+source = "artifacts/development_wave_20261028/scorecard_release_v017/original_gate_recheck.json; https://github.com/kieranmrhunt/ReadyESM/blob/v0.1.17/docs/validation-v0.1.17.md"
+
+[[release]]
+version = "v0.1.18"
+date = "30 Oct"
+change = "CATKE energy and scored outputs"
+kind = "model"
+direct_days = 31.0
+direct_label = "31 d · 3 pairs / season"
+repeat = "three paired members in January and July"
+evidence_scope = "Six paired months: original seven-field and release rules rejected; wider nine-field rule undecided. Exact restart and native CATKE GPU checks pass. Long climate drift remains unqualified."
+status = "qualified"
+source = "HISTORY.md; docs/validation-v0.1.18.md; scorecard_v4_data.json"
+
+[[experiment]]
+id = "BS01"
+label = "Mass-flux convection"
+status = "supported"
+reached = "component"
+ceiling = "accepted"
+flags = [".", "-", "P", ".", ".", "F"]
+evidence_scope = "Conservative core retained. Tested plume failed climate."
+next_step = "Repair the thermodynamic host before learned residuals."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS02"
+label = "Mixed-phase cloud"
+status = "supported"
+reached = "scored"
+ceiling = "accepted"
+flags = ["P", "P", "P", "P", "~", "F"]
+evidence_scope = "Transport/restart pass. Tested cloud closure failed."
+next_step = "Replace cloud-fraction / overlap closure before another grid."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS03"
+label = "Radiation sublayers"
+status = "active"
+reached = "pilot"
+ceiling = "accepted"
+flags = ["P", "P", "~", "~", ".", "."]
+evidence_scope = "New top / pressure-linear options in qualification."
+next_step = "Establish monthly skill; integrated conservation scope remains partial."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS04"
+label = "Balanced launch"
+status = "accepted"
+reached = "accepted"
+ceiling = "accepted"
+flags = ["P", "P", "~", "P", "P", "P"]
+evidence_scope = "Spectral-row and calendar launch repairs accepted."
+next_step = "CATKE initialization and velocity consistency remain distinct work."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS05"
+label = "Formal calibration"
+status = "supported"
+reached = "component"
+ceiling = "accepted"
+flags = ["-", "-", ".", ".", ".", "."]
+evidence_scope = "Real-column sensitivity / identifiability only."
+next_step = "Select bounded parameters, then coupled and held-out validation."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS06"
+label = "Multi-category ice"
+status = "supported"
+reached = "scored"
+ceiling = "accepted"
+flags = [".", "P", "~", "P", "P", "F"]
+evidence_scope = "Current category-pressure hybrid failed pile-up gate."
+next_step = "Revisit constitutive pressure attribution after O009 repair."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS07"
+label = "Coastal and landfast ice"
+status = "supported"
+reached = "scored"
+ceiling = "accepted"
+flags = [".", "-", "P", "P", "~", "F"]
+evidence_scope = "Connectivity component retained. Simple repairs failed."
+next_step = "Use corrected pressure evidence before new geometry experiments."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS08"
+label = "Catchment memory"
+status = "supported"
+reached = "pilot"
+ceiling = "accepted"
+flags = [".", "P", "P", "~", ".", "F"]
+evidence_scope = "Reservoir component passes. Runoff heat stays off."
+next_step = "O007 conductivity recovery and source/receiver closure remain open."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS09"
+label = "Branch engine"
+status = "accepted"
+reached = "accepted"
+ceiling = "accepted"
+infrastructure = true
+flags = ["-", "-", "-", "-", "-", "-"]
+evidence_scope = "Live receipts and branch infrastructure."
+next_step = "Scientific promotion still requires its separate model evidence."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__branch_and_efficiency_followup.txt; sources/experiments.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "BS10"
+label = "Optional interactive carbon"
+status = "accepted"
+reached = "accepted"
+ceiling = "accepted"
+flags = ["P", "P", "P", "P", ".", "."]
+evidence_scope = "Optional carbon accepted. Four full-grid GPU days."
+next_step = "Long-term uptake / climate sensitivity remain untested."
+source = "sources/docs__validation-carbon.md"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C01"
+label = "Mixed-layer parcel"
+status = "closed"
+reached = "scored"
+ceiling = "accepted"
+flags = ["P", "-", "P", "P", ".", "F"]
+evidence_scope = "Tested source depths failed the joint 10-day screen."
+next_step = "Different source-depth closures are not ruled out."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C02"
+label = "Depth-limited shallow"
+status = "closed"
+reached = "scored"
+ceiling = "accepted"
+flags = ["P", "-", "P", "P", ".", "F"]
+evidence_scope = "Tested shallow depths failed the joint 10-day screen."
+next_step = "Avoid repeating the same drying-prone settings."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C03"
+label = "Surface-forced shallow"
+status = "closed"
+reached = "scored"
+ceiling = "accepted"
+flags = ["P", ".", "~", "P", ".", "F"]
+evidence_scope = "No tested surface-rate coefficient passes the joint gate."
+next_step = "A structural closure change is needed before another grid."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C04"
+label = "Elevated and slantwise"
+status = "reserve"
+reached = "component"
+ceiling = "accepted"
+flags = ["-", "-", "-", "-", "-", "-"]
+evidence_scope = "CSI footprint below 1% in the inspected census."
+next_step = "Reserve mechanism; evidence does not reject all slantwise convection."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C05"
+label = "Non-equilibrium deep"
+status = "supported"
+reached = "scored"
+ceiling = "accepted"
+flags = [".", ".", "~", "P", "~", "~"]
+evidence_scope = "Memory screen underpowered by phase noise."
+next_step = "Establish phase identifiability before repeating the screen."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C06"
+label = "Downdraft / cold pool"
+status = "supported"
+reached = "scored"
+ceiling = "accepted"
+flags = [".", ".", ".", "P", ".", "F"]
+evidence_scope = "Tested cold-pool setting fails held-out seasonal case."
+next_step = "Retain source for a targeted two-season regime test."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C07"
+label = "Momentum transport"
+status = "active"
+reached = "pilot"
+ceiling = "accepted"
+flags = ["~", ".", "P", "P", ".", "."]
+evidence_scope = "Native thermodynamics: component + one-day pilot."
+next_step = "Fresh restart / monthly skill / release evidence still pending."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C08"
+label = "Multi-plume spectrum"
+status = "closed"
+reached = "scored"
+ceiling = "accepted"
+flags = ["P", "~", "P", "P", ".", "F"]
+evidence_scope = "January source parked. Formal two-season gate UNDECIDED."
+next_step = "Climate flag is the January target failure; repair column moisture exchange first."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C09"
+label = "Stochastic plumes"
+status = "closed"
+reached = "scored"
+ceiling = "accepted"
+flags = ["P", "~", "P", "P", "~", "F"]
+evidence_scope = "Eight-seed form closed below 1% resolution floor."
+next_step = "Retain component; restart evidence is counter/stream replay, not fresh coupled continuation."
+source = "sources/artifacts__blue_sky_20261008__c09_on_c08_stage1_v4__readouts__60075824__report.json"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."
+
+[[experiment]]
+id = "C10"
+label = "Boundary layer / shallow EDMF"
+status = "accepted"
+reached = "accepted"
+ceiling = "accepted"
+flags = ["P", "P", "~", "P", "P", "~"]
+evidence_scope = "Momentum-only K profile accepted in v0.1.15."
+next_step = "Full shallow EDMF is unfinished; old bulk-Ri setting failed."
+source = "sources/artifacts__oracle_audit_v0_1_15_20261026__atmosphere__branch_closure_review.txt"
+gate_scope = "Only the named component/screen is represented. Partial includes incomplete scope or conflicting evidence; not tested means unestablished in this inventory."

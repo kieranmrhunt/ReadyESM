@@ -2,6 +2,8 @@
 
 Run the commands below from the repository directory after installing the
 dependencies listed in the [README](../README.md#run).
+For GPU runs, the project requests CUDA runtime 13.2. Use an NVIDIA driver
+compatible with that runtime.
 
 ## Input data
 

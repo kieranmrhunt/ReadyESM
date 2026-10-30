@@ -38,6 +38,62 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
 
 ## Main known limitations
 
+- The land model uses a wrong exponent in the law for how fast water moves
+  through soil that is not full of water. In drier soil the predicted ability
+  to carry water is 8.6 times too high at half saturation and about 520 times
+  too high at 10 percent saturation. The effect on the climate has not been
+  measured. A correction is being tested and is not in this release.
+- Water vapour that leaves sea ice goes into the air, but the ice and snow do
+  not lose that water. The energy budget also misses the heat of fusion for
+  each kilogram. In a four-year run, the recorded vapour from sea ice was
+  equivalent to about 2.8 mm of water per year spread across Earth. This
+  measures the sampled flow, not how a corrected model would change the
+  ice or climate. The correction is not in this release.
+- In the sea-ice motion code, ice that is not moving still feels half of its
+  full internal pressure. The correct value is zero. Where ice strength
+  changes from place to place, this can push ice that should stay still. A
+  correction has passed its own tests but is not in this release.
+- When a run starts from ECCO ocean data, the starting ocean currents are not
+  put exactly where the ocean model keeps them, including along the fold of
+  the grid near the North Pole. A correction has passed its own tests, but
+  its effect on a coupled run has not been tested for release.
+- When falling snow melts in the air, the rain and snow code does not take
+  the heat of melting from the air. This comes from the SpeedyWeather version
+  used. Its effect on the full model has not been measured.
+- The coupler turns the wind into the directions of the ocean grid. Near the
+  North Pole this turn is less accurate. In a test of the same rotation
+  with a flow of 1 m/s, the error was up to 1.4 percent of that speed at
+  85 to 88 degrees N and up to 5.4 percent at 88 to 89 degrees N. Its
+  effect on the climate has not been measured.
+- In the standard output, ocean and sea-ice surface velocities are labelled
+  east and north, but they follow the directions of the ocean grid. Near the
+  Arctic, where those grid lines turn, the values are not east and north.
+  A correction is being tested and is not in this release.
+- Some atmospheric diagnostics are labelled with a time about one model
+  step (15 minutes) away from the state they describe. This is small for
+  monthly means but matters for six-hourly output and the timing of the
+  water budget. A correction is being tested and is not in this release.
+- Two smaller issues remain. In the sea-ice heat code, energy is not conserved
+  in one case: when the ice area grows and the snow on it then runs out.
+  When the model removes negative humidity, it also removes very small
+  positive humidity, below about one ten-millionth of a kilogram of water
+  per kilogram of air. The size of either effect on the climate has not been
+  measured. Corrections for both are being tested.
+- In one 30-day test for each season with v0.1.17 physics, upper-level
+  storm energy at 250 hPa was 0.65 to 0.79 of ERA5 at model resolution.
+  The sampling uncertainty has not been measured.
+- Land albedo is fixed at 0.4. Over Antarctic land-bearing grid cells,
+  the ERA5 forecast value is about 0.85 in January and July. The effect
+  of this difference on the coupled climate has not been measured.
+- Sea-ice albedo is fixed at 0.60 and does not change with snow cover.
+  In May of the v0.1.15 long run, the model blended surface albedo
+  north of 80 degrees N was 0.57 to 0.58, against 0.77 to 0.79 in ERA5.
+- In the v0.1.15 long run, global snowfall was about half the ERA5
+  value, while total precipitation was close. Large-scale condensate
+  becomes snow only below minus 10 degrees C, and convective
+  precipitation is always rain. The rule's share of the shortfall
+  has not been measured.
+
 - v0.1.15 improves January/July climate scores and low-level
   winds, but increases monthly global ice-area bias by 0.19 and 0.33 million
   km². Two January members exceed the day-31 ice-area change allowance.

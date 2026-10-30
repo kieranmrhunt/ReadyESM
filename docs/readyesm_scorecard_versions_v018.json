@@ -1,0 +1,58 @@
+{
+  "schema": "readiesm_v018_canonical_history_plain_publication_stage_v3",
+  "publication_status": "prepared_for_release_review; not installed",
+  "release_version": "v0.1.18",
+  "scientific_source_commit": "48c232cc6d313370c9d5c8fd2a52745af4e6c2ac",
+  "array_job_id": 63378103,
+  "stage_job_id": 63496364,
+  "canonical_stage_result_sha256": "7e29649128ca0dcf56e3872975a4c64376a1bb11833076f5ffa9e7e7657ceeda",
+  "canonical_stage_provenance_sha256": "a3fc62c93189320cbbeea37b117d9ed7c3c779574c9a4f48d38b09033d06e40a",
+  "renderer_sha256": "e79b740cddfe3b42deb79db59f322fd2229e3a5b9dc381c8b0ef74dccf5b0a44",
+  "preparer_sha256": "c3d8b4b2c2c0f69fe4f4cc4f1fcdd623a62c77e6dc970e7a65182f98ae68bf6a",
+  "figure_sha256": "226071786d0f444e59b0ac36e8011717182e61bf399c5366f8c6328a77444270",
+  "previous_columns_preserved": [
+    "v0_1_1",
+    "v0_1_2",
+    "v0_1_3",
+    "v0_1_4",
+    "v0_1_5",
+    "v0_1_6",
+    "v0_1_7",
+    "v0_1_8",
+    "v0_1_9",
+    "v0_1_10",
+    "v0_1_11",
+    "v0_1_12",
+    "v0_1_13",
+    "v0_1_14",
+    "v0_1_15",
+    "v0_1_16",
+    "v0_1_17"
+  ],
+  "runs": {
+    "JAN": {
+      "job_result_manifest_sha256": "d952e7fdbaca85ca1720a15d1c2b4e9fb7b580b1c0ad3cd6b2763c2b3c17f569",
+      "report_sha256": "41dc663306038eea680fc5965d1ac353cdac7a6fe9b615f3da662bff7e45dc6e",
+      "canonical_reference_sha256": "0600dde961dc00d087bc74781af6f0244268e7c47cd42eee6fa8c859743af310",
+      "score_sha256": "06e9b4616f5b84d9299e5253d0f653d8184ab980d49dc34fa4755e114729495c",
+      "history_sha256": "5dd2b97dc2bcf8e9960f972ea829c268038a93740b9d5622dcfe137ee886f5de",
+      "onr9": 0.8670181590043565,
+      "cells_at_or_better_than_cmip6_median": 42,
+      "slurm_task": "63378103_0"
+    },
+    "JUL": {
+      "job_result_manifest_sha256": "88b00c590ccc4df287182724071b61db302d2585eb16e371f8741871ae0b0ab6",
+      "report_sha256": "9cc21f3df4ec421fb6832c972ec954d86768fc71aa78d837cdc3b9c7165a5e7c",
+      "canonical_reference_sha256": "3fd06aae1fb3afd502acbc3a24e2ae8b6db3e6d35a620c15cfc362bfa78bd2a5",
+      "score_sha256": "9d336aab0ced29920f5a53a2d5da8d739ac594a29893d143bc12ba948f25a882",
+      "history_sha256": "bb40cd787872160710087ebfbbab414ae971ef7d5b17d68d8cd8e81afbec07fb",
+      "onr9": 1.037682919962492,
+      "cells_at_or_better_than_cmip6_median": 26,
+      "slurm_task": "63378103_1"
+    }
+  },
+  "comparison_scope": "single canonical start per season; matched six-pair readout is the release estimate",
+  "rendered_from_publication_manifest_sha256": "04aaf8ffceb67d558366edcf807962e53e65e66901a9ea4c96f608d8ece05e75",
+  "six_field_baseline_source_sha256": "417fe8872b678b397b1ae253d91960d313fb0295c813fdaceaff8f6836163aa0",
+  "label_change": "public-facing figure text only: spell out score and error names, explain the six-field baseline in plain words, and separate crowded score labels; scored inputs unchanged"
+}

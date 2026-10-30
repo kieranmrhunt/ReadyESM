@@ -1,13 +1,13 @@
 # Version history
 
 Latest tagged version: [v0.1.18](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.18),
-29 October 2026.
+30 October 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
 
-## 0.1.18 — 2026-10-29
+## 0.1.18 — 2026-10-30
 
 - Add the energy from the wind and from surface cooling that drives ocean
   mixing near the surface. The standard ocean combines four or five mixing
@@ -29,6 +29,24 @@ for test results and earlier work.
   outside a fixed limit, for example an ocean temperature above 40 °C.
 - The README example now runs for 31 days, and the figure data are named by
   release files and hashes, not by local paths.
+- GPU runs now ask for version 13.2 of the CUDA runtime. Use an NVIDIA driver
+  that supports it.
+- Over four pairs run on the same GPU host, v0.1.18 took 4 to 16 percent longer
+  per model day than the matched control. The new step check accounted for
+  less than 1 percent in a separate timing test.
+- Six 31-day runs, three in January and three in July, were compared with
+  matched runs using the v0.1.17 settings from the same observed starts. In
+  January the change in error was within the spread of the matched runs. In
+  July the error grew by slightly more than that spread, so the original
+  seven-field score rejected this version. The nine-field score did not reach a
+  decision. The separate release rule also rejected the change. The paired
+  radiation and model-state checks passed. These results are reported without
+  changing the scores or the rule outcome. Runs that start from observations
+  do not show long-term climate skill.
+- The new ocean mixing energy passed its GPU test. In a simple six-hour test
+  with wind over one ocean column, it deepened the mixed layer by 0.06 m
+  against a target of 0.1 m. The [validation record](docs/validation-v0.1.18.md)
+  describes this, and [NOTES.md](NOTES.md) lists other known limitations.
 
 ## 0.1.17 — 2026-10-28
 

@@ -9,30 +9,49 @@ In the standard setup, the atmosphere has a grid spacing of about 400 km
 about 1 degree and 60 levels. The land has 16 soil layers. ERA5 supplies the
 initial atmosphere and land state. ECCO supplies the ocean and sea ice.
 
-![Nine maps of the ocean, sea ice, atmosphere and land after 31 days](docs/readiesm-v0.1.17-maps.png)
+![Nine maps of the ocean, sea ice, atmosphere and land after 31 days in the observation-initialised v0.1.18 January run](docs/readiesm-v0.1.18-maps.png)
 
-January 1993 member 1 after 31 days with the v0.1.17 configuration. This is
-one run that starts from observations, rather than a long-term climate mean.
-Grey marks inactive cells. Ice-free ocean is white.
+January 1993 member 1 after 31 days with v0.1.18 source `48c232cc`.
+This run starts from observations and is one trajectory, not a long-term
+climate mean. Grey marks inactive cells. Ice-free ocean is white.
 
-![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture](docs/readiesm-v0.1.17-timelines.png)
+![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture in the first 31 days of v0.1.18](docs/readiesm-v0.1.18-timelines.png)
 
 The same run from day 0 to day 31. Radiation shows daily means. Other panels
 show daily samples. Ocean extrema cover all active depths and can move between
 cells.
-[Figure data and details](docs/readiesm-v0.1.17-figures.json).
+[Figure data, source hashes and methods](docs/readiesm-v0.1.18-figures.json).
 
-## Comparison with v0.1.16
+## v0.1.18 paired comparison
 
-![Six paired changes in the original seven-field score and the separate upper-level eddy screen against its target](docs/readiesm-v0.1.17-comparison.png)
+![Six matched January and July runs comparing v0.1.18 with v0.1.17 on two scores, with the energy and safety checks and the release decision](docs/readiesm-v0.1.18-comparison.png)
 
-The original score fell for four of six matched 31-day members. Lower is
-better. The three-member January mean was neutral under the release rule,
-and the July mean improved. The separate upper-level eddy screen used one
-matched member per season. Its improvement missed the predeclared target
-in both seasons. See the [validation results](docs/validation-v0.1.17.md),
-the [figure values and source hashes](docs/readiesm-v0.1.17-comparison.json)
-and the [plot recipe](docs/plot-v0.1.17-comparison.py).
+Three 31-day runs in each season compare v0.1.18 with matched runs using the
+v0.1.17 settings from the same observed starts. The controls use an earlier
+source commit than the published v0.1.17 tag. Lower error is better. On the
+original seven-field score, July error rose by 0.0115. That is more than the spread
+of the three matched July runs (0.0103), so this score rejected the change.
+The nine-field score did not reach a decision because its July change stayed
+within its spread. The paired radiation and model-state checks passed. The
+separate release rule also rejected the change because of the July result.
+These results are reported without changing the scores or the rule outcome. See the
+[validation record](docs/validation-v0.1.18.md),
+[figure values and source hashes](docs/readiesm-v0.1.18-comparison.json), and
+[plot recipe](docs/plot-v0.1.18-comparison.py).
+
+These runs start from observations. In a separate six-field test, two simple
+guesses (the long-term average and the starting anomaly held fixed) scored
+better than all 59 CMIP6 models. The ranks here show agreement with the
+observed month, not free-running climate skill. The
+[paired scorecard](scorecard.png), [development scorecard](development_scorecard.png)
+and [canonical-start version history](readyesm_scorecard_versions.png)
+show the evidence in different ways. The version history uses one start per
+season. The paired comparison estimates the change in this release. The
+[version-history figure record](docs/readyesm_scorecard_versions_v018.json)
+gives its source hashes. The [paired score values](scorecard_v4_data.json) and
+[development figure provenance](docs/development_scorecard_v018_provenance.json)
+record the frozen outcomes and GPU gate receipts behind the two other
+scorecards.
 
 ## Speed
 
@@ -60,7 +79,8 @@ initialization, for timing only.
 ## Run
 
 Use Julia 1.12 and Python 3.11 or newer. The standard configuration uses an NVIDIA GPU
-with CUDA. CPU runs are also supported.
+with CUDA. The project asks for CUDA runtime 13.2. Check that your NVIDIA
+driver supports it. CPU runs are also supported.
 
 ```bash
 git clone https://github.com/kieranmrhunt/ReadyESM.git
@@ -111,7 +131,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `duration_days`, `analysis_start_day` | `730`, `365` | Run length and a recorded analysis-start day. The current runner saves `analysis_start_day` in the metadata. It does not use it to choose which days to average. It must be less than `duration_days`. |
 | `atmosphere_hyperdiffusion_hours` | `4` | Time over which the model smooths small-scale noise in wind, temperature and humidity. A longer time gives weaker smoothing. |
 | `atmosphere_divergence_hyperdiffusion_hours` | `4` | Time over which the model smooths the divergent part of the wind. v0.1.16 used 1 hour. A restart from a saved state with a different value stops with an error. |
-| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Select `speedyweather_0_21_1_centered` for the older advection behaviour in a new run. Checkpoints from earlier releases cannot be restarted directly in v0.1.17. |
+| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Select `speedyweather_0_21_1_centered` for the older advection behaviour in a new run. A normal restart requires matching model settings, source commit and package versions. See [restart identity](docs/running.md#restart-identity). |
 | `atmosphere_vertical_diffusion` | `holtslag_boville_k_profile_v1` | Mix momentum vertically in the atmospheric boundary layer. Requires Oceananigans and Terrarium. |
 | `atmosphere_pbl_diffusivity_scale` | `1.0` | Multiply the boundary-layer mixing coefficient by a value greater than 0 and at most 1. |
 | `atmosphere_pbl_mix_heat`, `atmosphere_pbl_mix_humidity`, `atmosphere_pbl_mix_momentum` | `false`, `false`, `true` | Select the fields mixed by the boundary-layer scheme. |

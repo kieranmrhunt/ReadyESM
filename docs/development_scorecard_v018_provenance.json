@@ -1,0 +1,31 @@
+{
+  "schema": "v018_development_scorecard_release_stage_v1",
+  "publication_status": "prepared_for_release_review",
+  "candidate_source_commit": "48c232cc6d313370c9d5c8fd2a52745af4e6c2ac",
+  "control_source_commit": "a2f2ac4d4d6cf8fadd17d43808acf54d87c7f91d",
+  "stager_sha256": "926da6063547edbacca5b20740f0b2dd980bb6e7586f291c4bba1b0448ba1f91",
+  "paired_scorecard_stage_manifest_sha256": "aadbf2964a564a51b2f3c74c8d08cc97d8798043e48182bfa6cd1a89d5ad6a9e",
+  "paired_score_result_manifest_sha256": "3a08fd5990d445be02f417215f35470fcf737bfea4e1f4951cc941769afbd555",
+  "portable_score_data_sha256": "dbfbb447fe79dd76de643e1cb67ad47763102f0571b31577b0ce99c1b8fc17a2",
+  "gpu_gates": {
+    "restart_gpu_result": {
+      "job": "63495868",
+      "verdict": "V018_RESTART_GPU_PASS",
+      "result_manifest_sha256": "2ef4cac0bf6a3421d101b0361eb8606bb46ba2c92610aca224593fefd1a8cf47"
+    },
+    "native_gpu_result": {
+      "job": "63374110",
+      "verdict": "V018_CATKE_NATIVE_GPU_PASS",
+      "result_manifest_sha256": "d5119315152f41c01d09549f5a4534c42ca04aaf58f4b6d1a09b0911bf154539"
+    }
+  },
+  "neutral_rule_decision": "REJECT",
+  "published_v017_data_sha256": "49b2ac2c58c5dbc0059cb1dceef473930c3739d987bd57a82c2495f91c961e55",
+  "release_history_sha256": "63d59c96aa897c577fc7d138710f894df2dcaa002cdd82d0de40b38b06c3ed1d",
+  "release_history_date": "2026-10-30",
+  "data_sha256": "94ce913f3ddb0aa7ce66678ca4b9eaf8b456f450430251b04f67af9aeca70dcb",
+  "renderer_sha256": "334286c5493c6a7bc779a8f0cabe55c143400d3b905511c76bf443c04d155250",
+  "png_sha256": "49582df30911739c03a0d5d262874595efd22cd652b9849b4db49fcfc9b58685",
+  "pdf_sha256": "a8379c836022ea4df85ccdf61eeab1a1b4275582737d3b4500cdbf027a5b7bd6",
+  "scope": "Nineteen version rows; six paired months; long climate drift not qualified."
+}
