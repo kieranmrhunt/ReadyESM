@@ -1,5 +1,5 @@
 [meta]
-as_of = "2026-10-30T15:47:53.783325+00:00"
+as_of = "2026-10-30T16:20:31.799635+00:00"
 release_source = "HISTORY.md; docs/validation-v0.1.18.md; scorecard_v4_data.json"
 experiment_source = "docs/experiments.md; reviewed programme inventory"
 review_source = "sealed six-pair skill, exact restart and native CATKE GPU receipts"

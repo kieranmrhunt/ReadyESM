@@ -4,7 +4,7 @@
   "candidate_source_commit": "48c232cc6d313370c9d5c8fd2a52745af4e6c2ac",
   "control_source_commit": "a2f2ac4d4d6cf8fadd17d43808acf54d87c7f91d",
   "stager_sha256": "926da6063547edbacca5b20740f0b2dd980bb6e7586f291c4bba1b0448ba1f91",
-  "paired_scorecard_stage_manifest_sha256": "aadbf2964a564a51b2f3c74c8d08cc97d8798043e48182bfa6cd1a89d5ad6a9e",
+  "paired_scorecard_stage_manifest_sha256": "aded5f53baf212bbefe9ffcde8b63eaf4f32a4f12e685915595c0f794a73f7e4",
   "paired_score_result_manifest_sha256": "3a08fd5990d445be02f417215f35470fcf737bfea4e1f4951cc941769afbd555",
   "portable_score_data_sha256": "dbfbb447fe79dd76de643e1cb67ad47763102f0571b31577b0ce99c1b8fc17a2",
   "gpu_gates": {
@@ -21,11 +21,11 @@
   },
   "neutral_rule_decision": "REJECT",
   "published_v017_data_sha256": "49b2ac2c58c5dbc0059cb1dceef473930c3739d987bd57a82c2495f91c961e55",
-  "release_history_sha256": "63d59c96aa897c577fc7d138710f894df2dcaa002cdd82d0de40b38b06c3ed1d",
+  "release_history_sha256": "9363f3b79980f67bb1e0aed0974817ae791500b59242a2fbe6d5bb152a232c4d",
   "release_history_date": "2026-10-30",
-  "data_sha256": "94ce913f3ddb0aa7ce66678ca4b9eaf8b456f450430251b04f67af9aeca70dcb",
+  "data_sha256": "17a7a88975c64c547af67774ae36f487777f2c6c0fa92f4de9fdc0e0d6101fb4",
   "renderer_sha256": "334286c5493c6a7bc779a8f0cabe55c143400d3b905511c76bf443c04d155250",
-  "png_sha256": "49582df30911739c03a0d5d262874595efd22cd652b9849b4db49fcfc9b58685",
-  "pdf_sha256": "a8379c836022ea4df85ccdf61eeab1a1b4275582737d3b4500cdbf027a5b7bd6",
+  "png_sha256": "bb50a0ee4240d4cedb9798bb0701853a9c89673ac232f9b51bfa99c5e6784aee",
+  "pdf_sha256": "eebf246ec22af2c4dea426a90b3a72248e76b2310532021ad8705b14b2066f80",
   "scope": "Nineteen version rows; six paired months; long climate drift not qualified."
 }

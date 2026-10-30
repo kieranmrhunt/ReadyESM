@@ -248,15 +248,15 @@ The six-pair paired skill scorecard is prepared in
 and PNG SHA-256
 `1678b4a442de6a52f17dd3e6b0740456ec25c6869c1d3b4a54ee215349e71a91`.
 The reviewed development scorecard is prepared in
-`development_scorecard_v018_b3_v5_plain/release_stage_63495868_v2`, with
+`development_scorecard_v018_b3_v6_historybound/release_stage_63495868_v3`, with
 `result.sha256` SHA-256
-`a95e00c37b9c45b4f65341a99d5834ccf8ddfc65f2d88ac951f14d9b9b792b84`
+`3bdf1565bb72cee2e3d5b1fd5d138b5434c83686ab19a479c43bc9ca0265e681`
 and PNG SHA-256
-`49582df30911739c03a0d5d262874595efd22cd652b9849b4db49fcfc9b58685`.
+`bb50a0ee4240d4cedb9798bb0701853a9c89673ac232f9b51bfa99c5e6784aee`.
 Both stages include the exact restart and native CATKE GPU gate receipts.
-The development stage used paired v2; v2 and v4 have byte-identical scored
-JSON. The v4 paired figure corrects only the baseline wording and one label
-position.
+The development stage uses paired v4 and the reviewed release HISTORY text.
+Its scientific rows and portable score JSON are unchanged from the previous
+development stage; only the render timestamp and provenance changed.
 The plain-label README comparison is staged in `v018_comparison_figure_plain_v2`
 with SHA-256 manifest
 `286f757095b4d22aae6c161d1d1517394d899b1c1dc3a5b1377abe0347ec180c`.
