@@ -82,6 +82,14 @@ function weights(s::Source,longitude,latitude,month;max_distance=12.0)
     return (;indices=[best],weights=[1.0],fallback=true,distance=best_distance)
 end
 
+"Keep roundoff from taking a physical cover fraction outside [0, 1]."
+function bounded_cover(c::Real)
+    tolerance=16eps(Float64)
+    isfinite(c) && -tolerance<=c<=1+tolerance ||
+        throw(ArgumentError("remapped vegetation cover is outside [0, 1] beyond roundoff"))
+    return clamp(c,0.0,1.0)
+end
+
 function remap(s::Source,longitudes,latitudes;max_distance=12.0)
     length(longitudes)==length(latitudes)>0 || throw(DimensionMismatch("target coordinate lengths"))
     n=length(longitudes)
@@ -104,6 +112,7 @@ function remap(s::Source,longitudes,latitudes;max_distance=12.0)
                 albedo[name][k,m]+=w*s.fields[name][j,i,m]
             end
         end
+        cover[k,m]=bounded_cover(cover[k,m])
     end
     leaf_index=map((c,a)->iszero(c) ? 0.0 : a/c,cover,area_leaf_index)
     return (;cover,area_leaf_index,leaf_index,albedo,fallback,distance,source_identity=s.identity)

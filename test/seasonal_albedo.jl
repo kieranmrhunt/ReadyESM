@@ -98,6 +98,21 @@ end
     @test mapped.leaf_index≈fill(2.5,1,12)
     @test mapped.albedo[:aluvp]==fill(.3,1,12)
     @test !any(mapped.fallback) && mapped.source_identity=="synthetic"
+
+    # Four land-conditioned weights can sum to one Float64 ULP above one.
+    # The January production diagnostics require the mapped cover to remain
+    # within the physical range without weakening their strict validator.
+    fields[:cvh].=1.; fields[:cvl].=0.
+    full=R.SeasonalLandRemapping.source([-90.,0.,90.],[0.,90.,180.,270.],fields)
+    longitude,latitude=1.1050422658177905,-79.88410250277877
+    @test sum(R.SeasonalLandRemapping.weights(full,longitude,latitude,1).weights)>1
+    bounded=R.SeasonalLandRemapping.remap(full,[longitude],[latitude])
+    @test bounded.cover==ones(1,12)
+    @test all(isapprox.(bounded.leaf_index,fill(3.,1,12)))
+    @test R.SeasonalLandRemapping.bounded_cover(1+eps(Float64))==1
+    @test_throws ArgumentError R.SeasonalLandRemapping.bounded_cover(1+1e-8)
+    @test_throws ArgumentError R.SeasonalLandRemapping.bounded_cover(-1e-8)
+    @test_throws ArgumentError R.SeasonalLandRemapping.bounded_cover(NaN)
 end
 
 @testset "Enabled restart identity" begin
