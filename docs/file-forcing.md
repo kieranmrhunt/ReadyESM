@@ -3,7 +3,7 @@
 File forcing is optional and applies only with RRTMGP radiation. Leave both
 paths empty to use the standard constant gases and analytic ozone profile.
 Each input file is checked when the configuration is loaded. Its content hash
-and selected year are part of restart identity; use the same file contents and
+and selected year are part of restart identity. Use the same file contents and
 settings when resuming a run.
 
 ## Well-mixed greenhouse gases
@@ -59,5 +59,5 @@ forcing:
 ```
 
 The input preparation scripts and their source records are maintained in the
-development archive. The model reads the prepared files; it does not fetch
+development archive. The model reads the prepared files. It does not fetch
 forcing data from the internet.

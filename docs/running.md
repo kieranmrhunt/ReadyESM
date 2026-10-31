@@ -10,7 +10,7 @@ atmosphere and land, and ECCO V4r4 for the ocean and sea ice.
 The v0.1.19 production profile also reads the packaged monthly vegetation
 cycle under `data/era5_seasonal_land_cycle_1993/` and the realistic albedo
 candidate under `data/era5_realistic_albedo_1993/`. Their expected SHA-256
-values are pinned in `config/production.yml`; see the [albedo provenance](../data/era5_realistic_albedo_1993/README.md).
+values are pinned in `config/production.yml`. See the [albedo provenance](../data/era5_realistic_albedo_1993/README.md).
 
 ### ERA5
 

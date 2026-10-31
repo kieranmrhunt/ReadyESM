@@ -20,5 +20,5 @@ The monthly fields are remapped to the model's native land columns and interpola
 
 The production profile also enables the separate [seasonal albedo](seasonal-albedo.md)
 and dissipative-heating settings. Its combined 90-day run cannot attribute a
-temperature change to vegetation alone; separate paired arms are needed to
+temperature change to vegetation alone. Separate paired arms are needed to
 assess individual effects.
