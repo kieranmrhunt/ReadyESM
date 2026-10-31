@@ -25,3 +25,15 @@ The output and the files copied from the derivation stage are pinned in
 input; selection in the v0.1.19 production profile does not establish a
 validated climate correction. The combined 90-day qualification remains to
 be read before release.
+
+## Data credit
+
+Contains modified Copernicus Climate Change Service information 2026.
+The source is [ERA5 monthly averaged data on single levels from 1940 to present](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means),
+DOI [10.24381/cds.f17050d7](https://doi.org/10.24381/cds.f17050d7),
+provided under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+The original 1993 land-cycle file uses this source. This realistic-albedo
+candidate additionally uses its 1994–2013 forecast-albedo monthly climatology;
+the derivation and source hashes are recorded above. Neither the European
+Commission nor ECMWF is responsible for any use that may be made of the
+Copernicus information it contains.

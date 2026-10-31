@@ -199,3 +199,12 @@ Developed by Kieran Hunt with AI coding assistance from Claude and OpenAI Codex.
 ReadyESM is released under the European Union Public Licence v1.2
 (EUPL-1.2). See [LICENSE](LICENSE). The bundled packages in `vendor/` keep
 their own licences. The [third-party licences](THIRD_PARTY.md) list them.
+
+The packaged seasonal land inputs contain modified Copernicus Climate Change
+Service information 2026 from [ERA5 monthly averaged single-level data](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-single-levels-monthly-means)
+(DOI [10.24381/cds.f17050d7](https://doi.org/10.24381/cds.f17050d7)),
+licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+Neither the European Commission nor ECMWF is responsible for any use that may
+be made of the Copernicus information they contain. The
+[realistic-albedo data record](data/era5_realistic_albedo_1993/README.md)
+describes the modifications and source hashes.
