@@ -41,11 +41,12 @@ shortwave responds to the albedo change; both pass. A one-member July month
 sensitivity test found an approximately 2 K improvement in 30–60°N 500-hPa
 temperature bias, but global net top-of-atmosphere flux shifted by about
 +9.65 W m⁻². The test is short and has vertical and regional overshoots.
-The one-member 90-day combined run has completed on development source
-`d325fc3`. Its 30–60°N 500-hPa weeks-4–12 error against ERA5 moved from
-−3.31 K in the matched v0.1.18-settings run to +0.05 K. Global net
-top-of-atmosphere flux increased by 9.71 W m⁻² in July, 7.46 in August and
-6.65 over the 28 September days in the file; the upper-air warm bias worsened.
-This combined run does not isolate the albedo effect or establish
-repeatability or long-run energy closure. The six paired release months
-remain to be scored.
+The 90-day run with all three changes, from one start, is complete. It used
+development source `d325fc3`. In weeks 4 to 12, the error against ERA5 at
+500 hPa between 30 and 60°N was −3.31 K with the v0.1.18 settings and
++0.05 K with the changes. The net energy into the planet at the top of the
+atmosphere rose by 9.71 W m⁻² in July, 7.46 in August and 6.65 in the first
+28 days of September. The upper air, which was already too warm, became
+warmer. This run does not separate the albedo effect from the other two
+changes. It does not show that the result repeats, or that the energy stays
+in balance over long runs. The six paired release months are not yet scored.

@@ -174,8 +174,9 @@ Edit the existing entries in the YAML file. Forcing options sit under
 **Land brightness:** the fix that makes the radiation use the monthly values
 passes its tests. In one July month it warmed the middle atmosphere at 30 to
 60 degrees north and changed how much sunlight the planet absorbs. A 90-day
-combined test has completed on a development source. Its energy and upper-air
-guardrails remain material; see the [seasonal albedo guide](docs/seasonal-albedo.md).
+combined test is complete on a development copy of the code. Its effects on
+the energy balance and on the upper air still need work. See the
+[seasonal albedo guide](docs/seasonal-albedo.md).
 
 The standard setup uses prescribed CO2 and aerosol forcing. Optional
 [carbon exchange and emissions](docs/carbon.md) can update CO2.
