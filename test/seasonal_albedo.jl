@@ -122,7 +122,18 @@ end
     simulation=(;model=(;callbacks=Dict(:seasonal_albedo=>controller)))
     record=(;identity,has_solved=false,direct=zeros(Float32,2,1),diffuse=zeros(Float32,2,1))
     @test R._validate_seasonal_albedo_restart(simulation,(;seasonal_albedo=record))===nothing
+    reordered_identity=(;mapping_sha256="b",crossing_band=:equal_halves,
+        source_sha256="a",schema=1)
+    reordered=(;diffuse=zeros(Float32,2,1),direct=zeros(Float32,2,1),
+        has_solved=false,identity=reordered_identity)
+    @test R._validate_seasonal_albedo_restart(simulation,(;seasonal_albedo=reordered))===nothing
     @test_throws ArgumentError R._validate_seasonal_albedo_restart(simulation,(;))
+    @test_throws ArgumentError R._validate_seasonal_albedo_restart(simulation,
+        (;seasonal_albedo=(;identity,has_solved=false,direct=zeros(Float32,2,1))))
+    @test_throws ArgumentError R._validate_seasonal_albedo_restart(simulation,
+        (;seasonal_albedo=(;record...,extra=true)))
+    @test_throws ArgumentError R._validate_seasonal_albedo_restart(simulation,
+        (;seasonal_albedo=(;record...,identity=(;identity...,extra=true))))
     changed=(;identity=(;identity...,crossing_band=:visible),has_solved=false,
         direct=zeros(Float32,2,1),diffuse=zeros(Float32,2,1))
     @test_throws ArgumentError R._validate_seasonal_albedo_restart(simulation,(;seasonal_albedo=changed))

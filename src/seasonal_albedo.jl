@@ -160,6 +160,13 @@ function _seasonal_albedo_restart_state(simulation)
         diffuse=Array(RRTMGP.diffuse_sw_surface_albedo(solver))))
 end
 
+function _same_seasonal_albedo_identity(recorded,expected)
+    recorded isa NamedTuple || return false
+    length(recorded)==length(expected) || return false
+    return all(name->hasproperty(recorded,name) &&
+        isequal(getproperty(recorded,name),getproperty(expected,name)),keys(expected))
+end
+
 function _validate_seasonal_albedo_restart(simulation,state)
     enabled=_has_seasonal_albedo(simulation.model)
     present=hasproperty(state,:seasonal_albedo)
@@ -167,8 +174,12 @@ function _validate_seasonal_albedo_restart(simulation,state)
     enabled || return nothing
     controller=simulation.model.callbacks[:seasonal_albedo]
     record=state.seasonal_albedo
-    keys(record)==(:identity,:has_solved,:direct,:diffuse) || throw(ArgumentError("invalid seasonal albedo checkpoint schema"))
-    isequal(record.identity,controller.identity) || throw(ArgumentError("checkpoint has different seasonal albedo source, mapping or convention"))
+    required=(:identity,:has_solved,:direct,:diffuse)
+    record isa NamedTuple && length(record)==length(required) &&
+        all(name->hasproperty(record,name),required) ||
+        throw(ArgumentError("invalid seasonal albedo checkpoint schema"))
+    _same_seasonal_albedo_identity(record.identity,controller.identity) ||
+        throw(ArgumentError("checkpoint has different seasonal albedo source, mapping or convention"))
     record.has_solved isa Bool || throw(ArgumentError("invalid seasonal albedo solve flag"))
     for name in (:direct,:diffuse)
         values=getproperty(record,name)
