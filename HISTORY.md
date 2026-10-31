@@ -17,15 +17,19 @@ for test results and earlier work.
   into the air as heat. Land uses a monthly brightness map adjusted toward
   ERA5 values, in place of one fixed value. Plant cover and leaf area follow
   their monthly ERA5 cycle. Settings made outside the production file keep
-  the old choices. The three changes have not yet been tested together over
-  a season. They have not been shown to remove the temperature drift.
+  the old choices. A one-member July-start test of all three changes has run
+  for 90 days. It does not show whether the long-term temperature drift is gone.
 - In an earlier development version, the monthly land brightness had no
   effect because a later step put back the old single value before each
   radiation calculation. This is fixed. Tests show that the radiation now
   uses the monthly values. In one July month the change warmed the middle
   atmosphere between 30 and 60 degrees north and changed how much sunlight
-  the planet absorbs. A 90-day test of all three changes is under way. One
-  month cannot show the long-term effect.
+  the planet absorbs. In the 90-day combined test, the 30–60°N 500-hPa
+  weeks-4–12 error against ERA5 moved from −3.31 K to +0.05 K relative to the
+  matched v0.1.18 settings. Global net top-of-atmosphere flux increased by
+  9.71 W m⁻² in July, 7.46 in August and 6.65 over 28 September days, and
+  upper-air warm bias worsened. This is one start and does not establish
+  repeatability or which of the three changes caused the result.
 - An option is added for a soil-water law in which dry soil passes water much
   more slowly. It is off.
 - A short test compares model temperatures with ERA5 week by week to show how

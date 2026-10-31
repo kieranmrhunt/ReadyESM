@@ -10,9 +10,12 @@
   mixing are off in production.
 - The v0.1.19 production profile returns diagnosed atmospheric wind-energy
   losses as heat, uses realistic seasonal ERA5 land albedo and prescribes
-  seasonal vegetation cover and leaf area. The combined 90-day qualification
-  is pending. The albedo source remains an approximation to snow's spectral
-  response; see [its provenance](data/era5_realistic_albedo_1993/README.md).
+  seasonal vegetation cover and leaf area. A one-member 90-day combined test
+  has completed; it reduced the measured 30–60°N 500-hPa cold bias but moved
+  global net top-of-atmosphere flux upward and worsened upper-air warm bias.
+  Repeatability and long-run energy closure remain untested. The albedo source
+  remains an approximation to snow's spectral response; see
+  [its provenance](data/era5_realistic_albedo_1993/README.md).
 - Two-hour Betts–Miller convection with reference RH 0.5 above sigma 0.3,
   increasing to 0.7 at sigma 0.7, then constant below. Net-column rain diagnosis.
 - Mixed liquid/ice saturation and net-column large-scale rain diagnosis:
