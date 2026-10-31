@@ -49,6 +49,7 @@ struct KProfileBoundaryLayerMixing{NF} <: SpeedyWeather.AbstractVerticalDiffusio
     mix_heat::Bool               # strength screen: mix dry static energy (default true)
     mix_humidity::Bool           # strength screen: mix humidity (default true)
     mix_momentum::Bool           # opt-in: mix u and v with the same coefficients (default false)
+    dissipative_heating::Bool    # opt-in: return the momentum mixing's kinetic-energy loss as heat (default false)
 end
 
 Adapt.@adapt_structure KProfileBoundaryLayerMixing
@@ -58,16 +59,18 @@ function KProfileBoundaryLayerMixing(spectral_grid::SpeedyWeather.SpectralGrid;
                                      surface_condition = SpeedyWeather.SurfaceCondition(spectral_grid),
                                      surface_momentum_flux = SpeedyWeather.SurfaceMomentumFlux(spectral_grid),
                                      diffusivity_scale = 1, mix_heat = true, mix_humidity = true,
-                                     mix_momentum = false)
+                                     mix_momentum = false, dissipative_heating = false)
     0 < diffusivity_scale <= 1 || throw(ArgumentError("diffusivity_scale must be in (0, 1], got $diffusivity_scale"))
     (mix_heat || mix_humidity || mix_momentum) ||
         throw(ArgumentError("the K-profile must mix at least one of heat, humidity and momentum"))
+    !dissipative_heating || mix_momentum ||
+        throw(ArgumentError("K-profile dissipative heating requires momentum mixing"))
     NF = spectral_grid.NF
     return KProfileBoundaryLayerMixing{NF}(NF(critical_richardson), NF(maximum_sigma),
         NF(surface_condition.wind_slowdown), NF(surface_condition.gust_speed),
         NF(surface_momentum_flux.wind_slowdown), Bool(surface_momentum_flux.use_boundary_layer_drag),
         NF(surface_momentum_flux.drag_ocean), NF(surface_momentum_flux.drag_land),
-        NF(diffusivity_scale), Bool(mix_heat), Bool(mix_humidity), Bool(mix_momentum))
+        NF(diffusivity_scale), Bool(mix_heat), Bool(mix_humidity), Bool(mix_momentum), Bool(dissipative_heating))
 end
 
 """Provenance: the v1 string, plus a suffix for each non-default strength-screen parameter."""
@@ -111,7 +114,7 @@ SpeedyWeather.variables(::KProfileBoundaryLayerMixing) = (
 )
 
 function SpeedyWeather.initialize!(scheme::KProfileBoundaryLayerMixing, model::SpeedyWeather.AbstractModel)
-    condition, momentum = model.surface_condition, model.surface_momentum_flux
+    condition, momentum = model.surface_condition, _plain_surface_momentum_flux(model.surface_momentum_flux)
     condition isa SpeedyWeather.SurfaceCondition && momentum isa SpeedyWeather.SurfaceMomentumFlux ||
         throw(ArgumentError("the K-profile scheme supports SpeedyWeather's SurfaceCondition and SurfaceMomentumFlux"))
     matches = scheme.surface_wind_slowdown == condition.wind_slowdown && scheme.gust_speed == condition.gust_speed &&
@@ -297,6 +300,25 @@ Base.@propagate_inbounds function _pbl_add_flux_tendency!(tendency, ij, x_new, a
     return nothing
 end
 
+"""
+Opt-in dissipative heating (dissipative_heating.jl): add the kinetic-energy loss of the solved wind column as heat
+where it is dissipated. A layer's own KE change also contains KE moved between layers, which can be negative, so it is
+not used. The loss of the implicit solve is the sum of two non-negative parts, D_face from each face a_k (x_new[k+1] -
+x_new[k])^2 and D_implicit from each layer dsigma_k (x_new[k] - wind[k])^2 / (2 dt). Each face gives half to each
+adjacent layer and each layer keeps its own implicit part. Every layer's heating is then non-negative, and the column
+sum is exactly D_face + D_implicit (Barry's review of D1).
+"""
+Base.@propagate_inbounds function _pbl_heat_from_wind!(tendency, wind, ij, x_new, a, dsigma, dt, heat_capacity)
+    n = length(dsigma)
+    for k in 1:n
+        face = zero(eltype(x_new))
+        k > 1 && (face += a[k - 1] * (x_new[k] - x_new[k - 1])^2)
+        k < n && (face += a[k] * (x_new[k + 1] - x_new[k])^2)
+        tendency[ij, k] += (face / (2 * dsigma[k]) + (x_new[k] - wind[k])^2 / (2 * dt)) / heat_capacity
+    end
+    return nothing
+end
+
 Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, scheme::KProfileBoundaryLayerMixing, model)
     (; geometry, planet, atmosphere, time_stepping) = model
     temperature = vars.grid.temperature_prev
@@ -388,7 +410,13 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(ij, vars, sche
         # Momentum uses the same coefficients a (HB93 K_m = K, which the scalars already use: Pr = 1), with no flux
         # at the top and at the surface. SpeedyWeather's surface drag stays the only column momentum sink.
         face_sum, implicit_sum = _pbl_mix_wind!(vars.tendencies.grid.u, view(u, ij, :), ij, x_new, a, dsigma, dt, c, d)
+        scheme.dissipative_heating &&
+            _pbl_heat_from_wind!(vars.tendencies.grid.temperature, view(u, ij, :), ij, x_new, a, dsigma, dt,
+                                 heat_capacity)
         face_v, implicit_v = _pbl_mix_wind!(vars.tendencies.grid.v, view(v, ij, :), ij, x_new, a, dsigma, dt, c, d)
+        scheme.dissipative_heating &&
+            _pbl_heat_from_wind!(vars.tendencies.grid.temperature, view(v, ij, :), ij, x_new, a, dsigma, dt,
+                                 heat_capacity)
         # Kinetic-energy loss of this frozen-coefficient solve of length dt, per unit area (W/m2):
         # E_old - E_new = dt * D_face + (p_s / 2g) sum dsigma (x_new - x_old)^2 = dt * (D_face + D_implicit).
         mass = surface_pressure / gravity

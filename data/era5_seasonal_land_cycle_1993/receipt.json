@@ -1,0 +1,109 @@
+{
+  "schema": "era5_seasonal_land_source_v1",
+  "path": "era5_monthly_land_cycle_1993.nc",
+  "sha256": "b80d7e01a4390340794030f1f924e5583d813fb163a1f9d875ae749091c13f60",
+  "script_sha256": "809755cd62173d62e136419f99e2c782b6ac38cc2311eee9c49b5b168fd969c6",
+  "request_id": "3a99eb70-87d6-46bc-87d8-af09998ace28",
+  "variables": {
+    "cvh": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "cvl": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.0,
+      "maximum": 1.0
+    },
+    "lai_hv": {
+      "units": "m**2 m**-2",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.0,
+      "maximum": 6.8355712890625
+    },
+    "lai_lv": {
+      "units": "m**2 m**-2",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.0,
+      "maximum": 4.596435546875
+    },
+    "aluvp": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.01130509003996849,
+      "maximum": 0.9228870868682861
+    },
+    "aluvd": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.01247241348028183,
+      "maximum": 0.9228857755661011
+    },
+    "alnip": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.04886304959654808,
+      "maximum": 0.6603786945343018
+    },
+    "alnid": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.0503072515130043,
+      "maximum": 0.6755809783935547
+    },
+    "lsm": {
+      "units": "(0 - 1)",
+      "shape": [
+        12,
+        181,
+        360
+      ],
+      "finite_fraction": 1.0,
+      "minimum": 0.0,
+      "maximum": 1.0
+    }
+  },
+  "spectral_albedo_conversion": "not_yet_selected"
+}

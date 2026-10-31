@@ -1882,6 +1882,7 @@ function SpeedyWeather.timestep!(
     land::_ReadyESMTerrariumLand,
     model::SpeedyWeather.PrimitiveWetModel,
 )
+    _update_seasonal_vegetation!(vars, model)
     if !_is_gpu_terrarium(land)
         return _timestep_terrarium_cpu!(vars, land, model)
     end

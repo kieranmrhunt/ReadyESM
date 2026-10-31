@@ -122,6 +122,11 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     # standard-profile value and the solver is never written for that gas.
     ch4_vmr::Union{Nothing, NF}
     n2o_vmr::Union{Nothing, NF}
+    # Optional halocarbons (CFC-12 and the CFC-11 equivalent of all others) and the time-varying well-mixed gas
+    # schedule. Without a schedule these stay `nothing` and RRTMGP keeps zero halocarbons, as in production.
+    cfc12_vmr::Union{Nothing, NF}
+    cfc11_vmr::Union{Nothing, NF}
+    gas_schedule::Union{Nothing, WellMixedGasSchedule}
     surface_emissivity::NF
     target_aod_550nm::NF
     solve_every_n_steps::Int
@@ -133,6 +138,8 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     cloud_ice_water_path_gm2::NF
     prognostic_cloud_condensate::Condensate
     solar_distance_correction::Bool
+    # Optional prescribed zonal-mean ozone (prescribed_ozone.jl). `nothing` keeps the analytic production profile.
+    ozone::Union{Nothing, PrescribedOzone}
 end
 
 const DIAGNOSTIC_CLOUD_HUMIDITY_SEARCH_LEGACY_SCHEME =
@@ -1142,6 +1149,10 @@ changed. A checkpoint written before these options existed has no record and imp
 (`nothing`), so it restores only into a configuration without `ch4_ppb` and `n2o_ppb`.
 """
 function _validate_trace_gas_restart(radiation, state)
+    _validate_prescribed_ozone_restart(radiation, state)
+    # With a schedule the gases follow the restored clock; the schedule identity check replaces the value check.
+    _validate_well_mixed_gas_restart(radiation, state)
+    isnothing(radiation.gas_schedule) || return nothing
     for (label, field) in (("CH4", :ch4_vmr), ("N2O", :n2o_vmr))
         saved = hasproperty(state, field) ? getproperty(state, field) : nothing
         current = getproperty(radiation, field)
@@ -1170,8 +1181,16 @@ function RRTMGPRadiation(
     cloud_ice_water_path_gm2 = 25,
     prognostic_cloud_condensate = nothing,
     solar_distance_correction::Bool = false,
+    well_mixed_gas_schedule::Union{Nothing, WellMixedGasSchedule} = nothing,
+    well_mixed_gas_start::Union{Nothing, DateTime} = nothing,
+    prescribed_ozone::Union{Nothing, PrescribedOzone} = nothing,
 )
     NF = spectral_grid.NF
+    if !isnothing(well_mixed_gas_schedule)
+        isnothing(ch4_ppb) && isnothing(n2o_ppb) || throw(ArgumentError(
+            "a well-mixed gas schedule replaces ch4_ppb and n2o_ppb; leave them unset"))
+        isnothing(well_mixed_gas_start) && throw(ArgumentError("a well-mixed gas schedule needs its start time"))
+    end
     nlay = spectral_grid.nlayers
     ncol = spectral_grid.npoints
     _, latitude = RG.get_londlatds(spectral_grid.grid)
@@ -1180,6 +1199,14 @@ function RRTMGPRadiation(
     profile.well_mixed_vmr["co2"] = NF(co2_ppm * 1.0e-6)
     ch4_vmr = _optional_trace_gas_vmr("ch4_ppb", ch4_ppb, NF)
     n2o_vmr = _optional_trace_gas_vmr("n2o_ppb", n2o_ppb, NF)
+    cfc12_vmr = cfc11_vmr = nothing
+    if !isnothing(well_mixed_gas_schedule)
+        start = well_mixed_gas_values(well_mixed_gas_schedule, well_mixed_gas_start)
+        co2_ppm = start.co2 * 1.0e6
+        profile.well_mixed_vmr["co2"] = NF(start.co2)
+        ch4_vmr, n2o_vmr = NF(start.ch4), NF(start.n2o)
+        cfc12_vmr, cfc11_vmr = NF(start.cfc12), NF(start.cfc11eq)
+    end
     isnothing(ch4_vmr) || (profile.well_mixed_vmr["ch4"] = ch4_vmr)
     isnothing(n2o_vmr) || (profile.well_mixed_vmr["n2o"] = n2o_vmr)
     context = if spectral_grid.architecture isa SpeedyWeather.GPU
@@ -1224,6 +1251,12 @@ function RRTMGPRadiation(
     # field. The first live SpeedyWeather parameterization replaces this
     # profile with model state, but reading the fresh buffer here is still an
     # initialization error (and is reported by CUDA Compute Sanitizer).
+    if !isnothing(well_mixed_gas_schedule)
+        RRTMGP.set_volume_mixing_ratio!(solver, "ch4", ch4_vmr)
+        RRTMGP.set_volume_mixing_ratio!(solver, "n2o", n2o_vmr)
+        RRTMGP.set_volume_mixing_ratio!(solver, "cfc12", cfc12_vmr)
+        RRTMGP.set_volume_mixing_ratio!(solver, "cfc11", cfc11_vmr)
+    end
     _reset_solver_cloud_sampler!(solver, 0)
     RRTMGP.update_fluxes!(solver)
     heating_rate = copy(RRTMGP.heating_rate(solver))
@@ -1237,6 +1270,9 @@ function RRTMGPRadiation(
         NF(co2_ppm),
         ch4_vmr,
         n2o_vmr,
+        cfc12_vmr,
+        cfc11_vmr,
+        well_mixed_gas_schedule,
         NF(surface_emissivity),
         NF(aerosol_optical_depth_550nm),
         Int(solve_every_n_steps),
@@ -1248,6 +1284,7 @@ function RRTMGPRadiation(
         NF(cloud_ice_water_path_gm2),
         prognostic_cloud_condensate,
         solar_distance_correction,
+        prescribed_ozone,
     )
 end
 
@@ -1745,6 +1782,8 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
     vmr_h2o = RRTMGP.volume_mixing_ratio(solver, "h2o")
     vmr_o3 = RRTMGP.volume_mixing_ratio(solver, "o3")
     relative_humidity = RRTMGP.layer_relative_humidity(solver)
+    _update_prescribed_ozone!(radiation.ozone, vars.prognostic.clock.time)
+    ozone_columns = _ozone_columns(radiation.ozone)
 
     molar_ratio = model.atmosphere.mol_mass_dry_air / model.atmosphere.mol_mass_vapor
     backend = KernelAbstractions.get_backend(p_lay)
@@ -1770,9 +1809,7 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
                     zero(ps),
                     one(ps),
                 )
-                vmr_o3[r, ij] =
-                    typeof(ps)(3.0e-8) + typeof(ps)(7.5e-6) *
-                    exp(-(log(p / typeof(ps)(1200)))^2 / typeof(ps)(2.88))
+                vmr_o3[r, ij] = _layer_ozone(ozone_columns, ij, p, ps)
             end
             for k in 1:nlev
                 r = nlev - k + 1
@@ -1803,7 +1840,8 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
             σ_half,
             molar_ratio,
             nlay,
-            nlev;
+            nlev,
+            ozone_columns;
             ndrange = ncol,
         )
         KernelAbstractions.synchronize(backend)
@@ -1816,11 +1854,13 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
         radiation.solar_distance_correction,
     )
     RRTMGP.surface_emissivity(solver) .= radiation.surface_emissivity
+    _apply_well_mixed_gas_schedule!(radiation, vars.prognostic.clock.time)
     RRTMGP.set_volume_mixing_ratio!(solver, "co2", radiation.co2_ppm * 1.0e-6)
     isnothing(radiation.ch4_vmr) ||
         RRTMGP.set_volume_mixing_ratio!(solver, "ch4", radiation.ch4_vmr)
     isnothing(radiation.n2o_vmr) ||
         RRTMGP.set_volume_mixing_ratio!(solver, "n2o", radiation.n2o_vmr)
+    _set_halocarbon_mixing_ratios!(solver, radiation)
 
     direct_albedo = RRTMGP.direct_sw_surface_albedo(solver)
     diffuse_albedo = RRTMGP.diffuse_sw_surface_albedo(solver)
@@ -1869,6 +1909,7 @@ KernelAbstractions.@kernel function _pack_rrtmgp_state_kernel!(
     molar_ratio,
     nlay,
     nlev,
+    ozone_columns,
 )
     ij = @index(Global, Linear)
     ps = surface_pressure[ij]
@@ -1891,9 +1932,7 @@ KernelAbstractions.@kernel function _pack_rrtmgp_state_kernel!(
             zero(ps),
             one(ps),
         )
-        vmr_o3[r, ij] =
-            typeof(ps)(3.0e-8) + typeof(ps)(7.5e-6) *
-            exp(-(log(p / typeof(ps)(1200)))^2 / typeof(ps)(2.88))
+        vmr_o3[r, ij] = _layer_ozone(ozone_columns, ij, p, ps)
     end
     for k in 1:nlev
         r = nlev - k + 1
@@ -2064,9 +2103,14 @@ end
 
 function _solve_rrtmgp!(radiation::RRTMGPRadiation, vars, model)
     _update_rrtmgp_state!(radiation, vars, model)
+    # Refreshes of the RRTMGP state also populate its broadband albedo arrays.
+    # Pack the opt-in seasonal direct/diffuse bands after that refresh so they
+    # are the values used by this flux solve.
+    _prepare_seasonal_albedo!(radiation, vars, model)
     _update_fluxes!(radiation)
     _recalibrate_aod!(radiation)
     radiation.heating_rate .= RRTMGP.heating_rate(radiation.solver)
+    _finish_seasonal_albedo_solve!(radiation, vars, model)
     if _synchronize_rrtmgp_postphysics()
         backend = KernelAbstractions.get_backend(radiation.heating_rate)
         KernelAbstractions.synchronize(backend)

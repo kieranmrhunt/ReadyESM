@@ -59,24 +59,24 @@ _speedy_spectral_transform(spectral_grid) =
 
 """Scale-selective atmospheric damping configured in physical time units."""
 _atmosphere_horizontal_diffusion(config::ExperimentConfig, spectral_grid) =
-    HyperDiffusion(
+    _dissipative_horizontal_diffusion(config, spectral_grid, HyperDiffusion(
         spectral_grid;
         time_scale = Second(round(Int, 3600 * config.atmosphere_hyperdiffusion_hours)),
         time_scale_div = Second(round(
             Int,
             3600 * config.atmosphere_divergence_hyperdiffusion_hours,
         )),
-    )
+    ))
 
 """Quadratic protection against unresolved all-level and surface winds."""
 _atmosphere_speed_limit_drag(config::ExperimentConfig, spectral_grid) =
-    CoupledSurfaceSpeedLimitDrag(
+    _dissipative_speed_limit_drag(config, CoupledSurfaceSpeedLimitDrag(
         spectral_grid;
         speed_limit = config.atmosphere_speed_limit_ms,
         drag = config.atmosphere_speed_limit_drag_per_m,
         surface_speed_limit = config.atmosphere_surface_speed_limit_ms,
         surface_drag = config.atmosphere_surface_speed_limit_drag_per_m,
-    )
+    ))
 
 # Terrarium's `SoilHydrology(FT)` default is `NoFlow`: saturation is an
 # auxiliary field and its tendency method is intentionally empty. A coupled
@@ -86,12 +86,14 @@ _atmosphere_speed_limit_drag(config::ExperimentConfig, spectral_grid) =
 # Brooks--Corey curve with conductivity linear in saturation. At the 5 cm
 # production surface layer that pair has an explicit stability limit of only a
 # few seconds in dry soil and catastrophically overshoots with our 60 s step.
-function _prognostic_soil_hydrology(::Type{FT}) where {FT}
+function _prognostic_soil_hydrology(::Type{FT}, unsat_conductivity::Symbol = :van_genuchten_released) where {FT}
     swrc = Terrarium.VanGenuchten(α = FT(2), n = FT(2))
+    unsat_hydraulic_cond = unsat_conductivity == :van_genuchten_mualem ?
+        Terrarium.UnsatKVanGenuchtenMualem(FT) : Terrarium.UnsatKVanGenuchten(FT)
     hydraulic_properties = Terrarium.ConstantSoilHydraulics(
         FT;
         swrc,
-        unsat_hydraulic_cond = Terrarium.UnsatKVanGenuchten(FT),
+        unsat_hydraulic_cond,
     )
     return Terrarium.SoilHydrology(
         FT,
@@ -213,6 +215,7 @@ function build_baseline(config::ExperimentConfig)
         horizontal_diffusion,
         vertical_diffusion,
         drag,
+        _dissipative_surface_momentum_flux(config, spectral_grid)...,
         spectral_transform,
         hole_filling,
         large_scale_condensation,
@@ -298,6 +301,9 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         co2_ppm = config.forcing.co2_ppm,
         ch4_ppb = config.forcing.ch4_ppb,
         n2o_ppb = config.forcing.n2o_ppb,
+        well_mixed_gas_schedule = _well_mixed_gas_schedule(config),
+        well_mixed_gas_start = config.start_date,
+        prescribed_ozone = _prescribed_ozone(config, spectral_grid),
         aerosol_optical_depth_550nm = config.forcing.aerosol_optical_depth_550nm,
         surface_emissivity = COUPLED_SURFACE_EMISSIVITY,
         solve_every_n_steps = config.forcing.radiation_every_n_steps,
@@ -328,7 +334,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             land_mask,
         )
         FT = eltype(column_grid)
-        soil_hydrology = _prognostic_soil_hydrology(FT)
+        soil_hydrology = _prognostic_soil_hydrology(FT, config.terrarium_unsat_conductivity)
         # The package default jumps from 0.75 to saturation at 5 m, causing a
         # large artificial Richards redistribution at startup. Align the water
         # table to the nearest grid face, then initialize a continuous
@@ -378,7 +384,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             surface_runoff = Terrarium.DirectSurfaceRunoff(FT),
         )
         surface_energy_balance =
-            _coupled_land_surface_energy_balance(FT)
+            _coupled_land_surface_energy_balance(FT, config, Float32)
         terrarium_model = Terrarium.LandModel(
             column_grid;
             initializer = soil_initializer,
@@ -420,7 +426,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             ocean = ocean_humidity_flux,
             land = PrescribedLandHumidityFlux(),
         )
-        albedo = _coupled_atmosphere_albedo(spectral_grid)
+        albedo = _coupled_atmosphere_albedo(spectral_grid, config)
         PrimitiveWetModel(
             spectral_grid;
             vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
@@ -439,6 +445,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             horizontal_diffusion,
             vertical_diffusion,
             drag,
+            _dissipative_surface_momentum_flux(config, spectral_grid)...,
             spectral_transform,
             hole_filling,
             large_scale_condensation,
@@ -472,6 +479,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             horizontal_diffusion,
             vertical_diffusion,
             drag,
+            _dissipative_surface_momentum_flux(config, spectral_grid)...,
             spectral_transform,
             hole_filling,
             large_scale_condensation,
@@ -493,6 +501,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             horizontal_diffusion,
             vertical_diffusion,
             drag,
+            _dissipative_surface_momentum_flux(config, spectral_grid)...,
             spectral_transform,
             hole_filling,
             large_scale_condensation,
@@ -500,7 +509,11 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
             stochastic_physics,
         )
     end
+    config.terrarium_surface_albedo == :era5_spectral &&
+        _install_seasonal_albedo!(model, spectral_grid, config)
     _check_moist_mass_coupling_host(model)
+    _install_seasonal_vegetation!(model, spectral_grid, config)
+    _check_dissipative_heating_host(model, config)
     add!(
         model.callbacks,
         :rrtmgp_postphysics_update =>
@@ -509,6 +522,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         :global_radiation_budget => GlobalRadiationBudgetCallback(spectral_grid),
         :global_atmosphere_diagnostics =>
             GlobalAtmosphereDiagnosticsCallback(model),
+        _dissipative_heating_callbacks(config, spectral_grid)...,
     )
     return model
 end

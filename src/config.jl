@@ -5,6 +5,14 @@ Base.@kwdef struct ForcingConfig
     # untouched, so configurations without these keys are unchanged.
     ch4_ppb::Union{Nothing, Float64} = nothing
     n2o_ppb::Union{Nothing, Float64} = nothing
+    # Optional time-varying well-mixed gases (CO2, CH4, N2O, CFC-12, CFC-11-eq) from a sealed annual file
+    # (well_mixed_gas_schedule.jl). Empty keeps the constant production gases. A fixed year > 0 holds that year.
+    well_mixed_gas_path::String = ""
+    well_mixed_gas_fixed_year::Int = 0
+    # Optional prescribed zonal-mean ozone from a prepared monthly file (prescribed_ozone.jl). Empty keeps the analytic
+    # production profile. A fixed year > 0 repeats that year's twelve months.
+    ozone_path::String = ""
+    ozone_fixed_year::Int = 0
     aerosol_optical_depth_550nm::Float64 = 0.0
     aerosol_species::String = "sulfate"
     radiation::Symbol = :speedy_simplified
@@ -55,6 +63,10 @@ Base.@kwdef struct ExperimentConfig
     # Opt-in boundary-layer momentum mixing with the same K-profile coefficients (default false keeps the scheme
     # bitwise). It requires atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1.
     atmosphere_pbl_mix_momentum::Bool = false
+    # Opt-in dissipative heating (dissipative_heating.jl): :off (default, the release components unchanged),
+    # :diagnose_v1 (record the kinetic-energy loss of the momentum sinks, no heat) or :kinetic_energy_v1 (return it
+    # as heat).
+    atmosphere_dissipative_heating::Symbol = :off
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
@@ -117,6 +129,18 @@ Base.@kwdef struct ExperimentConfig
     terrarium_runoff_enthalpy::Bool = false
     terrarium_initial_conditions::Symbol = :hydrostatic
     terrarium_evapotranspiration::Symbol = :bare_ground
+    # Unsaturated conductivity law: released keeps Terrarium's S^(n/(n+1)) inner power; van_genuchten_mualem uses the
+    # standard S^(1/m) (Oracle O-007).
+    terrarium_unsat_conductivity::Symbol = :van_genuchten_released
+    # Opt-in ERA5 visible/NIR direct/diffuse surface albedo; constant preserves the released path.
+    terrarium_surface_albedo::Symbol = :constant
+    terrarium_albedo_cycle_path::String = ""
+    terrarium_albedo_cycle_sha256::String = ""
+    terrarium_albedo_crossing_band::Symbol = :equal_halves
+    # Optional prescribed seasonal vegetation cover and conditional LAI.
+    terrarium_vegetation_cycle::Symbol = :off
+    terrarium_vegetation_cycle_path::String = ""
+    terrarium_vegetation_cycle_sha256::String = ""
     terrarium_max_leaf_conductance_ms::Float64 = 2.0e-3
     terrarium_min_leaf_conductance_ms::Float64 = 5.0e-5
     terrarium_light_half_saturation_wm2::Float64 = 100.0
@@ -244,6 +268,10 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         co2_ppm = Float64(_mapping_value(forcing_raw, "co2_ppm", 420.0)),
         ch4_ppb = _optional_float(_mapping_value(forcing_raw, "ch4_ppb", nothing)),
         n2o_ppb = _optional_float(_mapping_value(forcing_raw, "n2o_ppb", nothing)),
+        well_mixed_gas_path = String(_mapping_value(forcing_raw, "well_mixed_gas_path", "")),
+        well_mixed_gas_fixed_year = Int(_mapping_value(forcing_raw, "well_mixed_gas_fixed_year", 0)),
+        ozone_path = String(_mapping_value(forcing_raw, "ozone_path", "")),
+        ozone_fixed_year = Int(_mapping_value(forcing_raw, "ozone_fixed_year", 0)),
         aerosol_optical_depth_550nm = Float64(
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
@@ -384,6 +412,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         ),
         atmosphere_pbl_mix_momentum = Bool(
             _mapping_value(raw, "atmosphere_pbl_mix_momentum", false),
+        ),
+        atmosphere_dissipative_heating = Symbol(
+            _mapping_value(raw, "atmosphere_dissipative_heating", "off"),
         ),
         atmosphere_large_scale_precipitation = Symbol(
             _mapping_value(
@@ -584,6 +615,30 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         terrarium_initial_conditions = Symbol(
             _mapping_value(raw, "terrarium_initial_conditions", "hydrostatic"),
         ),
+        terrarium_unsat_conductivity = Symbol(
+            _mapping_value(raw, "terrarium_unsat_conductivity", "van_genuchten_released"),
+        ),
+        terrarium_surface_albedo = Symbol(
+            _mapping_value(raw, "terrarium_surface_albedo", "constant"),
+        ),
+        terrarium_albedo_cycle_path = _resolve_optional_path(
+            _mapping_value(raw, "terrarium_albedo_cycle_path", ""),
+        ),
+        terrarium_albedo_cycle_sha256 = String(
+            _mapping_value(raw, "terrarium_albedo_cycle_sha256", ""),
+        ),
+        terrarium_albedo_crossing_band = Symbol(
+            _mapping_value(raw, "terrarium_albedo_crossing_band", "equal_halves"),
+        ),
+        terrarium_vegetation_cycle = Symbol(
+            _mapping_value(raw, "terrarium_vegetation_cycle", "off"),
+        ),
+        terrarium_vegetation_cycle_path = _resolve_optional_path(
+            _mapping_value(raw, "terrarium_vegetation_cycle_path", ""),
+        ),
+        terrarium_vegetation_cycle_sha256 = String(
+            _mapping_value(raw, "terrarium_vegetation_cycle_sha256", ""),
+        ),
         terrarium_evapotranspiration = Symbol(
             _mapping_value(raw, "terrarium_evapotranspiration", "bare_ground"),
         ),
@@ -678,6 +733,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
             "atmosphere_pbl_diffusivity_scale, atmosphere_pbl_mix_heat, atmosphere_pbl_mix_humidity and " *
             "atmosphere_pbl_mix_momentum require atmosphere_vertical_diffusion=holtslag_boville_k_profile_v1",
         ))
+    config.atmosphere_dissipative_heating in DISSIPATIVE_HEATING_MODES || throw(ArgumentError(
+        "atmosphere_dissipative_heating must be one of $(join(DISSIPATIVE_HEATING_MODES, ", "))",
+    ))
     config.atmosphere_large_scale_precipitation in (
         :upstream_observed,
         :net_column_conservative,
@@ -1025,6 +1083,40 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     !config.terrarium_runoff_enthalpy || config.land_model == :terrarium || throw(ArgumentError(
         "terrarium_runoff_enthalpy requires land_model=terrarium",
     ))
+    config.terrarium_unsat_conductivity in (:van_genuchten_released, :van_genuchten_mualem) || throw(ArgumentError(
+        "terrarium_unsat_conductivity must be van_genuchten_released or van_genuchten_mualem",
+    ))
+    config.terrarium_surface_albedo in (:constant, :era5_spectral) ||
+        throw(ArgumentError(
+            "terrarium_surface_albedo must be constant or era5_spectral",
+        ))
+    config.terrarium_albedo_crossing_band in (:equal_halves, :visible, :near_infrared) ||
+        throw(ArgumentError(
+            "terrarium_albedo_crossing_band must be equal_halves, visible or near_infrared",
+        ))
+    if config.terrarium_surface_albedo == :era5_spectral
+        config.land_model == :terrarium || throw(ArgumentError(
+            "ERA5 spectral albedo requires land_model=terrarium",
+        ))
+        config.ocean_model == :oceananigans || throw(ArgumentError(
+            "ERA5 spectral albedo requires ocean_model=oceananigans",
+        ))
+        isempty(config.terrarium_albedo_cycle_path) && throw(ArgumentError(
+            "ERA5 spectral albedo requires terrarium_albedo_cycle_path",
+        ))
+        occursin(r"^[0-9a-f]{64}$", config.terrarium_albedo_cycle_sha256) ||
+            throw(ArgumentError("ERA5 spectral albedo requires a lowercase SHA-256"))
+        !check_input_files || isfile(config.terrarium_albedo_cycle_path) ||
+            throw(ArgumentError(
+                "seasonal albedo source not found: $(config.terrarium_albedo_cycle_path)",
+            ))
+    elseif !isempty(config.terrarium_albedo_cycle_path) ||
+           !isempty(config.terrarium_albedo_cycle_sha256) ||
+           config.terrarium_albedo_crossing_band != :equal_halves
+        throw(ArgumentError(
+            "seasonal albedo source settings require terrarium_surface_albedo=era5_spectral",
+        ))
+    end
     config.terrarium_initial_conditions in (
         :hydrostatic,
         :era5_instantaneous,
@@ -1059,6 +1151,22 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
                 "terrarium_initial_conditions=era5_instantaneous",
             ),
         )
+    end
+    config.terrarium_vegetation_cycle in (:off, :cover_lai) || throw(ArgumentError(
+        "terrarium_vegetation_cycle must be off or cover_lai",
+    ))
+    if config.terrarium_vegetation_cycle == :cover_lai
+        config.terrarium_evapotranspiration == :era5_prescribed_vegetation || throw(ArgumentError(
+            "seasonal vegetation requires the existing ERA5-prescribed evapotranspiration scheme",
+        ))
+        isempty(config.terrarium_vegetation_cycle_path) && throw(ArgumentError("seasonal vegetation source path is required"))
+        occursin(r"^[0-9a-f]{64}$", config.terrarium_vegetation_cycle_sha256) ||
+            throw(ArgumentError("seasonal vegetation requires a SHA256 source identity"))
+        !check_input_files || isfile(config.terrarium_vegetation_cycle_path) ||
+            throw(ArgumentError("seasonal vegetation source file not found"))
+    else
+        isempty(config.terrarium_vegetation_cycle_path) && isempty(config.terrarium_vegetation_cycle_sha256) ||
+            throw(ArgumentError("off vegetation cycle must not specify a source"))
     end
     0 < config.terrarium_min_leaf_conductance_ms <=
         config.terrarium_max_leaf_conductance_ms || throw(ArgumentError(
@@ -1169,6 +1277,8 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
             "SpeedyWeather's simplified radiation does not consume it",
         ))
     end
+    _validate_well_mixed_gas_options(config, rrtmgp_active, check_input_files)
+    _validate_prescribed_ozone_options(config, rrtmgp_active, check_input_files)
     if !rrtmgp_active && config.forcing.aerosol_optical_depth_550nm > 0
         throw(ArgumentError(
             "prescribed aerosol AOD requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky",
@@ -1257,4 +1367,46 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         ),
     )
     return config
+end
+
+"""Check the prescribed-ozone options; with input checks, the file and the run's time span or fixed year."""
+function _validate_prescribed_ozone_options(config, rrtmgp_active, check_input_files)
+    path = config.forcing.ozone_path
+    fixed_year = config.forcing.ozone_fixed_year
+    if isempty(path)
+        fixed_year == 0 || throw(ArgumentError("ozone_fixed_year requires ozone_path"))
+        return nothing
+    end
+    rrtmgp_active || throw(ArgumentError("ozone_path requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky"))
+    fixed_year >= 0 || throw(ArgumentError("ozone_fixed_year must be zero or a positive year"))
+    check_input_files || return nothing
+    stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
+    _validate_ozone_time(PrescribedOzoneData(path), fixed_year, config.start_date, stop)
+    return nothing
+end
+
+"""Check the time-varying well-mixed gas options; with input checks, the file and the run's time span."""
+function _validate_well_mixed_gas_options(config, rrtmgp_active, check_input_files)
+    path = config.forcing.well_mixed_gas_path
+    fixed_year = config.forcing.well_mixed_gas_fixed_year
+    if isempty(path)
+        fixed_year == 0 || throw(ArgumentError("well_mixed_gas_fixed_year requires well_mixed_gas_path"))
+        return nothing
+    end
+    rrtmgp_active || throw(ArgumentError(
+        "well_mixed_gas_path requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky"))
+    config.carbon.mode == :off || throw(ArgumentError(
+        "well_mixed_gas_path cannot be combined with an active carbon mode, which also sets CO2"))
+    isnothing(config.forcing.ch4_ppb) && isnothing(config.forcing.n2o_ppb) || throw(ArgumentError(
+        "well_mixed_gas_path replaces ch4_ppb and n2o_ppb; leave them unset"))
+    fixed_year >= 0 || throw(ArgumentError("well_mixed_gas_fixed_year must be zero or a positive year"))
+    check_input_files || return nothing
+    schedule = WellMixedGasSchedule(path; fixed_year)
+    fixed_year == 0 || return nothing
+    lower, upper = _well_mixed_gas_span(schedule)
+    stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
+    lower <= _decimal_year(config.start_date) && _decimal_year(stop) <= upper || throw(ArgumentError(
+        "the run $(config.start_date) to $stop leaves the well-mixed gas schedule span $lower-$upper " *
+        "(annual means are placed at mid-year and are not extrapolated)"))
+    return nothing
 end

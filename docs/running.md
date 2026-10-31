@@ -2,13 +2,15 @@
 
 Run the commands below from the repository directory after installing the
 dependencies listed in the [README](../README.md#run).
-For GPU runs, the project requests CUDA runtime 13.2. Use an NVIDIA driver
-compatible with that runtime.
 
 ## Input data
 
 The standard configuration starts on 1 January 1993. It uses ERA5 for the
 atmosphere and land, and ECCO V4r4 for the ocean and sea ice.
+The v0.1.19 production profile also reads the packaged monthly vegetation
+cycle under `data/era5_seasonal_land_cycle_1993/` and the realistic albedo
+candidate under `data/era5_realistic_albedo_1993/`. Their expected SHA-256
+values are pinned in `config/production.yml`; see the [albedo provenance](../data/era5_realistic_albedo_1993/README.md).
 
 ### ERA5
 

@@ -1,0 +1,53 @@
+{
+ "schema": "readiesm_albedo_realistic_v2",
+ "path": "output/era5_monthly_land_cycle_1993_realistic_v2.nc",
+ "sha256": "2f8e9193e2fea340e81dacc0e486c1d7de7f3b3a1b1e44dfc16ae3eef76f5c0c",
+ "albedo_source_sha256": "b80d7e01a4390340794030f1f924e5583d813fb163a1f9d875ae749091c13f60",
+ "fal_source_sha256": "65db76e869a0605dede1dd1ee6a2a5ac64cea38a759f63c8a9845eca6167f65a",
+ "script_sha256": "2df30377e2fdb8f0852fd08647278375aaa32d8b70cd459a0aeabeb5464724f7",
+ "cells_without_land_target": 485148,
+ "band_values_clipped": 312,
+ "max_broadband_residual": 2.220446049250313e-16,
+ "broadband_land_means": {
+  "greenland_65_80N_305_325E_month1": {
+   "before": 0.1869588907609734,
+   "after": 0.8351715612578037,
+   "era5_fal_target": 0.8351715612578038
+  },
+  "greenland_65_80N_305_325E_month7": {
+   "before": 0.1871984136628048,
+   "after": 0.7812691429942857,
+   "era5_fal_target": 0.7812691429942857
+  },
+  "land_60_90N_month1": {
+   "before": 0.10827180124402652,
+   "after": 0.6023005282206716,
+   "era5_fal_target": 0.6023005282206717
+  },
+  "land_60_90N_month7": {
+   "before": 0.12267638350381323,
+   "after": 0.22883236908904944,
+   "era5_fal_target": 0.22883236908904944
+  },
+  "land_50_60N_month1": {
+   "before": 0.10140133033300527,
+   "after": 0.45660636499215124,
+   "era5_fal_target": 0.4566063649921513
+  },
+  "land_50_60N_month7": {
+   "before": 0.12325114148998981,
+   "after": 0.13906775170999017,
+   "era5_fal_target": 0.13906775170999017
+  },
+  "antarctica_south_of_70S_month1": {
+   "before": 0.1497526834278751,
+   "after": 0.847259130119879,
+   "era5_fal_target": 0.847259130119879
+  },
+  "antarctica_south_of_70S_month7": {
+   "before": 0.14974988670917996,
+   "after": 0.8490115442894071,
+   "era5_fal_target": 0.8490115442894072
+  }
+ }
+}

@@ -89,8 +89,45 @@ function _atmosphere_radiative_surface_temperature(vars, model)
     ]
 end
 
-"""Return the surface albedo retained by the active shortwave solver."""
-function _atmosphere_radiative_surface_albedo(vars, model)
+"""Reduce RRTMGP band-by-column direct and diffuse surface albedos to one value per column.
+
+With a band-invariant surface (`spectral = false`), direct and diffuse must agree in every band and the value is that
+albedo, exactly. With the ERA5 spectral land albedo (`spectral = true`), bands and direct/diffuse differ by design, so
+the value is the unweighted mean over bands and over direct and diffuse. It is a state summary, not a flux-weighted
+broadband albedo."""
+function _radiative_surface_albedo_from_bands(direct, diffuse, npoints; spectral::Bool = false)
+    size(direct) == size(diffuse) && ndims(direct) == 2 &&
+        size(direct, 1) > 0 &&
+        size(direct, 2) == npoints ||
+        throw(DimensionMismatch(
+            "RRTMGP direct/diffuse surface-albedo shapes " *
+            "$(size(direct))/$(size(diffuse)) do not match " *
+            "$(npoints) atmospheric columns",
+        ))
+    if spectral
+        # Check every band value, so out-of-range values cannot cancel in the mean.
+        all(isfinite, direct) && all(isfinite, diffuse) ||
+            error("RRTMGP spectral surface albedo is not finite")
+        all((0 .<= direct) .& (direct .<= 1)) && all((0 .<= diffuse) .& (diffuse .<= 1)) ||
+            error("RRTMGP spectral surface albedo band value is outside [0, 1]")
+        albedo = vec(sum(direct .+ diffuse; dims = 1)) ./ (2 * size(direct, 1))
+    else
+        maximum(abs, direct .- diffuse) <= 8eps(Float32) || error(
+            "RRTMGP direct and diffuse surface albedos differ",
+        )
+        albedo = vec(direct[1, :])
+        maximum(abs, direct .- reshape(albedo, 1, :)) <= 8eps(Float32) ||
+            error("RRTMGP surface albedo is not band invariant")
+    end
+    all((0 .<= albedo) .& (albedo .<= 1)) || error(
+        "RRTMGP surface albedo is outside [0, 1]",
+    )
+    return albedo
+end
+
+"""Return the surface albedo retained by the active shortwave solver. `spectral` is true when
+`terrarium_surface_albedo = :era5_spectral`; see `_radiative_surface_albedo_from_bands`."""
+function _atmosphere_radiative_surface_albedo(vars, model; spectral::Bool = false)
     radiation = model.longwave_radiation
     if radiation isa RRTMGPRadiation
         direct = Float64.(Array(
@@ -99,24 +136,9 @@ function _atmosphere_radiative_surface_albedo(vars, model)
         diffuse = Float64.(Array(
             RRTMGP.diffuse_sw_surface_albedo(radiation.solver),
         ))
-        size(direct) == size(diffuse) && ndims(direct) == 2 &&
-            size(direct, 1) > 0 &&
-            size(direct, 2) == model.geometry.npoints ||
-            throw(DimensionMismatch(
-                "RRTMGP direct/diffuse surface-albedo shapes " *
-                "$(size(direct))/$(size(diffuse)) do not match " *
-                "$(model.geometry.npoints) atmospheric columns",
-            ))
-        maximum(abs, direct .- diffuse) <= 8eps(Float32) || error(
-            "RRTMGP direct and diffuse surface albedos differ",
+        return _radiative_surface_albedo_from_bands(
+            direct, diffuse, model.geometry.npoints; spectral,
         )
-        albedo = vec(direct[1, :])
-        maximum(abs, direct .- reshape(albedo, 1, :)) <= 8eps(Float32) ||
-            error("RRTMGP surface albedo is not band invariant")
-        all((0 .<= albedo) .& (albedo .<= 1)) || error(
-            "RRTMGP surface albedo is outside [0, 1]",
-        )
-        return albedo
     end
 
     values = Float64.(Array(vars.parameterizations.albedo.data))
@@ -138,6 +160,8 @@ function _forcing_provenance(radiation, config::ExperimentConfig)
     return (;
         _base_forcing_provenance(radiation, config, rrtmgp_active, aerosol_active)...,
         _trace_gas_provenance(radiation, config, rrtmgp_active)...,
+        _well_mixed_gas_provenance(radiation, config, rrtmgp_active)...,
+        _prescribed_ozone_provenance(radiation, config, rrtmgp_active)...,
     )
 end
 

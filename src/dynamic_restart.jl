@@ -429,7 +429,7 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
         _restart_host_array(
             RRTMGP.aerosol_column_mass_density(solver, "sulfate"),
         ) : nothing
-    return (
+    state = (
         call_counter = radiation.call_counter,
         ch4_vmr = radiation.ch4_vmr,
         n2o_vmr = radiation.n2o_vmr,
@@ -450,12 +450,24 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
         prognostic_cloud_condensate =
             _rrtmgp_prognostic_condensate_state(radiation),
     )
+    # Preserve v0.1.18's checkpoint tuple when both opt-in forcings are off.
+    isnothing(radiation.gas_schedule) || (state = merge(state, (
+        well_mixed_gas_schedule = _well_mixed_gas_identity(radiation.gas_schedule),
+        well_mixed_gas_values = _well_mixed_gas_values_record(radiation),
+    )))
+    isnothing(radiation.ozone) || (state = merge(state, (
+        prescribed_ozone = _prescribed_ozone_identity(radiation.ozone),
+    )))
+    return state
 end
 
 function _restore_rrtmgp_radiation_state!(radiation::RRTMGPRadiation, state)
     _validate_trace_gas_restart(radiation, state)
     _validate_solar_restart(radiation, state)
+    isnothing(radiation.gas_schedule) || hasproperty(state, :well_mixed_gas_values) || throw(ArgumentError(
+        "checkpoint uses a well-mixed gas schedule but has no saved gas values"))
     solver = radiation.solver
+    _restore_well_mixed_gas_values!(radiation, state)
     radiation.call_counter = state.call_counter
     _restart_copy_array!(radiation.heating_rate, state.heating_rate, "RRTMGP heating rate")
     _restart_copy_array!(
@@ -982,8 +994,11 @@ function Oceananigans.restore_prognostic_state!(
     # Check constructed physics before any atmosphere, ocean or land state is overwritten.
     _validate_horizontal_diffusion_restart(model.atmosphere, state.atmosphere)
     _validate_moist_mass_restart(model.atmosphere, state.atmosphere)
+    _validate_seasonal_vegetation_restart(model.atmosphere, state.atmosphere)
+    _validate_seasonal_albedo_restart(model.atmosphere, state.atmosphere)
     _validate_full_temperature_restart(model.atmosphere, state.atmosphere)
     _validate_pbl_k_profile_restart(model.atmosphere, state.atmosphere)
+    _validate_dissipative_heating_restart(model.atmosphere, state.atmosphere)
     _validate_carbon_restart_compatibility(
         model,
         hasproperty(state, :carbon) ? state.carbon : nothing,
@@ -1408,6 +1423,9 @@ function _restore_atmosphere_diagnostics_callback!(callback, state)
 end
 
 function _speedy_callback_state(callbacks)
+    # The dissipative-heating budget exists only when that option is on, so other checkpoints keep their tuple.
+    budget = haskey(callbacks, :dissipative_heating_budget) ?
+        (; dissipative_heating_budget = _dissipative_heating_budget_state(callbacks[:dissipative_heating_budget])) : (;)
     return (
         rrtmgp_postphysics_timestep_counter =
             callbacks[:rrtmgp_postphysics_update].timestep_counter,
@@ -1420,6 +1438,7 @@ function _speedy_callback_state(callbacks)
         atmosphere_diagnostics = _atmosphere_diagnostics_callback_state(
             callbacks[:global_atmosphere_diagnostics],
         ),
+        budget...,
     )
 end
 
@@ -1437,6 +1456,12 @@ function _restore_speedy_callback_state!(callbacks, state)
     _restore_atmosphere_diagnostics_callback!(
         callbacks[:global_atmosphere_diagnostics],
         state.atmosphere_diagnostics,
+    )
+    haskey(callbacks, :dissipative_heating_budget) == hasproperty(state, :dissipative_heating_budget) ||
+        throw(ArgumentError("checkpoint and configuration differ in the dissipative-heating budget"))
+    haskey(callbacks, :dissipative_heating_budget) && _restore_dissipative_heating_budget!(
+        callbacks[:dissipative_heating_budget],
+        state.dissipative_heating_budget,
     )
     return callbacks
 end
@@ -1491,7 +1516,7 @@ end
 # Horizontal diffusion is a constructed operator, not a prognostic variable.
 # Check its effective inputs before restoring a checkpoint into a new model.
 function _horizontal_diffusion_restart_state(simulation)
-    diffusion = simulation.model.horizontal_diffusion
+    diffusion = _plain_horizontal_diffusion(simulation.model.horizontal_diffusion)
     diffusion isa HyperDiffusion || throw(ArgumentError(
         "ReadyESM restart requires SpeedyWeather HyperDiffusion",
     ))
@@ -1547,6 +1572,9 @@ function Oceananigans.prognostic_state(simulation::SpeedyWeather.Simulation)
         _moist_mass_restart_state(simulation)...,
         _full_temperature_restart_state(simulation)...,
         _pbl_k_profile_restart_state(simulation)...,
+        _seasonal_vegetation_restart_state(simulation)...,
+        _seasonal_albedo_restart_state(simulation)...,
+        _dissipative_heating_restart_state(simulation)...,
     )
 end
 
@@ -1557,8 +1585,11 @@ function Oceananigans.restore_prognostic_state!(
     _validate_horizontal_diffusion_restart(simulation, state)
     _validate_atmosphere_radiation_restart(simulation, state)
     _validate_moist_mass_restart(simulation, state)
+    _validate_seasonal_vegetation_restart(simulation, state)
     _validate_full_temperature_restart(simulation, state)
     _validate_pbl_k_profile_restart(simulation, state)
+    _validate_seasonal_albedo_restart(simulation, state)
+    _validate_dissipative_heating_restart(simulation, state)
     # JLD2 reconstructs the checkpointed Variables tree on the CPU.
     # SpeedyWeather's alias-aware copy handles ordinary host-to-device arrays.
     # The narrowly typed lower-triangular, RingGrids.Field, and ScratchMemory
@@ -1583,6 +1614,7 @@ function Oceananigans.restore_prognostic_state!(
         "ReadyESM dynamic restart requires RRTMGPRadiation",
     )
     _restore_rrtmgp_radiation_state!(radiation, state.radiation)
+    _restore_seasonal_albedo_restart!(simulation, state)
     _restore_speedy_callback_state!(simulation.model.callbacks, state.callbacks)
     return simulation
 end

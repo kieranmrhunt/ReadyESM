@@ -9,7 +9,11 @@ function legacy_pbl_test_config()
     # Their fixture must remain independent of changes to the released defaults.
     return with(released; atmosphere_vertical_diffusion=:speedyweather_0_21_1_zero_operator_control,
         atmosphere_pbl_diffusivity_scale=1.0, atmosphere_pbl_mix_momentum=false,
-        atmosphere_pbl_mix_heat=true, atmosphere_pbl_mix_humidity=true)
+        atmosphere_pbl_mix_heat=true, atmosphere_pbl_mix_humidity=true,
+        atmosphere_dissipative_heating=:off,
+        terrarium_surface_albedo=:constant, terrarium_albedo_cycle_path="",
+        terrarium_albedo_cycle_sha256="", terrarium_vegetation_cycle=:off,
+        terrarium_vegetation_cycle_path="", terrarium_vegetation_cycle_sha256="")
 end
 
 function analytic_pbl_test_config()

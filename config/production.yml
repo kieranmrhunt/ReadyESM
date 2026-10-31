@@ -14,6 +14,7 @@ atmosphere_pbl_diffusivity_scale: 1.0
 atmosphere_pbl_mix_heat: false
 atmosphere_pbl_mix_humidity: false
 atmosphere_pbl_mix_momentum: true
+atmosphere_dissipative_heating: kinetic_energy_v1
 atmosphere_large_scale_precipitation: net_column_conservative
 atmosphere_saturation_law: mixed_phase
 atmosphere_convection: betts_miller_sigma_rh_v1
@@ -50,6 +51,13 @@ land_model: terrarium
 terrarium_precision: float64
 terrarium_initial_conditions: era5_instantaneous
 terrarium_evapotranspiration: era5_prescribed_vegetation
+terrarium_surface_albedo: era5_spectral
+terrarium_albedo_cycle_path: data/era5_realistic_albedo_1993/era5_monthly_land_cycle_1993_realistic_v2.nc
+terrarium_albedo_cycle_sha256: 2f8e9193e2fea340e81dacc0e486c1d7de7f3b3a1b1e44dfc16ae3eef76f5c0c
+terrarium_albedo_crossing_band: equal_halves
+terrarium_vegetation_cycle: cover_lai
+terrarium_vegetation_cycle_path: data/era5_seasonal_land_cycle_1993/era5_monthly_land_cycle_1993.nc
+terrarium_vegetation_cycle_sha256: b80d7e01a4390340794030f1f924e5583d813fb163a1f9d875ae749091c13f60
 terrarium_soil_layers: 16
 terrarium_max_layer_thickness_m: 5
 terrarium_timestep_seconds: 60

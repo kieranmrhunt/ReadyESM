@@ -57,7 +57,12 @@ end
                 end
                 fill!(underlying.z.ηⁿ,(stretch-one(FT))*FT(200))
                 volumes = _carbon_test_volumes(grid)
-                @test isapprox(sum(volumes),sum(initial_volumes)*Float64(stretch);rtol=16eps(FT))
+                # Two Float64 reductions over this cell array contribute
+                # O(N*eps) summation error, in addition to cell-volume
+                # arithmetic. Preserve the tighter native Float32 bound but
+                # scale the Float64 bound with the number of summed cells.
+                geometry_rtol = max(16eps(FT), 4 * length(volumes) * eps(Float64))
+                @test isapprox(sum(volumes),sum(initial_volumes)*Float64(stretch);rtol=geometry_rtol)
                 host_grid = ReadyESM.Adapt.adapt(Array,grid)
                 host_underlying = immersed ? host_grid.underlying_grid : host_grid
                 for name in (:σᶜᶜⁿ,:σᶠᶜⁿ,:σᶜᶠⁿ,:σᶠᶠⁿ,:σᶜᶜ⁻,:ηⁿ)

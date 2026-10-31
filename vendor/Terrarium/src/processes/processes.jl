@@ -48,7 +48,7 @@ include("soil/stratigraphy/soil_stratigraphy.jl")
 export ConstantSoilCarbonDensity
 include("soil/biogeochem/constant_soil_carbon.jl")
 
-export ConstantSoilHydraulics, SoilHydraulicsSURFEX, UnsatKLinear, UnsatKVanGenuchten
+export ConstantSoilHydraulics, SoilHydraulicsSURFEX, UnsatKLinear, UnsatKVanGenuchten, UnsatKVanGenuchtenMualem
 export saturated_hydraulic_conductivity, mineral_porosity, field_capacity, wilting_point
 include("soil/hydrology/soil_hydraulic_properties.jl")
 

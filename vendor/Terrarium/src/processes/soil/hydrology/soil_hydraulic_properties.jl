@@ -241,3 +241,44 @@ function hydraulic_conductivity(
         return K
     end
 end
+
+"""
+    $TYPEDEF
+
+van Genuchten–Mualem unsaturated conductivity with the standard inner power `S^(1/m)`, `m = 1 - 1/n`
+[vangenuchtenHydraulicConductivity1980](@cite) (printed p. 893, eq. 8), extended with the same ice impedance
+factor as [`UnsatKVanGenuchten`](@ref). [`UnsatKVanGenuchten`](@ref) keeps its released inner power
+`S^(n/(n+1))`, which overestimates the unsaturated conductivity (8.6 times at `S = 0.5` and 520 times at `S = 0.1`
+for `n = 2`); it is retained unchanged for provenance (Oracle finding O-007). The saturated endpoint is the same.
+"""
+@parameterized @kwdef struct UnsatKVanGenuchtenMualem{NF} <: AbstractUnsatK{NF}
+    "Exponential scaling factor for ice impedance"
+    @param impedance::NF = 7 (bounds = Positive,)
+end
+
+UnsatKVanGenuchtenMualem(::Type{NF}; impedance::NF = NF(7)) where {NF} = UnsatKVanGenuchtenMualem(NF(impedance))
+
+"""Relative van Genuchten–Mualem conductivity `K/K_sat = √S [1 - (1 - S^(n/(n-1)))^((n-1)/n)]²` for `S` in [0, 1]."""
+@inline function vangenuchten_mualem_relative_conductivity(S, n)
+    m = (n - one(n)) / n
+    inner_power = S^(one(S) / m)
+    # `1 - (1 - inner_power)^m` loses precision at low saturation. This is
+    # the same expression evaluated stably via log1p and expm1.
+    return sqrt(S) * (-expm1(m * log1p(-inner_power)))^2
+end
+
+function hydraulic_conductivity(
+        hydraulics::AbstractSoilHydraulics{NF, <:VanGenuchten, UnsatKVanGenuchtenMualem{NF}},
+        soil::SoilComposition
+    ) where {NF}
+    let n = hydraulics.swrc.n # van Genuchten parameter `n`
+        θw = water(soil) # volumetric content of unfrozen water
+        θsat = porosity(soil) # porosity
+        f = liquid_fraction(soil) # fraction of pore water that is unfrozen (equiv. θw / θwi)
+        Ω = hydraulics.unsat_hydraulic_cond.impedance # scaling parameter for ice impedance
+        I_ice = 10^(-Ω * (1 - f)) # ice impedance factor
+        K_sat = saturated_hydraulic_conductivity(hydraulics, soil.solid.texture)
+        S = clamp(θw / θsat, zero(θw), one(θw))
+        return K_sat * I_ice * vangenuchten_mualem_relative_conductivity(S, n)
+    end
+end

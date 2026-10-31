@@ -347,13 +347,17 @@ prognostic(vars) = map(n -> copy(Array(S.get_step(getproperty(vars.prognostic, n
             O.run!(scalar_run)
             @test isfile(scalar_path)
             before = prognostic(scalar_run.model.atmosphere.variables)
-            @test_throws ArgumentError R.restore_dynamic_restart_state!(scalar_run, path)
+            # The restart identity check refuses first (the configurations differ). With that check waived, the
+            # K-profile record refuses on its own.
+            @test_throws ErrorException R.restore_dynamic_restart_state!(scalar_run, path)
+            @test_throws ArgumentError R.restore_dynamic_restart_state!(scalar_run, path; allow_identity_mismatch = true)
             @test scalar_run.model.clock.iteration == 1
             @test all(same_bits(x, y) for (x, y) in zip(prognostic(scalar_run.model.atmosphere.variables), before))
             # Off to on: the momentum configuration refuses the scalar-only checkpoint, and keeps its state.
             fresh = R.build_dynamic_esm(compact_l27(joinpath(dir, "fresh"); settings...); steps = 4)
             initial = prognostic(fresh.model.atmosphere.variables)
-            @test_throws ArgumentError R.restore_dynamic_restart_state!(fresh, scalar_path)
+            @test_throws ErrorException R.restore_dynamic_restart_state!(fresh, scalar_path)
+            @test_throws ArgumentError R.restore_dynamic_restart_state!(fresh, scalar_path; allow_identity_mismatch = true)
             @test fresh.model.clock.iteration == 0
             @test all(same_bits(x, y) for (x, y) in zip(prognostic(fresh.model.atmosphere.variables), initial))
         end

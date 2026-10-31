@@ -29,30 +29,23 @@ cells.
 Three 31-day runs in each season compare v0.1.18 with matched runs using the
 v0.1.17 settings from the same observed starts. The controls use an earlier
 source commit than the published v0.1.17 tag. Lower error is better. On the
-original seven-field score, July error rose by 0.0115. That is more than the spread
-of the three matched July runs (0.0103), so this score rejected the change.
-The nine-field score did not reach a decision because its July change stayed
-within its spread. The paired radiation and model-state checks passed. The
-separate release rule also rejected the change because of the July result.
-These results are reported without changing the scores or the rule outcome. See the
-[validation record](docs/validation-v0.1.18.md),
+original seven-field score, July error rose by 0.0115. That is more than the
+spread of the three matched July runs (0.0103), so this score rejected the
+change. The nine-field score did not reach a decision because its July change
+stayed within its spread. The paired radiation and model-state checks passed.
+The separate release rule also rejected the change because of the July result.
+These results are reported without changing the scores or the rule outcome.
+See the [validation record](docs/validation-v0.1.18.md),
 [figure values and source hashes](docs/readiesm-v0.1.18-comparison.json), and
 [plot recipe](docs/plot-v0.1.18-comparison.py).
 
 These runs start from observations. In a separate six-field test, two simple
 guesses (the long-term average, and the starting difference from that average
-held fixed) scored
-better than all 59 CMIP6 models. The ranks here show agreement with the
-observed month, not the skill of the model's own long-term climate. The
-[paired scorecard](scorecard.png), [development scorecard](development_scorecard.png)
-and [version history](readyesm_scorecard_versions.png)
-show the evidence in different ways. The version history uses one start per
-season. The paired comparison estimates the change in this release. The
-[version-history figure record](docs/readyesm_scorecard_versions_v018.json)
-gives its source hashes. The [paired score values](scorecard_v4_data.json) and
-[development figure provenance](docs/development_scorecard_v018_provenance.json)
-record the frozen outcomes and GPU gate receipts behind the two other
-scorecards.
+held fixed) scored better than all 59 CMIP6 models. The ranks here show
+agreement with the observed month, not the skill of the model's own long-term
+climate. The [paired scorecard](scorecard.png),
+[development scorecard](development_scorecard.png) and
+[version history](readyesm_scorecard_versions.png) show the v0.1.18 evidence.
 
 ## Speed
 
@@ -80,8 +73,7 @@ initialization, for timing only.
 ## Run
 
 Use Julia 1.12 and Python 3.11 or newer. The standard configuration uses an NVIDIA GPU
-with CUDA. The project asks for CUDA runtime 13.2. Check that your NVIDIA
-driver supports it. CPU runs are also supported.
+with CUDA. CPU runs are also supported.
 
 ```bash
 git clone https://github.com/kieranmrhunt/ReadyESM.git
@@ -117,8 +109,20 @@ to the configured output directory. To plot the final day and timelines:
 
 ```bash
 python scripts/plot_readme.py artifacts/my_run/diagnostics.nc \
-    artifacts/my_run/summary --version v0.1.18 --expected-days 31
+    artifacts/my_run/summary --version v0.1.19 --expected-days 31
 ```
+
+For streamed monthly, annual and CMIP-style climate fields, see the
+[climate output guide](docs/climate-output.md).
+For the ERA5-referenced short-run temperature drift screen, see the
+[drift-screen guide](docs/drift-screen.md).
+The production profile selects kinetic-energy return from atmospheric
+dissipation, seasonal vegetation and the realistic land-albedo candidate.
+Their packaged input files and hashes are in
+`data/era5_seasonal_land_cycle_1993/` and
+`data/era5_realistic_albedo_1993/`. The combined climate qualification is
+pending; see the [candidate validation record](docs/validation-v0.1.19.md)
+and [known limitations](NOTES.md).
 
 ## Configuration
 
@@ -132,10 +136,11 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `duration_days`, `analysis_start_day` | `730`, `365` | Run length and a recorded analysis-start day. The current runner saves `analysis_start_day` in the metadata. It does not use it to choose which days to average. It must be less than `duration_days`. |
 | `atmosphere_hyperdiffusion_hours` | `4` | Time over which the model smooths small-scale noise in wind, temperature and humidity. A longer time gives weaker smoothing. |
 | `atmosphere_divergence_hyperdiffusion_hours` | `4` | Time over which the model smooths the divergent part of the wind. v0.1.16 used 1 hour. A restart from a saved state with a different value stops with an error. |
-| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Select `speedyweather_0_21_1_centered` for the older advection behaviour in a new run. A normal restart requires matching model settings, source commit and package versions. See [restart identity](docs/running.md#restart-identity). |
+| `atmosphere_vertical_advection` | `centered_full_temperature` | Transport full temperature vertically. Select `speedyweather_0_21_1_centered` for the older advection behaviour in a new run. Checkpoints from earlier releases cannot be restarted directly in v0.1.17. |
 | `atmosphere_vertical_diffusion` | `holtslag_boville_k_profile_v1` | Mix momentum vertically in the atmospheric boundary layer. Requires Oceananigans and Terrarium. |
 | `atmosphere_pbl_diffusivity_scale` | `1.0` | Multiply the boundary-layer mixing coefficient by a value greater than 0 and at most 1. |
 | `atmosphere_pbl_mix_heat`, `atmosphere_pbl_mix_humidity`, `atmosphere_pbl_mix_momentum` | `false`, `false`, `true` | Select the fields mixed by the boundary-layer scheme. |
+| `atmosphere_dissipative_heating` | `kinetic_energy_v1` | Return diagnosed wind-energy losses from drag, mixing and numerical smoothing as heat. The generic experiment default is `off`. |
 | `atmosphere_convection` | `betts_miller_sigma_rh_v1` | Betts–Miller with a vertical humidity profile. Use `betts_miller_constant_rh` for the previous scheme. |
 | `atmosphere_convection_upper_relative_humidity`, `atmosphere_convection_lower_relative_humidity` | `0.5`, `0.7` | Reference relative humidity above and below the transition. |
 | `atmosphere_convection_transition_top_sigma`, `atmosphere_convection_transition_bottom_sigma` | `0.3`, `0.7` | Bounds of the linear transition in pressure fraction. |
@@ -143,16 +148,32 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
 | `atmosphere_moist_mass_coupling` | `false` | Let water-vapour sources change the air mass. Evaporation adds air and precipitation removes it, and the global mean surface pressure follows. Use it only with Betts–Miller convection, net-column large-scale precipitation and RRTMGP radiation. |
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
+| `terrarium_unsat_conductivity` | `van_genuchten_released` | Keep the established soil-water conductivity law, or opt in to the standard van Genuchten–Mualem law with `van_genuchten_mualem`. |
+| `terrarium_surface_albedo` | `era5_spectral` | Use the pinned realistic seasonal land-albedo candidate with the coupled Terrarium/ocean configuration. The generic experiment default is `constant`; see [seasonal albedo](docs/seasonal-albedo.md). |
+| `terrarium_vegetation_cycle` | `cover_lai` | Prescribe monthly ERA5 vegetation cover and leaf area index. Requires ERA5 Terrarium initialization and `era5_prescribed_vegetation`. The generic experiment default is `off`; see [seasonal vegetation](docs/seasonal-vegetation.md). |
 | `scored_outputs` | `false` | Write the four files that the release scores read. See [Run and output](docs/running.md#run-and-output). Requires RRTMGP. A run with this switch on cannot be restarted. |
 | `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
 | `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Prescribed CH4 and N2O for RRTMGP. Omitted values use 1900 and 340 ppb. Keep these settings unchanged on restart. |
 | `forcing.solar_distance_correction` | `true` | Vary incoming sunlight with seasonal Earth–Sun distance. Requires RRTMGP. See the [solar guide](docs/solar-forcing.md). |
+
+| `forcing.well_mixed_gas_path` | empty | Optional annual file for CO2, CH4, N2O and halocarbons. Requires RRTMGP. Replaces constant CO2/CH4/N2O; incompatible with active carbon mode. See [file forcing](docs/file-forcing.md). |
+| `forcing.well_mixed_gas_fixed_year` | `0` | Use the model date when `0`; otherwise hold the annual gas values for this year. Requires `well_mixed_gas_path`. |
+| `forcing.ozone_path` | empty | Optional monthly file of zonal-mean ozone. Requires RRTMGP. Replaces the analytic ozone profile. See [file forcing](docs/file-forcing.md). |
+| `forcing.ozone_fixed_year` | `0` | Use the model date when `0`; otherwise repeat the selected year's twelve months. Requires `ozone_path`. |
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Prescribed sulfate aerosol optical depth. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
+
+**Seasonal albedo status:** the wiring fix passes CPU and A100 smoke checks.
+A one-member July month test found a large midlatitude temperature response
+and a material top-of-atmosphere energy shift. The combined 90-day test is
+pending. See the [seasonal albedo guide](docs/seasonal-albedo.md).
 
 The standard setup uses prescribed CO2 and aerosol forcing. Optional
 [carbon exchange and emissions](docs/carbon.md) can update CO2.
 For CH4/N2O restart settings, see the [trace-gas notes](docs/validation-runoff-trace-gases.md#scope).
+The gas and ozone files are optional; with both paths empty, the standard
+forcing stays unchanged. Their prepared formats, time coverage and restart
+identity are described in [file forcing](docs/file-forcing.md).
 Land vegetation is prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
 has separate configuration instructions.
 

@@ -2928,7 +2928,8 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
     atmosphere_radiative_surface_albedo =
         _atmosphere_radiative_surface_albedo(
             atmosphere.variables,
-            atmosphere.model,
+            atmosphere.model;
+            spectral = config.terrarium_surface_albedo == :era5_spectral,
         )
     ao_fluxes = earth.interfaces.atmosphere_ocean_interface.fluxes
     ai_fluxes = earth.interfaces.atmosphere_sea_ice_interface.fluxes
@@ -3574,6 +3575,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             truncation = config.truncation,
             nlayers = config.nlayers,
             atmosphere = "SpeedyWeather",
+            _seasonal_albedo_provenance(config)...,
             atmosphere_humidity_nonnegative_scheme =
                 "Gaussian-area layer-mean conservative rescaling",
             atmosphere_convective_precipitation_scheme =
@@ -3648,6 +3650,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             atmosphere_initial_spectral_truncation =
                 config.atmosphere_initial_spectral_truncation,
             _moist_mass_coupling_provenance(config)...,
+            _dissipative_heating_provenance(config)...,
             era5_month = config.era5_month,
             _atmosphere_initial_condition_provenance(
                 atmosphere.model.initial_conditions,
@@ -3662,9 +3665,11 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 "retained_rrtmgp_solver_state" :
                 "diagnosed_fourth_power_surface_mixture",
             atmosphere_radiative_surface_albedo_source =
-                atmosphere.model.longwave_radiation isa RRTMGPRadiation ?
-                "retained_rrtmgp_direct_diffuse_band_invariant_solver_state" :
-                "retained_speedyweather_surface_parameterization",
+                !(atmosphere.model.longwave_radiation isa RRTMGPRadiation) ?
+                "retained_speedyweather_surface_parameterization" :
+                config.terrarium_surface_albedo == :era5_spectral ?
+                "retained_rrtmgp_unweighted_band_and_direct_diffuse_mean_solver_state" :
+                "retained_rrtmgp_direct_diffuse_band_invariant_solver_state",
             co2_ppm = config.forcing.co2_ppm,
             cloud_scheme = String(config.forcing.cloud_scheme),
             _forcing_provenance(atmosphere.model.longwave_radiation, config)...,

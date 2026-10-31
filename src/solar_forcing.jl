@@ -22,9 +22,24 @@ end
 _solar_distance_scheme(enabled::Bool) = enabled ?
     "spencer_present_day_gregorian_year_fraction_v1" : "constant_distance"
 
+"""Time dependence of the radiative forcing, as recorded in diagnostics provenance."""
 function _forcing_time_dependence(config)
+    base = _forcing_time_dependence_without_ozone(config)
+    isempty(config.forcing.ozone_path) && return base
+    ozone = config.forcing.ozone_fixed_year > 0 ?
+        "zonal_mean_ozone_fixed_at_year_$(config.forcing.ozone_fixed_year)" : PRESCRIBED_OZONE_TIME_DEPENDENCE
+    return base == "constant_for_entire_integration" ? ozone : base * "_and_" * ozone
+end
+
+function _forcing_time_dependence_without_ozone(config)
     carbon = config.carbon.mode == :emissions_driven
     solar = config.forcing.solar_distance_correction
+    if !isempty(config.forcing.well_mixed_gas_path)
+        gases = config.forcing.well_mixed_gas_fixed_year > 0 ?
+            "well_mixed_greenhouse_gases_fixed_at_year_$(config.forcing.well_mixed_gas_fixed_year)" :
+            WELL_MIXED_GAS_TIME_DEPENDENCE
+        return solar ? gases * "_and_seasonal_solar_distance_from_model_clock" : gases
+    end
     carbon && solar && return "CO2_updated_each_coupling_step_and_seasonal_solar_distance_from_model_clock"
     carbon && return "CO2_updated_each_coupling_step_from_emissions_and_air_sea_exchange"
     solar && return "seasonal_solar_distance_from_model_clock"
