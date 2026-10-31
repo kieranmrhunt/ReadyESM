@@ -157,30 +157,30 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `atmosphere_moist_mass_coupling` | `false` | Let water-vapour sources change the air mass. Evaporation adds air and precipitation removes it, and the global mean surface pressure follows. Use it only with Betts–Miller convection, net-column large-scale precipitation and RRTMGP radiation. |
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
 | `terrarium_unsat_conductivity` | `van_genuchten_released` | Keep the established soil-water conductivity law, or opt in to the standard van Genuchten–Mualem law with `van_genuchten_mualem`. |
-| `terrarium_surface_albedo` | `era5_spectral` | Use the pinned realistic seasonal land-albedo candidate with the coupled Terrarium/ocean configuration. The generic experiment default is `constant`; see [seasonal albedo](docs/seasonal-albedo.md). |
-| `terrarium_vegetation_cycle` | `cover_lai` | Prescribe monthly ERA5 vegetation cover and leaf area index. Requires ERA5 Terrarium initialization and `era5_prescribed_vegetation`. The generic experiment default is `off`; see [seasonal vegetation](docs/seasonal-vegetation.md). |
+| `terrarium_surface_albedo` | `era5_spectral` | Use the packaged monthly land brightness from ERA5 for coupled runs. The generic experiment default is `constant`. See [seasonal albedo](docs/seasonal-albedo.md). |
+| `terrarium_vegetation_cycle` | `cover_lai` | Prescribe monthly ERA5 vegetation cover and leaf area index. Requires ERA5 Terrarium initialization and `era5_prescribed_vegetation`. The generic experiment default is `off`. See [seasonal vegetation](docs/seasonal-vegetation.md). |
 | `scored_outputs` | `false` | Write the four files that the release scores read. See [Run and output](docs/running.md#run-and-output). Requires RRTMGP. A run with this switch on cannot be restarted. |
 | `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
 | `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Prescribed CH4 and N2O for RRTMGP. Omitted values use 1900 and 340 ppb. Keep these settings unchanged on restart. |
 | `forcing.solar_distance_correction` | `true` | Vary incoming sunlight with seasonal Earth–Sun distance. Requires RRTMGP. See the [solar guide](docs/solar-forcing.md). |
 
-| `forcing.well_mixed_gas_path` | empty | Optional annual file for CO2, CH4, N2O and halocarbons. Requires RRTMGP. Replaces constant CO2/CH4/N2O; incompatible with active carbon mode. See [file forcing](docs/file-forcing.md). |
-| `forcing.well_mixed_gas_fixed_year` | `0` | Use the model date when `0`; otherwise hold the annual gas values for this year. Requires `well_mixed_gas_path`. |
+| `forcing.well_mixed_gas_path` | empty | Optional annual file for CO2, CH4, N2O and halocarbons. Requires RRTMGP. Replaces the constant CO2, CH4 and N2O values. Cannot be used with the active carbon mode. See [file forcing](docs/file-forcing.md). |
+| `forcing.well_mixed_gas_fixed_year` | `0` | With `0`, use the model date. Otherwise hold the annual gas values for this year. Requires `well_mixed_gas_path`. |
 | `forcing.ozone_path` | empty | Optional monthly file of zonal-mean ozone. Requires RRTMGP. Replaces the analytic ozone profile. See [file forcing](docs/file-forcing.md). |
-| `forcing.ozone_fixed_year` | `0` | Use the model date when `0`; otherwise repeat the selected year's twelve months. Requires `ozone_path`. |
+| `forcing.ozone_fixed_year` | `0` | With `0`, use the model date. Otherwise repeat the twelve months of the selected year. Requires `ozone_path`. |
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Prescribed sulfate aerosol optical depth. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
 
-**Seasonal albedo status:** the wiring fix passes CPU and A100 smoke checks.
-A one-member July month test found a large midlatitude temperature response
-and a material top-of-atmosphere energy shift. The combined 90-day test is
-pending. See the [seasonal albedo guide](docs/seasonal-albedo.md).
+**Land brightness:** the fix that makes the radiation use the monthly values
+passes its tests. In one July month it warmed the middle atmosphere at 30 to
+60 degrees north and changed how much sunlight the planet absorbs. A 90-day
+test is under way. See the [seasonal albedo guide](docs/seasonal-albedo.md).
 
 The standard setup uses prescribed CO2 and aerosol forcing. Optional
 [carbon exchange and emissions](docs/carbon.md) can update CO2.
 For CH4/N2O restart settings, see the [trace-gas notes](docs/validation-runoff-trace-gases.md#scope).
-The gas and ozone files are optional; with both paths empty, the standard
-forcing stays unchanged. Their prepared formats, time coverage and restart
+The gas and ozone files are optional. With both paths empty, the standard
+forcing does not change. Their prepared formats, time coverage and restart
 identity are described in [file forcing](docs/file-forcing.md).
 Land vegetation is prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
 has separate configuration instructions.
