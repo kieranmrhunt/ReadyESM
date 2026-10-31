@@ -9,32 +9,29 @@ for test results and earlier work.
 
 ## 0.1.19 — in development
 
-- Add optional file-based forcing for annual well-mixed greenhouse gases and
-  monthly zonal-mean ozone with RRTMGP. Both inputs are off by default, include
-  validated schemas and date handling, and are recorded in restart identity.
-  See [file forcing](docs/file-forcing.md) for formats and configuration.
-- Add opt-in van Genuchten–Mualem soil-water conductivity. The versioned
-  production profile now selects kinetic-energy return from atmospheric
-  dissipation, realistic seasonal ERA5 spectral land albedo, and monthly
-  prescribed vegetation cover and leaf-area index. The generic experiment
-  constructor retains its legacy selections for ad hoc configurations.
-  Enabled inputs and mappings are recorded in restart identity. These
-  production selections still need combined climate qualification and do not
-  establish a correction to temperature drift.
-- An earlier development version replaced seasonal land albedo with the old
-  single value before each radiation calculation, so the option had no effect
-  in coupled runs. The fix now packs the seasonal bands after refreshing the
-  RRTMGP state. A CPU/GPU smoke test checks that the solver receives those
-  bands and responds to the changed albedo. Both checks pass. A one-member
-  July month sensitivity test showed a large 30–60°N 500-hPa response, along
-  with material top-of-atmosphere energy changes. The combined 90-day test is
-  pending; the one-month result is not an equilibrium or drift correction.
-- Add an atmosphere setting that measures wind energy lost to drag, mixing
-  and numerical smoothing and can return that energy as heat. The production
-  profile selects this return, but it has not been shown to reduce drift.
-- Add the ERA5-referenced short-run temperature drift screen, a hashed 1993
-  seasonal land-cycle input, and streamed climate-output tools. The drift
-  screen is a diagnostic, not a causal or equilibrium assessment.
+- Greenhouse gases and ozone can now be read from files: yearly gas amounts,
+  and monthly ozone by latitude and height. Both are off unless you choose
+  them. See [file forcing](docs/file-forcing.md).
+- The production settings now switch on three changes to account for more
+  energy. Energy that drag, mixing and smoothing take from the wind goes back
+  into the air as heat. Land uses a monthly brightness map adjusted toward
+  ERA5 values, in place of one fixed value. Plant cover and leaf area follow
+  their monthly ERA5 cycle. Settings made outside the production file keep
+  the old choices. The three changes have not yet been tested together over
+  a season. They have not been shown to remove the temperature drift.
+- In an earlier development version, the monthly land brightness had no
+  effect because a later step put back the old single value before each
+  radiation calculation. This is fixed. Tests show that the radiation now
+  uses the monthly values. In one July month the change warmed the middle
+  atmosphere between 30 and 60 degrees north and changed how much sunlight
+  the planet absorbs. A 90-day test of all three changes is under way. One
+  month cannot show the long-term effect.
+- An option is added for a soil-water law in which dry soil passes water much
+  more slowly. It is off.
+- A short test compares model temperatures with ERA5 week by week to show how
+  fast the model drifts. It measures the drift, not its cause.
+- New tools write monthly and yearly climate output, and output in the format
+  used for comparing climate models, while the model runs.
 
 ## 0.1.18 — 2026-10-30
 
@@ -58,6 +55,25 @@ for test results and earlier work.
   outside a fixed limit, for example an ocean temperature above 40 °C.
 - The README example now runs for 31 days, and the figure data are named by
   release files and hashes, not by local paths.
+- GPU runs now ask for version 13.2 of the CUDA runtime. Use an NVIDIA driver
+  that supports it.
+- Over four pairs run on the same GPU host, v0.1.18 took 4 to 16 percent longer
+  per model day than the matched control. The new step check accounted for
+  less than 1 percent in a separate timing test.
+- Six 31-day runs, three in January and three in July, were compared with
+  matched runs using the v0.1.17 settings from the same observed starts. The
+  controls used an earlier source commit than the published v0.1.17 tag. In
+  January the change in error was within the spread of the matched runs. In
+  July the error grew by slightly more than that spread, so the original
+  seven-field score rejected this version. The nine-field score did not reach a
+  decision. The separate release rule also rejected the change. The paired
+  radiation and model-state checks passed. These results are reported without
+  changing the scores or the rule outcome. Runs that start from observations
+  do not show long-term climate skill.
+- The new ocean mixing energy ran correctly on the GPU. In a simple six-hour
+  test with wind over one ocean column, it deepened the mixed layer by 0.06 m.
+  The target was 0.1 m. The [validation record](docs/validation-v0.1.18.md)
+  describes this, and [NOTES.md](NOTES.md) lists other known limitations.
 
 ## 0.1.17 — 2026-10-28
 

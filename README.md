@@ -46,6 +46,13 @@ agreement with the observed month, not the skill of the model's own long-term
 climate. The [paired scorecard](scorecard.png),
 [development scorecard](development_scorecard.png) and
 [version history](readyesm_scorecard_versions.png) show the v0.1.18 evidence.
+The version history uses one start per season. The paired comparison estimates
+the change in that release. The
+[version-history figure record](docs/readyesm_scorecard_versions_v018.json)
+gives its source hashes. The [paired score values](scorecard_v4_data.json) and
+[development figure provenance](docs/development_scorecard_v018_provenance.json)
+record the frozen outcomes and GPU gate receipts behind the other two
+scorecards.
 
 ## Speed
 
@@ -73,7 +80,8 @@ initialization, for timing only.
 ## Run
 
 Use Julia 1.12 and Python 3.11 or newer. The standard configuration uses an NVIDIA GPU
-with CUDA. CPU runs are also supported.
+with CUDA. The project asks for CUDA runtime 13.2. Check that your NVIDIA
+driver supports it. CPU runs are also supported.
 
 ```bash
 git clone https://github.com/kieranmrhunt/ReadyESM.git
@@ -112,16 +120,16 @@ python scripts/plot_readme.py artifacts/my_run/diagnostics.nc \
     artifacts/my_run/summary --version v0.1.19 --expected-days 31
 ```
 
-For streamed monthly, annual and CMIP-style climate fields, see the
-[climate output guide](docs/climate-output.md).
-For the ERA5-referenced short-run temperature drift screen, see the
+For files of monthly and yearly climate fields, see the
+[climate output guide](docs/climate-output.md). For the week-by-week
+temperature comparison with ERA5, see the
 [drift-screen guide](docs/drift-screen.md).
-The production profile selects kinetic-energy return from atmospheric
-dissipation, seasonal vegetation and the realistic land-albedo candidate.
-Their packaged input files and hashes are in
+The standard settings return energy lost from the wind to the air as heat.
+They also use monthly ERA5 land brightness, plant cover and leaf area. Their
+input files and recorded hashes are in
 `data/era5_seasonal_land_cycle_1993/` and
-`data/era5_realistic_albedo_1993/`. The combined climate qualification is
-pending; see the [candidate validation record](docs/validation-v0.1.19.md)
+`data/era5_realistic_albedo_1993/`. The three changes are still being tested
+together. See the [candidate validation record](docs/validation-v0.1.19.md)
 and [known limitations](NOTES.md).
 
 ## Configuration
