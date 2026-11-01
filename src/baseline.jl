@@ -154,6 +154,8 @@ function _atmosphere_large_scale_condensation(
         return ObservedImplicitCondensation(spectral_grid)
     elseif config.atmosphere_large_scale_precipitation ==
            :net_column_conservative
+        config.atmosphere_large_scale_melt_cooling && return NetColumnImplicitCondensation(
+            MeltCoolingImplicitCondensation(spectral_grid))
         return NetColumnImplicitCondensation(spectral_grid)
     else
         error(

@@ -3622,6 +3622,8 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 config.atmosphere_large_scale_precipitation ==
                     :upstream_observed ?
                 "SpeedyWeather implicit condensation observed without surface-rate correction" :
+                config.atmosphere_large_scale_melt_cooling ?
+                "implicit condensation net column humidity drying with snowmelt cooling" :
                 "implicit condensation net column humidity drying",
             atmosphere_layer_process_diagnostics =
                 "signed_incremental_parameterization_tendencies_v1",

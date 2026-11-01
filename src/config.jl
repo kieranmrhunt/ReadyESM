@@ -75,6 +75,9 @@ Base.@kwdef struct ExperimentConfig
     # as heat).
     atmosphere_dissipative_heating::Symbol = :off
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
+    # Opt-in (large_scale_melt_cooling.jl): keep the cooling of large-scale snow that melts as it falls, which
+    # SpeedyWeather 0.21.1 computes and then discards. Requires net_column_conservative precipitation.
+    atmosphere_large_scale_melt_cooling::Bool = false
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
     atmosphere_saturation_law::Symbol = :liquid
@@ -434,6 +437,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "atmosphere_large_scale_precipitation",
                 "upstream_observed",
             ),
+        ),
+        atmosphere_large_scale_melt_cooling = Bool(
+            _mapping_value(raw, "atmosphere_large_scale_melt_cooling", false),
         ),
         atmosphere_saturation_law = Symbol(
             _mapping_value(raw, "atmosphere_saturation_law", "liquid"),
@@ -820,6 +826,10 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         "atmosphere_large_scale_precipitation must be upstream_observed or " *
         "net_column_conservative",
     ))
+    !config.atmosphere_large_scale_melt_cooling ||
+        config.atmosphere_large_scale_precipitation == :net_column_conservative || throw(ArgumentError(
+            "atmosphere_large_scale_melt_cooling requires atmosphere_large_scale_precipitation=net_column_conservative",
+        ))
     config.atmosphere_saturation_law in (:liquid, :mixed_phase) || throw(ArgumentError(
         "atmosphere_saturation_law must be liquid or mixed_phase",
     ))
