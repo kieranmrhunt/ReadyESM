@@ -1,0 +1,26 @@
+{
+  "schema": "readiesm_v019_qualified_release_figure_manifest_v1",
+  "frozen_scorer_verdict": "REJECT",
+  "publication_status": "qualified_release_with_failed_score",
+  "score_result_manifest_sha256": "4110bafb73c4a8a7517c6dfad48edc001edf99382f2d2d02ddcbcbb760667c64",
+  "staged_source_sha256s_sha256": "64e8e99b6d539e8323c25c1c1836c31e7677483cc17e6d38a1ba84c882f69823",
+  "publication_adapter_sha256": "6fda26dd0b43a808b7f0d7fbf5de5287195b21b0fe62f06d162924f56e725b15",
+  "files": {
+    "development_scorecard.pdf": "62f9fbd150e39756374988f51ec1c0136152585b74684a31b680e6f1035bb08b",
+    "development_scorecard.png": "48ec1de9b4398ea8e9fde2f53e38943e86baa78842bed9797a5d1d63e21f2b4a",
+    "development_scorecard_data.toml": "a78c3e2e97415b8bb62c984643d83787932a499a7a8f4bd87b47702423a57b3f",
+    "docs/development_scorecard_v019_provenance.json": "66de95f35681ba5178639e8b658306def4bbc3185a68ab5690944d38fc36faf2",
+    "docs/plot-v0.1.19-comparison.py": "9d17454430b147ef999f9687ce7f55f101bf13f5742f09230bd6d7bec71c5716",
+    "docs/plot-v0.1.19-scorecard.py": "307d409516c1789ec3e85ad66c95e96fbbf6f08114462c2a25096a66ac5ab136",
+    "docs/readiesm-v0.1.19-comparison.json": "e2028bd3116cda76ef114529ea4c8ca626ebad2dca3b7bb3457061d111313000",
+    "docs/readiesm-v0.1.19-comparison.png": "f89566f5b8123f1e7d98c7828269b068300d0edef1c3cb6b277b1fd7e2d16928",
+    "docs/readiesm-v0.1.19-figures.json": "e4ed955326f3212f2f7a02d18577acef0b6608644f9acb81cedf549d287aea78",
+    "docs/readiesm-v0.1.19-maps.png": "f30e07c9a2205d06097d1133db0b5a7c7aca5dd2a7db6a4de0aeccccd35b1087",
+    "docs/readiesm-v0.1.19-timelines.png": "5cf118e6726bf321bc497cd57b69598be2940d67a45c9c273971e5ce3321e7e4",
+    "docs/readyesm_scorecard_versions_v019.json": "f7a3c4f2f1a6e4385315c0462ef402ba57d9c9f1ac4fab7a8207ae2eb35f98d1",
+    "plot_development_scorecard.py": "6f9f2d285fed9be0b274bc9de2307e3e09088545aa86042f46cea85c2d587d91",
+    "readyesm_scorecard_versions.png": "b31036fe64be758d0a401a91a76dc1e8400211ca2cf041800805ba745b8205db",
+    "scorecard.png": "f09049ea50af6593577515bf93afefa4e1eef8ea30b35d43c0474f8a22b27f7c",
+    "scorecard_v4_data.json": "142b520eb525e3c32bebd4ad62728e05f2f6f6e714d817dfd5febd9569695983"
+  }
+}

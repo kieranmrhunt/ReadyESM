@@ -1,0 +1,348 @@
+{
+  "schema": "readiesm_v019_comparison_figure_v1",
+  "scope": "Three matched 31-day runs from observed starts in each of January and July 1993. The original score uses seven fields and the wider score nine. Both are error relative to the CMIP6 median.",
+  "cmip6_rank_caveat": "These runs start from observations. In a separate test of six scored fields, a climatology and persistence beat every CMIP6 model. The rank shows agreement with the observed month, not free-running climate skill.",
+  "cmip6_rank_caveat_source": "development_wave_20261025/initialisation_advantage_v1/baselines.json",
+  "cmip6_rank_caveat_source_sha256": "417fe8872b678b397b1ae253d91960d313fb0295c813fdaceaff8f6836163aa0",
+  "control": "matched v0.1.18 run",
+  "candidate": "v0.1.19",
+  "control_source": "48c232cc6d313370c9d5c8fd2a52745af4e6c2ac",
+  "candidate_source": "4caab6896ee4780f9fe283d03d955407bdfa3748",
+  "candidate_array": "63776410",
+  "score_job": "63794836",
+  "score_result_manifest_sha256": "4110bafb73c4a8a7517c6dfad48edc001edf99382f2d2d02ddcbcbb760667c64",
+  "members": [
+    {
+      "season": "JAN",
+      "member": 1,
+      "onr7": {
+        "control": 0.8344842192021271,
+        "candidate": 0.8316076945474269
+      },
+      "onr9": {
+        "control": 0.8893561719929974,
+        "candidate": 0.8359671938304934
+      },
+      "cmip6_position_v3": {
+        "control": 59.0,
+        "candidate": 59.0
+      },
+      "cmip6_position_v4": {
+        "control": 54.0,
+        "candidate": 58.0
+      },
+      "v3_source_file": "JAN_m1/v3/scorecard.json",
+      "v3_source_sha256": "7a736ad45d1449587870bbd40da1275f839606ae71343b30855affdc95ba7fa6",
+      "v4_source_file": "JAN_m1/v4/scorecard.json",
+      "v4_source_sha256": "d088fa382a9992f87db078bf50f3c727657b6a7005ecd90f93a751ecab01c931"
+    },
+    {
+      "season": "JAN",
+      "member": 2,
+      "onr7": {
+        "control": 0.8038711964016192,
+        "candidate": 0.8379052705117378
+      },
+      "onr9": {
+        "control": 0.8636532196549491,
+        "candidate": 0.8417220592453338
+      },
+      "cmip6_position_v3": {
+        "control": 59.0,
+        "candidate": 58.0
+      },
+      "cmip6_position_v4": {
+        "control": 58.0,
+        "candidate": 58.0
+      },
+      "v3_source_file": "JAN_m2/v3/scorecard.json",
+      "v3_source_sha256": "5a6675a3eadaf0302ac08501599e39a56eb1766a8039159150e2517e11f3aff8",
+      "v4_source_file": "JAN_m2/v4/scorecard.json",
+      "v4_source_sha256": "62d0469096ecb6a88afc78de975ca1080c5f274485883496d372e9e69322260d"
+    },
+    {
+      "season": "JAN",
+      "member": 3,
+      "onr7": {
+        "control": 0.81400507567181,
+        "candidate": 0.825969816514035
+      },
+      "onr9": {
+        "control": 0.873062077030933,
+        "candidate": 0.8334066601662005
+      },
+      "cmip6_position_v3": {
+        "control": 59.0,
+        "candidate": 59.0
+      },
+      "cmip6_position_v4": {
+        "control": 55.0,
+        "candidate": 58.0
+      },
+      "v3_source_file": "JAN_m3/v3/scorecard.json",
+      "v3_source_sha256": "8121d5d9f4739448a567434b4c0ab2d843351713b20564e93766191e45fdd525",
+      "v4_source_file": "JAN_m3/v4/scorecard.json",
+      "v4_source_sha256": "26ad15adb3a7df58c75356568e0019299a72ecc32716eee8dc2ac72b91e6aae4"
+    },
+    {
+      "season": "JUL",
+      "member": 1,
+      "onr7": {
+        "control": 1.0024606240493972,
+        "candidate": 0.9462776676414489
+      },
+      "onr9": {
+        "control": 1.0250142252076146,
+        "candidate": 0.9658689281872204
+      },
+      "cmip6_position_v3": {
+        "control": 32.0,
+        "candidate": 44.0
+      },
+      "cmip6_position_v4": {
+        "control": 31.0,
+        "candidate": 37.0
+      },
+      "v3_source_file": "JUL_m1/v3/scorecard.json",
+      "v3_source_sha256": "31983769757cd6f5cee4a1b84222fe407228bf50ced3e9c13cebaaf7d0b8d423",
+      "v4_source_file": "JUL_m1/v4/scorecard.json",
+      "v4_source_sha256": "899dc3e6ebb97999467e01edbccf02046fc35afa5ee8bc282516c7a1b30a261c"
+    },
+    {
+      "season": "JUL",
+      "member": 2,
+      "onr7": {
+        "control": 1.0055375000757896,
+        "candidate": 0.9544151217124901
+      },
+      "onr9": {
+        "control": 1.0300112140128288,
+        "candidate": 0.9720738014456322
+      },
+      "cmip6_position_v3": {
+        "control": 32.0,
+        "candidate": 42.0
+      },
+      "cmip6_position_v4": {
+        "control": 31.0,
+        "candidate": 34.0
+      },
+      "v3_source_file": "JUL_m2/v3/scorecard.json",
+      "v3_source_sha256": "5556cf0491e729bf0c885f6b3c9f97a1375bdb74282f1f8b5e9f0250d62d41fe",
+      "v4_source_file": "JUL_m2/v4/scorecard.json",
+      "v4_source_sha256": "3a1bbbaefddf8f5c500851a25b632f3a04508d6d6db1a8202790e0e57babb8de"
+    },
+    {
+      "season": "JUL",
+      "member": 3,
+      "onr7": {
+        "control": 1.0019050561663685,
+        "candidate": 0.9339560572210922
+      },
+      "onr9": {
+        "control": 1.025899810800231,
+        "candidate": 0.9548345851733439
+      },
+      "cmip6_position_v3": {
+        "control": 34.0,
+        "candidate": 48.0
+      },
+      "cmip6_position_v4": {
+        "control": 33.0,
+        "candidate": 42.0
+      },
+      "v3_source_file": "JUL_m3/v3/scorecard.json",
+      "v3_source_sha256": "adb5c518410546080379c1bd3c50759a29411e63dd02362d9e2a7f6face3c205",
+      "v4_source_file": "JUL_m3/v4/scorecard.json",
+      "v4_source_sha256": "8fedf93c9e6afcfef276db48d28d341e0a6faa950b1252a7f78f5f1b5ddd3149"
+    }
+  ],
+  "seasons": {
+    "JAN": {
+      "onr7": {
+        "control_mean": 0.8174534970918521,
+        "candidate_mean": 0.8318275938577333,
+        "delta_mean": 0.01437409676588112,
+        "noise": 0.01559512741094982
+      },
+      "onr9": {
+        "control_mean": 0.8753571562262931,
+        "candidate_mean": 0.837031971080676,
+        "delta_mean": -0.03832518514561726,
+        "noise": 0.013004267803599218
+      },
+      "cmip6_position_v3": {
+        "control_mean": 59.0,
+        "candidate_mean": 58.666666666666664,
+        "delta_mean": -0.3333333333333333,
+        "noise": 0.5
+      },
+      "cmip6_position_v4": {
+        "control_mean": 55.666666666666664,
+        "candidate_mean": 58.0,
+        "delta_mean": 2.3333333333333335,
+        "noise": 2.0816659994661326
+      },
+      "original_v3_verdict": "UNDECIDED",
+      "original_v4_verdict": "IMPROVED",
+      "noise_outcome": "NON_WORSE"
+    },
+    "JUL": {
+      "onr7": {
+        "control_mean": 1.0033010600971852,
+        "candidate_mean": 0.9448829488583437,
+        "delta_mean": -0.05841811123884133,
+        "noise": 0.01
+      },
+      "onr9": {
+        "control_mean": 1.026975083340225,
+        "candidate_mean": 0.9642591049353988,
+        "delta_mean": -0.06271597840482605,
+        "noise": 0.01
+      },
+      "cmip6_position_v3": {
+        "control_mean": 32.666666666666664,
+        "candidate_mean": 44.666666666666664,
+        "delta_mean": 12.0,
+        "noise": 1.1547005383792517
+      },
+      "cmip6_position_v4": {
+        "control_mean": 31.666666666666668,
+        "candidate_mean": 37.666666666666664,
+        "delta_mean": 6.0,
+        "noise": 1.1547005383792515
+      },
+      "original_v3_verdict": "IMPROVED",
+      "original_v4_verdict": "IMPROVED",
+      "noise_outcome": "NON_WORSE"
+    }
+  },
+  "guards": {
+    "olr_abs_bias": {
+      "control_mean": 7.327706459000884,
+      "candidate_mean": 6.196439694243537,
+      "allowance": 0.5,
+      "passing": true
+    },
+    "albedo_abs_bias": {
+      "control_mean": 0.022263587362028853,
+      "candidate_mean": 0.00025463462664599795,
+      "allowance": 0.002,
+      "passing": true
+    },
+    "net_abs_bias": {
+      "control_mean": 0.555898514047847,
+      "candidate_mean": 6.974093206476804,
+      "allowance": 0.5,
+      "passing": false
+    },
+    "two_season_net": {
+      "passing": false
+    },
+    "physical_breakage": {
+      "passing": false
+    }
+  },
+  "treatment_applied": {
+    "passed": true,
+    "members_checked": 6,
+    "receipt_sha256": "b8ef691b213417fa73562ce587be0741802bef33c633e5929ba2d92cd3a04a34"
+  },
+  "release_decision": {
+    "original_v3_metric_verdict": "UNDECIDED",
+    "original_v4_metric_verdict": "REJECT",
+    "neutral_rule_decision": "REJECT",
+    "no_clear_worse": true,
+    "all_required_guards_pass": false,
+    "neutral_adjudication_sha256": "1bab4de267cab33984add6048c617162d70cf78042a3815c2cf7b2736ef4883d"
+  },
+  "gpu_restart_evidence": {
+    "job": "63764225",
+    "source_commit": "4caab6896ee4780f9fe283d03d955407bdfa3748",
+    "verdict": "V019_RESTART_GPU_PASS",
+    "result_manifest_sha256": "f59c79ed0fd097ca4c1c243c3db6b4518d3a11c3687fdfefa07d5e4663634a47",
+    "input_manifest_sha256": "2df0ff60e4ba267b0b30aac2ff5c36efc5020218ef6ff07859a02c6c940f4772",
+    "reference_report_sha256": "6ac0008f6e684a102dd93989e60aef8df789dd72bdef5f3275b8523d85f809ea",
+    "resume_report_sha256": "214efbcde882205d9c1c43dc767fd3e696d1a6fcdca848f58a47f0e19fc03637",
+    "production_diagnostics_pass": true,
+    "scope": "fresh-process exact-state restart and identity-refusal controls on one A100"
+  },
+  "run_cost": {
+    "method": "report.toml elapsed_day_seconds, day 1 to day 31; percent comparison only on the same GPU host",
+    "pairs": [
+      {
+        "season": "JAN",
+        "member": 1,
+        "control_host": "gpuhost006.jc.rl.ac.uk",
+        "candidate_host": "gpuhost006.jc.rl.ac.uk",
+        "same_host": true,
+        "control_seconds_per_day": 50.242383104233326,
+        "candidate_seconds_per_day": 51.08062930086666,
+        "percent_longer": 1.6684045318756002
+      },
+      {
+        "season": "JAN",
+        "member": 2,
+        "control_host": "gpuhost012.jc.rl.ac.uk",
+        "candidate_host": "gpuhost006.jc.rl.ac.uk",
+        "same_host": false,
+        "control_seconds_per_day": 48.68179748246666,
+        "candidate_seconds_per_day": 50.58948968666667,
+        "percent_longer": 3.918697137029681
+      },
+      {
+        "season": "JAN",
+        "member": 3,
+        "control_host": "gpuhost005.jc.rl.ac.uk",
+        "candidate_host": "gpuhost006.jc.rl.ac.uk",
+        "same_host": false,
+        "control_seconds_per_day": 48.453713934700005,
+        "candidate_seconds_per_day": 48.5275002393,
+        "percent_longer": 0.1522820411649528
+      },
+      {
+        "season": "JUL",
+        "member": 1,
+        "control_host": "gpuhost007.jc.rl.ac.uk",
+        "candidate_host": "gpuhost006.jc.rl.ac.uk",
+        "same_host": false,
+        "control_seconds_per_day": 51.48881193853333,
+        "candidate_seconds_per_day": 50.25643010093333,
+        "percent_longer": -2.3934944140315384
+      },
+      {
+        "season": "JUL",
+        "member": 2,
+        "control_host": "gpuhost012.jc.rl.ac.uk",
+        "candidate_host": "gpuhost006.jc.rl.ac.uk",
+        "same_host": false,
+        "control_seconds_per_day": 49.52422056706667,
+        "candidate_seconds_per_day": 50.859932762933326,
+        "percent_longer": 2.69708877913144
+      },
+      {
+        "season": "JUL",
+        "member": 3,
+        "control_host": "gpuhost006.jc.rl.ac.uk",
+        "candidate_host": "gpuhost006.jc.rl.ac.uk",
+        "same_host": true,
+        "control_seconds_per_day": 50.65933358029999,
+        "candidate_seconds_per_day": 49.74087937880001,
+        "percent_longer": -1.8130009547878134
+      }
+    ],
+    "same_host_count": 2,
+    "same_host_percent_range": [
+      -1.8130009547878134,
+      1.6684045318756002
+    ],
+    "same_host_mean_percent": -0.0722982114561066,
+    "comparison_status": "comparable"
+  },
+  "rule_result_shown": "reject",
+  "release_status": "qualified release with failed frozen score",
+  "renderer": "docs/plot-v0.1.19-comparison.py",
+  "renderer_sha256": "9d17454430b147ef999f9687ce7f55f101bf13f5742f09230bd6d7bec71c5716",
+  "image_sha256": "f89566f5b8123f1e7d98c7828269b068300d0edef1c3cb6b277b1fd7e2d16928",
+  "source_renderer_sha256": "ae3074d23012cb46562a58a04390849c1124b2f129748f560b14757a0e4ce57a"
+}

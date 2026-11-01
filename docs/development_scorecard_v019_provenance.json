@@ -1,0 +1,23 @@
+{
+  "schema": "readiesm_v019_development_scorecard_stage_v1",
+  "publication_status": "qualified_release_with_failed_score",
+  "candidate_array": "63776410",
+  "score_job": "63794836",
+  "score_result_manifest_sha256": "4110bafb73c4a8a7517c6dfad48edc001edf99382f2d2d02ddcbcbb760667c64",
+  "score_input_manifest_sha256": "0a691e8e6674e83d216378ba5da0969a6caec342c6ba2a738e7f4f598a92161f",
+  "candidate_source_commit": "4caab6896ee4780f9fe283d03d955407bdfa3748",
+  "neutral_decision": "REJECT",
+  "frozen_v3_metric_verdict": "UNDECIDED",
+  "frozen_v4_metric_verdict": "REJECT",
+  "treatment_gate_sha256": "b8ef691b213417fa73562ce587be0741802bef33c633e5929ba2d92cd3a04a34",
+  "base_data_sha256": "6b2d294129c4558cdb83eb323136a72338fabffb03b0a0ad7456c0e5844b31fb",
+  "renderer_sha256": "6f9f2d285fed9be0b274bc9de2307e3e09088545aa86042f46cea85c2d587d91",
+  "preparer_sha256": "1bb91c547aa9975ae3092b12887ab72f085600ea207400eadf81d24dc6e6c660",
+  "data_sha256": "a78c3e2e97415b8bb62c984643d83787932a499a7a8f4bd87b47702423a57b3f",
+  "png_sha256": "48ec1de9b4398ea8e9fde2f53e38943e86baa78842bed9797a5d1d63e21f2b4a",
+  "pdf_sha256": "62f9fbd150e39756374988f51ec1c0136152585b74684a31b680e6f1035bb08b",
+  "historical_release_rows_preserved": 19,
+  "programme_rows_preserved": 20,
+  "scope": "Six-pair evidence inventory; LONG1 drift and final tag review separate.",
+  "publication_adapter_sha256": "6fda26dd0b43a808b7f0d7fbf5de5287195b21b0fe62f06d162924f56e725b15"
+}

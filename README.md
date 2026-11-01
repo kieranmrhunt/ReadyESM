@@ -9,35 +9,46 @@ In the standard setup, the atmosphere has a grid spacing of about 400 km
 about 1 degree and 60 levels. The land has 16 soil layers. ERA5 supplies the
 initial atmosphere and land state. ECCO supplies the ocean and sea ice.
 
-![Nine maps of the ocean, sea ice, atmosphere and land after 31 days in the v0.1.18 January run that starts from observations](docs/readiesm-v0.1.18-maps.png)
+![Nine maps of the ocean, sea ice, atmosphere and land after 31 days in a v0.1.19 January run that starts from observations](docs/readiesm-v0.1.19-maps.png)
 
-January 1993 member 1 after 31 days with v0.1.18 source `48c232cc`.
+January 1993, first of three runs, after 31 days with v0.1.19 source
+`4caab689`.
 This run starts from observations. It is one run, not a long-term climate
 mean. Grey marks inactive cells. Ice-free ocean is white.
 
-![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture in the first 31 days of v0.1.18](docs/readiesm-v0.1.18-timelines.png)
+![Eight timelines showing radiation, temperature, water, ocean extremes, sea ice and soil moisture in the first 31 days of v0.1.19](docs/readiesm-v0.1.19-timelines.png)
 
 The same run from day 0 to day 31. Radiation shows daily means. Other panels
 show daily samples. Ocean extrema cover all active depths and can move between
 cells.
-[Figure data, source hashes and methods](docs/readiesm-v0.1.18-figures.json).
+[Figure data, source hashes and methods](docs/readiesm-v0.1.19-figures.json).
 
-## v0.1.18 paired comparison
+## v0.1.19 paired comparison
 
-![Six matched January and July runs comparing v0.1.18 with v0.1.17 on two scores, with the energy and safety checks and the release decision](docs/readiesm-v0.1.18-comparison.png)
+![Six matched January and July runs comparing v0.1.19 with v0.1.18, showing improved monthly error but failed radiation and sea-ice checks](docs/readiesm-v0.1.19-comparison.png)
 
-Three 31-day runs in each season compare v0.1.18 with matched runs using the
-v0.1.17 settings from the same observed starts. The controls use an earlier
-source commit than the published v0.1.17 tag. Lower error is better. On the
-original seven-field score, July error rose by 0.0115. That is more than the
-spread of the three matched July runs (0.0103), so this score rejected the
-change. The nine-field score did not reach a decision because its July change
-stayed within its spread. The paired radiation and model-state checks passed.
-The separate release rule also rejected the change because of the July result.
-These results are reported without changing the scores or the rule outcome.
-See the [validation record](docs/validation-v0.1.18.md),
-[figure values and source hashes](docs/readiesm-v0.1.18-comparison.json), and
-[plot recipe](docs/plot-v0.1.18-comparison.py).
+Three 31-day runs in each season compare v0.1.19 with v0.1.18 from the same
+observed starts. Error across nine weather fields fell in both seasons.
+The frozen release score nevertheless **rejected** v0.1.19. The two-season
+absolute imbalance in energy at the top of the atmosphere grew from 0.56 to
+6.97 W m⁻², against an allowance of 0.5 W m⁻² for the change. At the end of
+January, Antarctic sea-ice extent was 4.17–4.30 million km² in v0.1.19,
+against 3.00–3.03 million km² in the controls and 2.96 million km² in daily
+observations. This is a **qualified release with known failures**. The score
+and failed checks are unchanged. See the
+[validation record](docs/validation-v0.1.19.md) and
+[figure values and source hashes](docs/readiesm-v0.1.19-comparison.json).
+The [plot recipe](docs/plot-v0.1.19-comparison.py) renders the comparison
+from that figure record.
+
+In a separate six-month run from a January 1993 start, the June air
+temperature about 5.5 km above sea level between 30 and 60°N was 0.83°C
+too cold, compared with 5.32°C too cold using the matched v0.1.18 settings.
+That is one pair of runs. It does not show how a stable climate would behave.
+The model uses 1365 W m⁻² for the Sun's energy output. The same value was
+used in earlier versions. In this six-month run, incoming sunlight averaged
+0.89 W m⁻² above the ERA5 reference. This explains only part of the energy
+imbalance. The remaining causes are under investigation.
 
 These runs start from observations. In a separate six-field test, two simple
 guesses (the long-term average, and the starting difference from that average
@@ -45,12 +56,13 @@ held fixed) scored better than all 59 CMIP6 models. The ranks here show
 agreement with the observed month, not the skill of the model's own long-term
 climate. The [paired scorecard](scorecard.png),
 [development scorecard](development_scorecard.png) and
-[version history](readyesm_scorecard_versions.png) show the v0.1.18 evidence.
+[version history](readyesm_scorecard_versions.png) show the v0.1.19 evidence
+and its failed checks.
 The version history uses one start per season. The paired comparison estimates
 the change in that release. The
-[version-history figure record](docs/readyesm_scorecard_versions_v018.json)
+[version-history figure record](docs/readyesm_scorecard_versions_v019.json)
 gives its source hashes. The [paired score values](scorecard_v4_data.json) and
-[development figure provenance](docs/development_scorecard_v018_provenance.json)
+[development figure provenance](docs/development_scorecard_v019_provenance.json)
 record the frozen outcomes and GPU gate receipts behind the other two
 scorecards.
 
@@ -128,8 +140,9 @@ The standard settings return energy lost from the wind to the air as heat.
 They also use monthly ERA5 land brightness, plant cover and leaf area. Their
 input files and recorded hashes are in
 `data/era5_seasonal_land_cycle_1993/` and
-`data/era5_realistic_albedo_1993/`. The three changes are still being tested
-together. See the [candidate validation record](docs/validation-v0.1.19.md)
+`data/era5_realistic_albedo_1993/`. The three changes were tested together
+in paired months and a six-month continuous run. See the
+[validation record](docs/validation-v0.1.19.md)
 and [known limitations](NOTES.md).
 
 ## Configuration

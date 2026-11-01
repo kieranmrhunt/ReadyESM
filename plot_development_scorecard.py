@@ -20,12 +20,62 @@ PLAIN_RELEASE_LABELS={
     '390 d prototype: identity FAILED':'390 d test run: source mismatch',
     '31 d · optional ON/OFF pair':'31 d · optional feature on/off pair',
     '120 d output; drift review pending':'120 d output. Climate drift check pending',
+    '30 d · 3 January pairs':'30 d · 3 matched January runs',
+    '31 d · 1 January pair':'31 d · 1 matched January run',
+    '31 d · 3 pairs / season':'31 d · 3 matched runs per season',
+    '31 d · 3 January members':'31 d · 3 January runs',
 }
 PLAIN_RELEASE_CHANGES={
-    'Darcy boundary fix':'Soil-water boundary fix',
-    'Sigma-RH convection profile':'Height-varying convection humidity',
-    'Momentum-only K profile':'Boundary-layer wind mixing',
-    'CATKE energy and scored outputs':'Ocean surface-mixing energy and score files',
+    'First coupled baseline':'First version joining air, ocean, ice and land',
+    'Land ET dispatch':'Land evaporation path fixed',
+    'Albedo diagnostics':'Surface brightness outputs',
+    'Darcy boundary fix':'Soil water boundary fixed',
+    'Runoff and GPU fixes':'River runoff and graphics-card fixes',
+    'Sea-ice GPU restart':'Sea-ice restart on graphics cards',
+    'Float64 land and cloud path':'More precise land and cloud sums',
+    'Two-hour convection':'Rising air adjusts within two hours',
+    'Mixed phase and rain closure':'Ice and water clouds, rain water balanced',
+    'Spectral launch repair':'Atmosphere start fixed',
+    'Calendar-centred ocean launch':'Ocean start matched to the date',
+    'Land flux / grid-order repairs':'Land exchange and grid order fixed',
+    'Optional moist-mass coupling':'Option: rain and evaporation change the air mass',
+    'Sigma-RH convection profile':'Rising-air humidity target varies with height',
+    'Full temperature transport':'Air temperature transport improved',
+    'Momentum-only K profile':'Wind mixing near the ground',
+    'Production solar-distance forcing':'Sunlight follows Earth’s distance from the Sun',
+    'Weaker wind-divergence smoothing':'Less smoothing of spreading and converging winds',
+    'CATKE energy and scored outputs':'Ocean surface mixing energy, and score files',
+}
+PLAIN_PROGRAMME_LABELS={
+    'BS01':'Rising-air plumes', 'BS02':'Ice and water clouds',
+    'BS03':'Finer layers for sunlight and heat', 'BS04':'Balanced start',
+    'BS05':'Systematic tuning', 'BS06':'Ice of several thicknesses',
+    'BS07':'Coastal ice and ice fixed to the shore', 'BS08':'Water stored in river basins',
+    'BS09':'Tools for linked test runs', 'BS10':'Optional carbon cycle',
+    'C01':'Rising air starting near the ground', 'C02':'Shallow rising air with a depth limit',
+    'C03':'Shallow rising air driven by the ground', 'C04':'Raised and slanted rising air',
+    'C05':'Deep rising air with memory', 'C06':'Falling air and cool air pools',
+    'C07':'Wind carried by rising air', 'C08':'Many rising-air plume sizes',
+    'C09':'Random rising-air plumes', 'C10':'Mixing near the ground',
+}
+PLAIN_PROGRAMME_SCOPES={
+    'BS01':'Core kept. The tested plume version failed the climate test.',
+    'BS02':'Moving and restarting work. The tested cloud rule failed.',
+    'BS03':'New model top and layer options are being tested.',
+    'BS04':'Fixes to the atmosphere and ocean start are in use.',
+    'BS06':'The tested ice pressure rule failed the pile-up test.',
+    'BS07':'The coast connection part is kept. Simple fixes failed.',
+    'BS08':'The water store works. Heat carried by runoff stays off.',
+    'BS09':'The tools are in use. Model changes still need their own tests.',
+    'BS10':'Optional carbon is in use after four days on the full grid.',
+    'C01':'The tested start depths failed the joint 10-day test.',
+    'C02':'The tested depths failed the joint 10-day test.',
+    'C03':'No tested setting passes the joint test.',
+    'C05':'The memory test was too weak to see past day-to-day noise.',
+    'C06':'The tested cool-air-pool setting fails the second-season case.',
+    'C07':'The parts work and a one-day trial ran.',
+    'C08':'The January version is parked. The two-season test was undecided.',
+    'C09':'The eight-run version was closed: its effect was too small to measure.',
 }
 COLOURS={'accepted':'#285c8d','active':'#247c8b','supported':'#b07b13',
          'design':'#6e62a3','reserve':'#8a929c','closed':'#485463'}
@@ -33,13 +83,17 @@ FLAG_COLOURS={'P':'#285c8d','F':'#a83b55','~':'#b07b13','.':'#a4adb8','-':'#8a92
 
 def load_data(path):
     data=tomllib.loads(path.read_text())
-    if [r['version'] for r in data['release']]!=[f'v0.1.{i}' for i in range(19)]:
-        raise ValueError('Expected every version v0.1.0–v0.1.18 in order')
+    if [r['version'] for r in data['release']]!=[f'v0.1.{i}' for i in range(20)]:
+        raise ValueError('Expected every version v0.1.0–v0.1.19 in order')
     meta=data['meta']
-    if meta['candidate_version']!='v0.1.18' or meta['release_status'] not in ('candidate_preview','evidence_verified_for_v018'):
-        raise ValueError('Expected v0.1.18 preview or evidence-verified inventory')
-    if meta['release_status']=='evidence_verified_for_v018' and data['release'][-1]['status']!='qualified':
-        raise ValueError('Evidence-verified inventory needs a qualified v0.1.18 row')
+    if meta['candidate_version']!='v0.1.19' or meta['release_status'] not in ('candidate_preview','evidence_verified_for_v019'):
+        raise ValueError('Expected v0.1.19 preview or evidence-verified inventory')
+    if data['release'][-2]['status']!='qualified':
+        raise ValueError('Published v0.1.18 row must remain qualified for its stated checks')
+    if meta['release_status']=='candidate_preview' and data['release'][-1]['status']!='unreleased':
+        raise ValueError('A preview must leave v0.1.19 unreleased')
+    if meta['release_status']=='evidence_verified_for_v019' and data['release'][-1]['status']!='qualified':
+        raise ValueError('Evidence-verified inventory needs a qualified v0.1.19 row')
     if [r['id'] for r in data['experiment']]!=[f'{p}{i:02d}' for p in ('BS','C') for i in range(1,11)]:
         raise ValueError('Expected all twenty named programme tracks')
     for row in data['release']:
@@ -111,9 +165,9 @@ def programme(ax,rows,title):
         if i%2==0:ax.add_patch(Rectangle((0,y-.46),100,.92,facecolor='#f5f7f9',edgecolor='none',zorder=0))
         col=COLOURS[row['status']]
         ax.add_patch(Rectangle((.2,y-.3),.28,.6,facecolor=col,edgecolor='none',zorder=2))
-        label=row['label'].replace('EDMF','mixing')
-        scope=row['evidence_scope'].replace('gate','test').replace('UNDECIDED','undecided').replace('; ','. ')
-        if row['id']=='C04':scope='Slanted convection appears in less than 1% of inspected cases.'
+        label=PLAIN_PROGRAMME_LABELS[row['id']]
+        scope=PLAIN_PROGRAMME_SCOPES.get(row['id'],row['evidence_scope'].replace('gate','test').replace('UNDECIDED','undecided').replace('; ','. '))
+        if row['id']=='C04':scope='Slanted rising air appears in less than 1% of inspected cases.'
         if row['id']=='C10':scope='Only wind mixing was accepted in v0.1.15.'
         if row['id']=='BS05':scope='Only one-column checks of which settings can be told apart.'
         ax.text(1,y-.17,f"{row['id']}  {label}",fontsize=9.5,fontweight='bold',va='center')
@@ -141,7 +195,7 @@ def render(data,png,pdf):
     fig.text(.035,.949,f"Evidence inventory: {data['meta']['as_of']}",fontsize=11,color='#526174')
     version=data['meta']['candidate_version']
     fig.text(.035,.932,f'{version} review preview — release evidence pending' if candidate else f'{version} — release record with disclosed test outcomes',fontsize=11,color='#986b14' if candidate else '#285c8d')
-    handles=[Line2D([],[],marker='o',ls='',color='#285c8d',label='tested for this release'),
+    handles=[Line2D([],[],marker='o',ls='',color='#285c8d',label='tested for published release'),
              Line2D([],[],marker='o',ls='',mfc='white',mec='#687482',label='earlier or unreleased test'),
              Line2D([],[],marker='D',ls='',mfc='white',mec='#b07b13',label='run finished, review pending'),
              Line2D([],[],marker='x',ls='',color='#a83b55',label='source mismatch, excluded')]
@@ -150,7 +204,7 @@ def render(data,png,pdf):
     fig.legend(handles=gates,loc='lower left',bbox_to_anchor=(.03,.065),ncol=5,frameon=False,fontsize=9)
     fig.text(.035,.052,'Each row shows the furthest test completed. Items marked in use include optional tools. Climate skill is measured separately.',fontsize=9,color='#526174')
     fig.text(.035,.038,'Off: works when switched off · Resume: continues from a saved state · Balance: energy and water accounted for · Limits: values stay physical · Repeat: matched runs agree · Climate: meets target',fontsize=8.6,color='#526174')
-    fig.text(.035,.024,'v0.1.12 tested an optional feature for 31 days but left it off in standard runs. v0.1.13 checked a short restart. v0.1.14/15 allowed stated limit exceptions. Long drift remains open.',fontsize=8.8,color='#526174')
+    fig.text(.035,.024,'v0.1.12 tested an optional feature for 31 days but left it off in standard runs. v0.1.13 checked a short restart. v0.1.14 and v0.1.15 allowed documented exceptional values. Long drift remains open.',fontsize=8.8,color='#526174')
     fig.text(.035,.010,data['meta']['publication_note'],fontsize=8.6,color='#526174')
     png.parent.mkdir(parents=True,exist_ok=True);pdf.parent.mkdir(parents=True,exist_ok=True)
     fig.savefig(png,dpi=160,facecolor='white');fig.savefig(pdf,facecolor='white');plt.close(fig)

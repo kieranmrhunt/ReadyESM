@@ -1,0 +1,70 @@
+{
+  "schema": "readiesm_v019_version_history_stage_v1",
+  "publication_status": "qualified_release_with_failed_score",
+  "candidate_array": "63776410",
+  "score_job": "63794836",
+  "score_result_manifest_sha256": "4110bafb73c4a8a7517c6dfad48edc001edf99382f2d2d02ddcbcbb760667c64",
+  "scorer_input_manifest_sha256": "0a691e8e6674e83d216378ba5da0969a6caec342c6ba2a738e7f4f598a92161f",
+  "scientific_source_commit": "4caab6896ee4780f9fe283d03d955407bdfa3748",
+  "previous_history_stage_manifest_sha256": "7e29649128ca0dcf56e3872975a4c64376a1bb11833076f5ffa9e7e7657ceeda",
+  "previous_publication_manifest_sha256": "973775c84e243e1719b9be99ea435d00b15b9fc6cf407e5f746980de43545c9a",
+  "previous_columns_preserved": [
+    "v0_1_1",
+    "v0_1_2",
+    "v0_1_3",
+    "v0_1_4",
+    "v0_1_5",
+    "v0_1_6",
+    "v0_1_7",
+    "v0_1_8",
+    "v0_1_9",
+    "v0_1_10",
+    "v0_1_11",
+    "v0_1_12",
+    "v0_1_13",
+    "v0_1_14",
+    "v0_1_15",
+    "v0_1_16",
+    "v0_1_17",
+    "v0_1_18"
+  ],
+  "neutral_release_decision": "REJECT",
+  "six_field_baseline_source_sha256": "417fe8872b678b397b1ae253d91960d313fb0295c813fdaceaff8f6836163aa0",
+  "renderer_sha256": "919cc6c449a03c9b392dbc71b8cd353bcf5d84a3ba4a4bdf23742d6d0a0d815a",
+  "preparer_sha256": "fe8e6be614ddb44d1e5f68ed08d5aeaca198061d8a36d3a4c14d8dd8e74f2f0a",
+  "figure_sha256": "b31036fe64be758d0a401a91a76dc1e8400211ca2cf041800805ba745b8205db",
+  "runs": {
+    "JAN": {
+      "history_sha256": "9ab35d6a32abb50f7f800e34557b64389b47d177219ee193c606b1e8c7e8028a",
+      "score_sha256": "d088fa382a9992f87db078bf50f3c727657b6a7005ecd90f93a751ecab01c931",
+      "previous_history_sha256": "5dd2b97dc2bcf8e9960f972ea829c268038a93740b9d5622dcfe137ee886f5de",
+      "candidate_score_sha256": "d088fa382a9992f87db078bf50f3c727657b6a7005ecd90f93a751ecab01c931",
+      "candidate_report_sha256": "5b55819164b0a74882ce3a705351c5fe68b8c7bcb565a974acc5c408048d3b75",
+      "candidate_result_manifest_sha256": "eb046c073f931a9a088e6858c1d49df9e68879e0a87498111c378aae9b901351",
+      "initial_hashes_different_from_v018_canonical": [
+        "humidity",
+        "temperature"
+      ],
+      "comparison_scope": "one paired member for display; six matched pairs determine the release score",
+      "cells_at_or_better_than_cmip6_median": 47,
+      "onr9": 0.8359671938304934
+    },
+    "JUL": {
+      "history_sha256": "7fd05ba027cc34cecc30c3d346a3605235aba9ba02c36bb63a3a2e569bfe61a3",
+      "score_sha256": "899dc3e6ebb97999467e01edbccf02046fc35afa5ee8bc282516c7a1b30a261c",
+      "previous_history_sha256": "bb40cd787872160710087ebfbbab414ae971ef7d5b17d68d8cd8e81afbec07fb",
+      "candidate_score_sha256": "899dc3e6ebb97999467e01edbccf02046fc35afa5ee8bc282516c7a1b30a261c",
+      "candidate_report_sha256": "4137956799e5586455e765aca28e89f3c77b41cdf18c7a283aa9fe4f44b8268d",
+      "candidate_result_manifest_sha256": "7cf3b18d45baa1176af59fc904bf24aa475776a66a29ef5b4aed4117a1f7daf9",
+      "initial_hashes_different_from_v018_canonical": [
+        "humidity",
+        "temperature"
+      ],
+      "comparison_scope": "one paired member for display; six matched pairs determine the release score",
+      "cells_at_or_better_than_cmip6_median": 34,
+      "onr9": 0.9658689281872204
+    }
+  },
+  "comparison_scope": "paired member 1 for display; six matched pairs determine the release decision; v0.1.19 initial atmospheric temperature and humidity differ from v0.1.18 canonical",
+  "publication_note": "v0.1.19 was released with failed energy and January sea-ice checks. Scores start from observations."
+}

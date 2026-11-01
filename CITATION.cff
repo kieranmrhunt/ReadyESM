@@ -6,5 +6,6 @@ authors:
     given-names: Kieran
   - name: ReadyESM contributors
 version: 0.1.19
+date-released: 2026-11-01
 url: https://github.com/kieranmrhunt/ReadyESM
 license: EUPL-1.2

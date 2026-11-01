@@ -9,15 +9,20 @@
 - K-profile boundary-layer momentum mixing at scale 1. Heat and humidity
   mixing are off in production.
 - The v0.1.19 production profile returns diagnosed atmospheric wind-energy
-  losses as heat, uses realistic seasonal ERA5 land albedo and prescribes
-  seasonal vegetation cover and leaf area. A 90-day test of the three changes
-  together, from one start, is complete. It removed most of the cold error
-  at 500 hPa between 30 and 60°N. The planet took in more energy, and the
-  upper air, which was already too warm, became warmer. It is not yet known
-  whether this result repeats, or whether the energy stays in balance over
-  many years. The albedo source only approximates how snow reflects light of
-  different colours. See
-  [its provenance](data/era5_realistic_albedo_1993/README.md).
+  losses as heat, uses monthly ERA5 values for how much sunlight land
+  reflects, and prescribes seasonal vegetation cover and leaf area. A 90-day
+  test of the three changes
+  together, from one start, is complete. A separate six-month continuous
+  pair also found less cold error about 5.5 km above sea level between
+  30 and 60°N, but the v0.1.19 air was still 0.83°C too cold there in June
+  against ERA5. The
+  frozen six-pair release rule rejected v0.1.19 because the top-of-atmosphere
+  energy imbalance grew and January Antarctic sea ice moved away from daily
+  observations. The upper air, which was already too warm in the 90-day
+  test, became warmer. It is not yet known whether the six-month result
+  repeats or whether energy stays in balance over many years. The land
+  brightness input only approximates how snow reflects light of different
+  colours. See [its provenance](data/era5_realistic_albedo_1993/README.md).
 - Two-hour Betts–Miller convection with reference RH 0.5 above sigma 0.3,
   increasing to 0.7 at sigma 0.7, then constant below. Net-column rain diagnosis.
 - Mixed liquid/ice saturation and net-column large-scale rain diagnosis:
@@ -52,8 +57,8 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
   winds, but increases monthly global ice-area bias by 0.19 and 0.33 million
   km². Two January members exceed the day-31 ice-area change allowance.
   Local ice accumulation remains, with mixed changes in July maxima.
-  The v0.1.19 candidate includes a heat-return option, but its energy effect
-  and drift response at production resolution need further testing.
+  v0.1.19 includes a heat-return option. Its separate contribution to the
+  energy imbalance and drift remains unresolved.
   See the [comparison](docs/validation-v0.1.15.md).
 
 - v0.1.14 improves the initialized January/July climate scores and SST, but

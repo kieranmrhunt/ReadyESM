@@ -1,5 +1,6 @@
 # Version history
 
+Current version: v0.1.19, 1 November 2026.
 Previous tagged version: [v0.1.18](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.18),
 30 October 2026.
 
@@ -7,7 +8,24 @@ See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
 
-## 0.1.19 — in development
+## 0.1.19 — 2026-11-01
+
+This release has known failures. Six matched January and July month pairs
+improved the error across nine weather fields, but the planned release rule
+**rejected** the version. The two-season absolute imbalance in energy at the
+top of the atmosphere rose from 0.56 to 6.97 W m⁻². The allowed increase
+was 0.5 W m⁻². January Antarctic sea-ice extent at day 31 rose from
+3.00–3.03 to 4.17–4.30 million km², while the observed extent was about
+2.96 million km². The failed checks remain failed in the
+[validation record](docs/validation-v0.1.19.md). Results from runs that start
+from observations do not prove long-term climate skill.
+
+In a separate six-month continuous pair starting in January 1993, the June
+air temperature about 5.5 km above sea level between 30 and 60°N was
+0.83°C too cold with v0.1.19. It was 5.32°C too cold with the matched
+v0.1.18 settings, relative to ERA5. This is one pair, so it does not
+establish repeatability or a stable
+long-term climate.
 
 - Greenhouse gases and ozone can now be read from files: yearly gas amounts,
   and monthly ozone by latitude and height. Both are off unless you choose
@@ -25,8 +43,9 @@ for test results and earlier work.
   radiation calculation. This is fixed. Tests show that the radiation now
   uses the monthly values. In one July month the change warmed the middle
   atmosphere between 30 and 60 degrees north and changed how much sunlight
-  the planet absorbs. In weeks 4 to 12 of the 90-day test, the air at 500 hPa
-  between 30 and 60°N was 3.31 K colder than ERA5 with the v0.1.18 settings.
+  the planet absorbs. In weeks 4 to 12 of the 90-day test, the air about
+  5.5 km above sea level between 30 and 60°N was 3.31 K colder than ERA5
+  with the v0.1.18 settings.
   With the three changes it was 0.05 K warmer. The planet took in more energy
   than before: 9.71 W m⁻² more in July, 7.46 in August and 6.65 in the first
   28 days of September. The upper air was already too warm, and it became
