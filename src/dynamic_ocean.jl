@@ -4335,8 +4335,9 @@ function validate_dynamic_diagnostics(diagnostics)
     end
     large_scale_scheme =
         diagnostics.metadata.atmosphere_large_scale_precipitation_scheme
-    if large_scale_scheme ==
-       "implicit condensation net column humidity drying"
+    # The opt-in snowmelt cooling changes only temperature, so the net-column humidity check applies to it unchanged.
+    if large_scale_scheme in ("implicit condensation net column humidity drying",
+                              "implicit condensation net column humidity drying with snowmelt cooling")
         all(abs.(
             large_scale_precipitation_from_tendency .-
             diagnostics.atmosphere_large_scale_rainfall_flux .-
