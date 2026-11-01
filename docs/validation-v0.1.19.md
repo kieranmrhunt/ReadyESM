@@ -59,8 +59,10 @@ sealed comparison is `artifacts/development_wave_20261101/nsidc_daily_extent_199
 (`SHA256SUMS` SHA-256
 `15b6d794a62e4e2b61298dd70547fa1a8821e2ae84e389d16098e8a3c812986a`).
 This first-month result does not settle the separate second-summer melt-out
-question; the matched LONG1 run is intended to test that. Neither
-observational readout changes the frozen physical-breakage verdict.
+question. LONG1 covers January–December 1993 and can test first-year drift;
+the next southern summer would require a separately approved extension into
+1994. Neither observational readout changes the frozen physical-breakage
+verdict.
 
 **Release status: HOLD.** The frozen net-radiation and January sea-ice
 guards both fail. LONG1 drift evidence and a scientific disposition are
