@@ -18,6 +18,11 @@ Some files in `src/` adapt code from SpeedyWeather, which uses EUPL-1.2.
 For example, the full-temperature vertical advection follows SpeedyWeather
 [pull request 1286](https://github.com/SpeedyWeather/SpeedyWeather.jl/pull/1286),
 merged as commit `adf0d61da03bc3a9bd6698edb9fc0a7ddfac002d`.
+The optional snowmelt cooling in `src/large_scale_melt_cooling.jl` copies the
+`large_scale_condensation!` routine of SpeedyWeather 0.21.1
+(`src/parameterizations/large_scale_condensation.jl`) and changes two lines,
+so that melting snow cools the air. The file header names the copyright
+holders and the licence.
 
 Julia installs the other packages listed in `Manifest.toml`. Each package
 keeps its own licence. Most use the MIT licence. Others use Apache-2.0,

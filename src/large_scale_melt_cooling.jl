@@ -1,7 +1,8 @@
 # Opt-in snowmelt cooling for SpeedyWeather 0.21.1's implicit large-scale condensation (Claude, 1 Nov 2026).
 #
-# SpeedyWeather.jl is MIT licensed (Copyright (c) 2020 Milan Kloewer, 2021 The SpeedyWeather.jl Contributors, 2022
-# Fred Kucharski and Franco Molteni for the SPEEDY parametrization schemes). The column routine below is a copy of
+# SpeedyWeather.jl is licensed under the European Union Public Licence v1.2 (EUPL-1.2), the same licence as ReadyESM:
+# Copyright (c) 2020 Milan Kloewer and (c) 2021 The SpeedyWeather.jl Contributors for SpeedyWeather.jl, and (c) 2022
+# Fred Kucharski and Franco Molteni for the SPEEDY parametrization schemes. The column routine below is a copy of
 # `large_scale_condensation!` in SpeedyWeather 0.21.1 src/parameterizations/large_scale_condensation.jl with two
 # changes, the same as Codex's melt-energy repair (b6a9dd4) for the unreleased process-conservative candidate:
 #   1. the melt cooling is a tendency, -Lᵢ/cₚ δq_melt / Δt, so the temperature in the implicit derivative is the
