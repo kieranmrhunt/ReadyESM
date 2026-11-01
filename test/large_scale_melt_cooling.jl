@@ -1,9 +1,12 @@
 module LargeScaleMeltCoolingTests
-using ReadyESM, Test
+using ReadyESM, Test, Dates
 const R = ReadyESM
 const S = R.SpeedyWeather
+const O = R.Oceananigans
 
 fields(value) = (; (k => getfield(value, k) for k in fieldnames(typeof(value)))...)
+with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
+include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
 
 # Column heat input of the large-scale scheme (W/m²): the sum over layers of (cₚ dT/dt + Lᵥ dq/dt) times the layer mass.
 function column_heat(vars, model, ij)
@@ -130,6 +133,36 @@ end
     @test p.large_scale_snowmelt_rate[ij] > 0
     @test 0 <= p.snow_rate_large_scale[ij]
     @test all(isfinite, vars.tendencies.grid.temperature.data[ij, :])
-    println("LARGE_SCALE_MELT_COOLING_TESTS_PASS")
 end
+
+@testset "Large-scale snowmelt cooling: coupled CPU build and run, off and on" begin
+    released = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
+    @test released.atmosphere_large_scale_precipitation == :net_column_conservative
+    states = Dict{Bool, Any}()
+    for melt in (false, true)
+        base = analytic_coupled_test_config(released; output_dir = mktempdir())
+        config = with(base; atmosphere_timestep_at_t31_minutes = 3.75, duration_days = 0.25,
+            start_date = DateTime(1993, 1, 1), atmosphere_large_scale_melt_cooling = melt)
+        R.validate(config; check_input_files = false)
+        simulation = R.build_dynamic_esm(config)
+        lsc = simulation.model.atmosphere.model.large_scale_condensation
+        @test lsc isa R.NetColumnImplicitCondensation
+        @test (lsc.condensation isa R.MeltCoolingImplicitCondensation) == melt
+        O.run!(simulation)
+        vars = simulation.model.atmosphere.variables
+        T, q = Array(vars.grid.temperature_prev.data), Array(vars.grid.humidity_prev.data)
+        @test all(isfinite, T) && all(isfinite, q)
+        if melt
+            rate = Array(vars.parameterizations.large_scale_snowmelt_rate.data)
+            @test all(x -> isfinite(x) && x >= 0, rate)
+            println("MELT_COOLING_COUPLED max_snowmelt_rate_m_s=$(maximum(rate)) columns_melting=$(count(>(0), rate))")
+        else
+            @test !hasproperty(vars.parameterizations, :large_scale_snowmelt_rate)
+        end
+        states[melt] = (T, q)
+    end
+    println("MELT_COOLING_COUPLED atmosphere_identical_off_on=$(states[false] == states[true])")
+end
+# Reached only if both top-level test sets passed (a failing set throws when it ends).
+println("LARGE_SCALE_MELT_COOLING_TESTS_PASS")
 end
