@@ -37,14 +37,30 @@ separately and does not replace the predeclared day-31 gate.
 The day-31 area increase is concentrated in Southern Hemisphere summer ice:
 control areas of 1.61–1.64 million km² become 2.68–2.70 million km² in all
 three pairs, an increase of 1.04–1.08 million km². Northern day-31 changes
-have mixed signs (+0.94, −0.25 and +0.08 million km²). This pattern is
-consistent with less Antarctic summer melt, but the paired experiment changes
+have mixed signs (+0.94, −0.25 and +0.08 million km²). This pattern indicates
+more Antarctic summer ice area at day 31, but the paired experiment changes
 several processes together and does not attribute the cause. NSIDC's January
-Southern Hemisphere **monthly mean** is 3.12 million km²; comparing that
-with model **day 31** is only directional, not a matched observational score.
-The monthly global total comparison above uses matching time windows and
-shows a larger candidate bias. Both views belong in a release discussion;
-neither changes the frozen physical-breakage verdict.
+Southern Hemisphere **monthly mean area** is 3.12 million km²; comparing that
+with model **day-31 area** does not establish which version is closer to
+observations. The monthly global total comparison above uses matching time
+windows and shows a larger candidate bias.
+
+A subsequent like-for-like **day-31 extent** check changes the interpretation
+of the southern ice response. NSIDC daily extent on 31 January and 1 February
+1993 is 2.960–2.963 million km². The three v0.1.18 controls give
+3.000–3.027 million km², close to that bracket, while the three v0.1.19
+candidates give 4.170–4.295 million km², an excess of 1.207–1.332 million
+km². The model's 00 UTC 1 February output is bracketed by those two observed
+days; both use a 15% concentration threshold. The southern day-31 extent
+therefore moves away from observations, even though area and extent respond
+differently. The northern January extent is 2.3–3.3 million km² too large and
+July southern extent is 6.4–7.5 million km² too large in both versions. The
+sealed comparison is `artifacts/development_wave_20261101/nsidc_daily_extent_1993_claude`
+(`SHA256SUMS` SHA-256
+`15b6d794a62e4e2b61298dd70547fa1a8821e2ae84e389d16098e8a3c812986a`).
+This first-month result does not settle the separate second-summer melt-out
+question; the matched LONG1 run is intended to test that. Neither
+observational readout changes the frozen physical-breakage verdict.
 
 **Release status: HOLD.** The frozen net-radiation and January sea-ice
 guards both fail. LONG1 drift evidence and a scientific disposition are
