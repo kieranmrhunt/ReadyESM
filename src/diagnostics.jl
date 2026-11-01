@@ -216,6 +216,8 @@ function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_ac
         solar_distance_scheme = _solar_distance_scheme(
             rrtmgp_active && radiation.solar_distance_correction,
         ),
+        solar_constant_w_m2 = config.forcing.solar_constant_w_m2,
+        solar_constant_source = _solar_constant_source(config),
         cloud_humidity_search_min_sigma =
             config.forcing.cloud_humidity_search_min_sigma,
         applied_cloud_humidity_search_min_sigma =

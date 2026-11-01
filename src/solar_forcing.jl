@@ -55,3 +55,15 @@ function _validate_solar_restart(radiation, state)
     ))
     return nothing
 end
+
+# Total solar irradiance (design: artifacts/development_wave_20261101/tsi_option_claude/DESIGN.md v2). ReadyESM used to
+# leave the SpeedyWeather planet at its default, so every earlier release ran at 1365 W/m2. This helper builds the planet
+# with the configured value and is passed to every PrimitiveWetModel in src/baseline.jl, since both SpeedyWeather and
+# RRTMGP read planet.solar_constant. At the default the planet is identical to SpeedyWeather's own Earth(spectral_grid).
+const DEFAULT_SOLAR_CONSTANT_W_M2 = 1365.0
+
+_readyesm_planet(config, spectral_grid) =
+    SpeedyWeather.Earth(spectral_grid; solar_constant = spectral_grid.NF(config.forcing.solar_constant_w_m2))
+
+_solar_constant_source(config) = isempty(strip(config.forcing.solar_constant_source)) ?
+    "SpeedyWeather Earth default" : config.forcing.solar_constant_source

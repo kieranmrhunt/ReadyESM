@@ -18,6 +18,11 @@ Base.@kwdef struct ForcingConfig
     radiation::Symbol = :speedy_simplified
     radiation_every_n_steps::Int = 1
     solar_distance_correction::Bool = false
+    # Total solar irradiance (src/solar_forcing.jl, design tsi_option_claude/DESIGN.md v2). 1365 W/m2 with an empty source
+    # is the SpeedyWeather Earth default that every earlier release used. Any other value needs a source label, which the
+    # provenance records with the value.
+    solar_constant_w_m2::Float64 = 1365.0
+    solar_constant_source::String = ""
     cloud_scheme::Symbol = :none
     cloud_humidity_search_min_sigma::Float64 = 0.0
     cloud_liquid_water_path_gm2::Float64 = 60.0
@@ -284,6 +289,10 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         solar_distance_correction = Bool(
             _mapping_value(forcing_raw, "solar_distance_correction", false),
         ),
+        solar_constant_w_m2 = Float64(
+            _mapping_value(forcing_raw, "solar_constant_w_m2", DEFAULT_SOLAR_CONSTANT_W_M2),
+        ),
+        solar_constant_source = String(_mapping_value(forcing_raw, "solar_constant_source", "")),
         cloud_humidity_search_min_sigma = Float64(
             _mapping_value(forcing_raw, "cloud_humidity_search_min_sigma", 0.0),
         ),
@@ -1361,6 +1370,12 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     if config.forcing.solar_distance_correction && !rrtmgp_active
         throw(ArgumentError("solar_distance_correction requires RRTMGP radiation"))
     end
+    isfinite(config.forcing.solar_constant_w_m2) && config.forcing.solar_constant_w_m2 > 0 ||
+        throw(ArgumentError("forcing.solar_constant_w_m2 must be positive and finite"))
+    config.forcing.solar_constant_w_m2 == DEFAULT_SOLAR_CONSTANT_W_M2 ||
+        !isempty(strip(config.forcing.solar_constant_source)) || throw(ArgumentError(
+            "a forcing.solar_constant_w_m2 other than $DEFAULT_SOLAR_CONSTANT_W_M2 needs forcing.solar_constant_source",
+        ))
     if config.scored_outputs && !rrtmgp_active
         throw(ArgumentError("scored_outputs requires RRTMGP radiation for the top-of-atmosphere file"))
     end

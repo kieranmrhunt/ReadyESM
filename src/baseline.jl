@@ -208,6 +208,7 @@ function build_baseline(config::ExperimentConfig)
     model = PrimitiveWetModel(
         spectral_grid;
         vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
+        planet = _readyesm_planet(config, spectral_grid),
         atmosphere,
         ocean,
         sea_ice,
@@ -430,6 +431,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         PrimitiveWetModel(
             spectral_grid;
             vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
+            planet = _readyesm_planet(config, spectral_grid),
             atmosphere,
             ocean,
             sea_ice,
@@ -466,6 +468,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         PrimitiveWetModel(
             spectral_grid;
             vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
+            planet = _readyesm_planet(config, spectral_grid),
             atmosphere,
             ocean,
             sea_ice,
@@ -490,6 +493,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         PrimitiveWetModel(
             spectral_grid;
             vertical_advection = _atmosphere_vertical_advection_scheme(config, spectral_grid),
+            planet = _readyesm_planet(config, spectral_grid),
             atmosphere,
             ocean,
             sea_ice,
