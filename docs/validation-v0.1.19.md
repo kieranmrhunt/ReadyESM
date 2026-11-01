@@ -34,6 +34,18 @@ candidate 18.910 million km²; total monthly bias therefore worsened from
 2.582 to 2.557 million km². The observation comparison is reported
 separately and does not replace the predeclared day-31 gate.
 
+The day-31 area increase is concentrated in Southern Hemisphere summer ice:
+control areas of 1.61–1.64 million km² become 2.68–2.70 million km² in all
+three pairs, an increase of 1.04–1.08 million km². Northern day-31 changes
+have mixed signs (+0.94, −0.25 and +0.08 million km²). This pattern is
+consistent with less Antarctic summer melt, but the paired experiment changes
+several processes together and does not attribute the cause. NSIDC's January
+Southern Hemisphere **monthly mean** is 3.12 million km²; comparing that
+with model **day 31** is only directional, not a matched observational score.
+The monthly global total comparison above uses matching time windows and
+shows a larger candidate bias. Both views belong in a release discussion;
+neither changes the frozen physical-breakage verdict.
+
 **Release status: HOLD.** The frozen net-radiation and January sea-ice
 guards both fail. LONG1 drift evidence and a scientific disposition are
 still pending. No v0.1.19 tag or GitHub release has been made; scored figures
