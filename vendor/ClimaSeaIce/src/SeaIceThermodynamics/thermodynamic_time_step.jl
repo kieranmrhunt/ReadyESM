@@ -239,7 +239,8 @@ end
     β = Qs / ρiℒ           # coefficient on ℵⁿ⁺¹
 
     Cᵐ = ifelse(hiⁿ > zero(hiⁿ), ℵⁿ / (2 * hiⁿ), zero(hiⁿ))
-    Cᶠ = ifelse(hᶜ  > zero(hᶜ),  (1 - ℵⁿ) / hᶜ,  zero(hᶜ))
+    hˡ = freezing_concentration_thickness(ice_thermodynamics.concentration_evolution, hᶜ)
+    Cᶠ = ifelse(hˡ  > zero(hˡ),  (1 - ℵⁿ) / hˡ,  zero(hˡ))
     Kᵐ = Δt * Cᵐ
     Kᶠ = Δt * Cᶠ
 
@@ -369,3 +370,8 @@ end
 
     return ℵ⁺
 end
+
+# ReadyESM patch: the same rule with the freezing term at the lead-closing thickness h₀ (LeadClosingEvolution).
+@inline concentration_thermodynamic_step(evolution::LeadClosingEvolution, ∂t_V, ℵⁿ, hⁿ, hᶜ, Δt) =
+    concentration_thermodynamic_step(ProportionalEvolution(), ∂t_V, ℵⁿ, hⁿ,
+                                     freezing_concentration_thickness(evolution, hᶜ), Δt)

@@ -883,6 +883,7 @@ function _sea_ice_simulation_with_momentum_forcing(
     sea_ice_density,
     snow_density,
     boundary_conditions = NamedTuple(),
+    concentration_evolution = ClimaSeaIce.SeaIceThermodynamics.ProportionalEvolution(),
 )
     FT = eltype(grid)
     top_surface_temperature = Oceananigans.Field{
@@ -905,6 +906,7 @@ function _sea_ice_simulation_with_momentum_forcing(
         internal_heat_flux,
         top_heat_boundary_condition,
         bottom_heat_boundary_condition,
+        concentration_evolution,
     )
     snow_thermodynamics =
         NumericalEarth.SeaIces.default_snow_thermodynamics(grid)
@@ -1406,6 +1408,9 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
         sea_ice_density = FT(900),
         snow_density = FT(330),
     )
+    # Opt-in lead-closing thickness (src/sea_ice_lead_closing.jl). The release keeps NumericalEarth's constructor and
+    # ProportionalEvolution; with the option the equivalent ReadyESM constructor carries LeadClosingEvolution.
+    evolution = _sea_ice_concentration_evolution(config, FT)
     if config.sea_ice_dynamics
         pressure_formulation = _sea_ice_pressure_formulation(
             config.sea_ice_pressure_formulation,
@@ -1453,6 +1458,8 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
                 boundary_conditions = isnothing(coastal_boundary_conditions) ?
                     NamedTuple() : coastal_boundary_conditions,
                 common_kwargs...,
+                concentration_evolution = something(evolution,
+                    ClimaSeaIce.SeaIceThermodynamics.ProportionalEvolution()),
             )
         end
         if !isnothing(coastal_boundary_conditions)
@@ -1464,8 +1471,19 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
                 forcing = NamedTuple(),
                 boundary_conditions = coastal_boundary_conditions,
                 common_kwargs...,
+                concentration_evolution = something(evolution,
+                    ClimaSeaIce.SeaIceThermodynamics.ProportionalEvolution()),
             )
         end
+        isnothing(evolution) || return _sea_ice_simulation_with_momentum_forcing(
+            grid,
+            ocean;
+            advection,
+            dynamics,
+            forcing = NamedTuple(),
+            common_kwargs...,
+            concentration_evolution = evolution,
+        )
         return ClimaOcean.sea_ice_simulation(
             grid,
             ocean;
@@ -1474,6 +1492,15 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
             common_kwargs...,
         )
     end
+    isnothing(evolution) || return _sea_ice_simulation_with_momentum_forcing(
+        grid,
+        ocean;
+        dynamics = nothing,
+        advection = nothing,
+        forcing = NamedTuple(),
+        common_kwargs...,
+        concentration_evolution = evolution,
+    )
     return ClimaOcean.sea_ice_simulation(
         grid,
         ocean;
@@ -3854,6 +3881,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 _sea_ice_momentum_substeps(sea_ice) : 0,
             sea_ice_pressure_formulation = config.sea_ice_dynamics ?
                 String(config.sea_ice_pressure_formulation) : "none",
+            _sea_ice_lead_closing_provenance(config)...,
             sea_ice_immersed_boundary_drag_coefficient =
                 config.sea_ice_dynamics ?
                 config.sea_ice_immersed_boundary_drag_coefficient : NaN,

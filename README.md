@@ -167,6 +167,7 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `atmosphere_convection_transition_top_sigma`, `atmosphere_convection_transition_bottom_sigma` | `0.3`, `0.7` | Bounds of the linear transition in pressure fraction. |
 | `atmosphere_convection_timescale_seconds` | `7200` | Betts–Miller adjustment time. |
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
+| `sea_ice_lead_closing_thickness_m` | `0` | Opt in to a separate thickness, in metres, for the ice that forms when open water freezes, between 0.05 and 2. The release uses the 0.05 m consolidation thickness, so new ice closes open water fast. A thicker value closes it more slowly. See the [design](artifacts/development_wave_20261103/sea_ice_lead_closing_claude/DESIGN.md). |
 | `atmosphere_moist_mass_coupling` | `false` | Let water-vapour sources change the air mass. Evaporation adds air and precipitation removes it, and the global mean surface pressure follows. Use it only with Betts–Miller convection, net-column large-scale precipitation and RRTMGP radiation. |
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
 | `terrarium_unsat_conductivity` | `van_genuchten_released` | Keep the established soil-water conductivity law, or opt in to the standard van Genuchten–Mualem law with `van_genuchten_mualem`. |

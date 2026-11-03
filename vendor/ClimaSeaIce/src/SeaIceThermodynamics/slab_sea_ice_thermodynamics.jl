@@ -15,6 +15,23 @@ References
 """
 struct ProportionalEvolution end
 
+"""
+    LeadClosingEvolution(lead_closing_thickness)
+
+ReadyESM patch (opt-in, design artifacts/development_wave_20261103/sea_ice_lead_closing_claude/DESIGN.md): the
+[`ProportionalEvolution`](@ref) rule with its freezing term using a separate lead-closing (thick/thin demarcation)
+thickness `h₀` instead of the ice consolidation thickness. Hibler (1979) uses h₀ = 0.5 m for the Arctic; values of
+0.1-1.0 m are used in the literature. The consolidation thickness keeps its other role (the surface solve).
+"""
+struct LeadClosingEvolution{FT}
+    lead_closing_thickness :: FT
+end
+
+# Thickness of the freezing (lead-closing) term of the concentration rule.
+@inline freezing_concentration_thickness(::ProportionalEvolution, hᶜ) = hᶜ
+@inline freezing_concentration_thickness(evolution::LeadClosingEvolution, hᶜ) =
+    convert(typeof(hᶜ), evolution.lead_closing_thickness)
+
 struct SlabThermodynamics{ST, HBC, CF, CE}
     top_surface_temperature   :: ST
     heat_boundary_conditions  :: HBC

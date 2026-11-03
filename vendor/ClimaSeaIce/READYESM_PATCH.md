@@ -19,3 +19,11 @@ The narrow snow change passes exact stored-state/flux and zero-tendency checks.
 The original and candidate CPU kernels agree exactly in production-state and
 small-grid comparisons. Coupled GPU reliability remains under qualification;
 this patch alone is not proof that CUDA700 is resolved.
+
+## Opt-in lead-closing thickness (3 Nov 2026)
+
+`SeaIceThermodynamics.LeadClosingEvolution(h0)` is a `concentration_evolution` rule that is the same as
+`ProportionalEvolution`, except that its freezing term uses the lead-closing thickness `h0` and not the consolidation
+thickness `hc`. `freezing_concentration_thickness` returns `hc` for `ProportionalEvolution`, so the closed-form snow
+step and the concentration step keep their released arithmetic exactly. ReadyESM selects the new rule only with
+`sea_ice_lead_closing_thickness_m > 0`.

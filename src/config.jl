@@ -99,6 +99,9 @@ Base.@kwdef struct ExperimentConfig
     sea_ice_dynamics::Bool = false
     sea_ice_momentum_substeps::Int = 240
     sea_ice_pressure_formulation::Symbol = :replacement_pressure
+    # Opt-in lead-closing thickness h_0 (m) for the freezing term of the sea-ice concentration rule
+    # (src/sea_ice_lead_closing.jl). 0 keeps the release rule, which uses the 0.05 m consolidation thickness.
+    sea_ice_lead_closing_thickness_m::Float64 = 0.0
     sea_ice_immersed_boundary_drag_coefficient::Float64 = 0.0
     ocean_nlongitude::Int = 32
     ocean_nlatitude::Int = 16
@@ -515,6 +518,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "sea_ice_pressure_formulation",
                 "replacement_pressure",
             ),
+        ),
+        sea_ice_lead_closing_thickness_m = Float64(
+            _mapping_value(raw, "sea_ice_lead_closing_thickness_m", 0.0),
         ),
         sea_ice_immersed_boundary_drag_coefficient = Float64(
             _mapping_value(
@@ -1354,6 +1360,12 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     config.sea_ice_momentum_substeps >= 1 || throw(ArgumentError(
         "sea_ice_momentum_substeps must be positive",
     ))
+    h0 = config.sea_ice_lead_closing_thickness_m
+    iszero(h0) || (isfinite(h0) && SEA_ICE_LEAD_CLOSING_RANGE_M[1] <= h0 <= SEA_ICE_LEAD_CLOSING_RANGE_M[2]) ||
+        throw(ArgumentError(
+            "sea_ice_lead_closing_thickness_m must be 0 or between $(SEA_ICE_LEAD_CLOSING_RANGE_M[1]) and " *
+            "$(SEA_ICE_LEAD_CLOSING_RANGE_M[2]) m",
+        ))
     config.sea_ice_pressure_formulation in (
         :replacement_pressure,
         :ice_strength,
