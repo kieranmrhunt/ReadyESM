@@ -4289,6 +4289,7 @@ function validate_dynamic_diagnostics(diagnostics)
         diagnostics.metadata.atmosphere_gravity_ms2 > 0 || error(
         "atmosphere gravitational acceleration is invalid",
     )
+    _validate_solar_constant_provenance(diagnostics.metadata)
     convective_surface_column_mass =
         diagnostics.atmosphere_convective_precipitation_surface_pressure ./
         diagnostics.metadata.atmosphere_gravity_ms2

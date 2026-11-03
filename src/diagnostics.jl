@@ -162,8 +162,16 @@ function _forcing_provenance(radiation, config::ExperimentConfig)
         _trace_gas_provenance(radiation, config, rrtmgp_active)...,
         _well_mixed_gas_provenance(radiation, config, rrtmgp_active)...,
         _prescribed_ozone_provenance(radiation, config, rrtmgp_active)...,
+        _solar_constant_entry_provenance(config)...,
     )
 end
+
+"""
+Provenance of a non-default solar constant: its pinned table entry, source file, SHA-256, year and reduction. Like the
+trace-gas entries, these are added only when the setting is used, so default output is unchanged.
+"""
+_solar_constant_entry_provenance(config::ExperimentConfig) =
+    isempty(config.forcing.solar_constant_entry) ? (;) : _solar_constant_provenance(config)
 
 """
 Provenance for the optional CH4 and N2O overrides. Each gas adds entries only
