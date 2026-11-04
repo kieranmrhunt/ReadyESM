@@ -447,10 +447,13 @@ end
          Fi = column(Fi), Fs = column(Fs), P = column(zeros(FT, 4)))
     observer = (; weight = ones(4, 1), ice_density = fill(ρi, 4, 1), snow_density = fill(ρs, 4, 1),
                 ledger_epsilon = Float64(eps(FT)), float_type = FT)
+    # The reduction returns its values in the order of _SEA_ICE_BRANCH_STAGE_QUANTITIES.
     v = R._sea_ice_branch_stage_values(observer, trues(4, 1), s, Δτ)
-    @test v.invalid_cells == 0
-    @test v.ice_ledger_failed_cells == 0
-    @test v.snow_ledger_failed_cells == 1
+    q(name) = findfirst(x -> first(x) === name, R._SEA_ICE_BRANCH_STAGE_QUANTITIES)
+    @test length(v) == length(R._SEA_ICE_BRANCH_STAGE_QUANTITIES)
+    @test v[q(:invalid_cells)] == 0
+    @test v[q(:ice_ledger_failed_cells)] == 0
+    @test v[q(:snow_ledger_failed_cells)] == 1
     # Without the floor, cells 1 and 2 would fail: their residual exceeds the relative bound alone.
     relative = 8 * eps(FT)
     r_snow_1 = -ρs * (Float64(A1[1]) * Float64(hs1[1]) - Float64(A0[1]) * Float64(hs0[1]))
