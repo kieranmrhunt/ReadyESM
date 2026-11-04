@@ -704,7 +704,7 @@ const _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS = (
 
 """
 Combinations refused with atmosphere_convection = tiedtke_bechtold_eqcape_stage1 (frozen contract
-tiedtke_bechtold_claude_v1/frozen_v3, f99d3c3e: DESIGN.md integration items 1 and 6, STAGE1_CHOICES_DRAFT.md r14 D01,
+tiedtke_bechtold_claude_v1/frozen_v4, b07062d2: DESIGN.md integration items 1 and 6, STAGE1_CHOICES_DRAFT.md r15 D01,
 D02):
 1. every prognostic cloud scheme, through the host selector `_uses_prognostic_cloud_condensate`:
    PrognosticCondensateConvection consumes the Betts-Miller process diagnostics and convective rain, and stage 1a

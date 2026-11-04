@@ -1,7 +1,7 @@
 module TiedtkeBechtoldHostTests
 # Tiedtke-Bechtold stage 1a, part 2: host integration (src/tiedtke_bechtold_host.jl and its config, factory and restart
-# hooks) against the frozen contract tiedtke_bechtold_claude_v1/frozen_v3/FROZEN_CONTRACT_v3.sha256 f99d3c3e
-# (DESIGN.md "Integration gate after Paul's code audit" items 1-6; STAGE1_CHOICES_DRAFT.md r14 D43, T4, T12, T14).
+# hooks) against the frozen contract tiedtke_bechtold_claude_v1/frozen_v4/FROZEN_CONTRACT_v4.sha256 b07062d2
+# (DESIGN.md "Integration gate after Paul's code audit" items 1-6; STAGE1_CHOICES_DRAFT.md r15 D43, T4, T12, T14).
 # Tests: configuration name and every refusal (with the host's prognostic-cloud selector); the declared work arrays
 # and TB-named diagnostics; the wrapper on fixed columns in Float64 and Float32 (T12 unit boundary, accumulation, the
 # host water budget in kg m-2, the never-written correction, bit identity with the plain column call, NaN-filled
@@ -20,7 +20,7 @@ include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
 
 const TB = :tiedtke_bechtold_eqcape_stage1
 const PRECISIONS = (Float64, Float32)
-const MANIFEST = "f99d3c3ec2754af6afac513bb38f0a5454aafc5a0aa1d00ccc7dbf113bbd0913"
+const MANIFEST = "b07062d259455a207fb45afd1d2a0283387c167f10f8e7a57bb150d36b8c0e76"
 # Declared tolerance of column identities (as in the part-1 test): 64 n eps(NF) times the gross exchange.
 closure_tolerance(::Type{NF}, n) where {NF} = 64 * n * eps(NF)
 

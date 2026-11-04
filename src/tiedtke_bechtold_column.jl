@@ -1,8 +1,8 @@
 # Tiedtke-Bechtold convection, stage 1a: the pure column function (no host wiring).
 #
-# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/frozen_v3/FROZEN_CONTRACT_v3.sha256
-# (sha256 f99d3c3ec2754af6afac513bb38f0a5454aafc5a0aa1d00ccc7dbf113bbd0913), which pins DESIGN.md 42b7a0d6,
-# STAGE1_CHOICES_DRAFT.md d2b08bb5 (r14) and SPEC_CHAPTER6.md 57d18c70. "Dnn" and "Fn" below are the decision rows
+# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/frozen_v4/FROZEN_CONTRACT_v4.sha256
+# (sha256 b07062d259455a207fb45afd1d2a0283387c167f10f8e7a57bb150d36b8c0e76), which pins DESIGN.md 42b7a0d6,
+# STAGE1_CHOICES_DRAFT.md 211627e7 (r15) and SPEC_CHAPTER6.md 57d18c70. "Dnn" and "Fn" below are the decision rows
 # of STAGE1_CHOICES_DRAFT.md. Stage 1a scope (F1-F7): deep-only trigger from k = n-2, updraught only, liquid only,
 # rain only under the water contract instantaneous_rain_no_rup_v1 (no rain loading), PCAPE_bl = 0, strict CFL, no
 # downdraughts, no shallow or mid-level convection, no momentum and no surface-flux input.
@@ -13,7 +13,7 @@
 # inside a CPU or GPU column kernel and in the offline replay and SCM harness.
 
 const TIEDTKE_BECHTOLD_CONTRACT_MANIFEST_SHA256 =
-    "f99d3c3ec2754af6afac513bb38f0a5454aafc5a0aa1d00ccc7dbf113bbd0913"
+    "b07062d259455a207fb45afd1d2a0283387c167f10f8e7a57bb150d36b8c0e76"
 const TIEDTKE_BECHTOLD_WATER_CONTRACT = "instantaneous_rain_no_rup_v1"   # D28
 const TIEDTKE_BECHTOLD_KE_VERSION = "tb_ke_v1"                           # D20, D21
 const TIEDTKE_BECHTOLD_ORGDET_VERSION = "tb_orgdet_v1"                   # D19
@@ -23,7 +23,7 @@ const TIEDTKE_BECHTOLD_CLOSURE_NAME =
     "pre-Cy40r1 equilibrium CAPE closure (IFS Cy41r2 Eq. 6.25 with PCAPE_bl = 0)"  # D31, F5
 
 """
-Parameters of the stage 1a Tiedtke-Bechtold column (STAGE1_CHOICES_DRAFT.md r14, Sect. 9). Source tags per field:
+Parameters of the stage 1a Tiedtke-Bechtold column (STAGE1_CHOICES_DRAFT.md r15, Sect. 9). Source tags per field:
 IFS = IFS Cy41r2 Part IV Chapter 6 as printed, IFS-R = Cy41r2 with a stated reading, RE = ReadyESM choice,
 HOST = SpeedyWeather 0.21.1 value, always read from the live planet and atmosphere objects (see
 `tiedtke_bechtold_parameters`), never a literal copy. The struct is isbits, so it passes to GPU kernels unchanged.
@@ -90,6 +90,7 @@ struct TiedtkeBechtoldParameters{NF <: AbstractFloat}
     RH_cr_land::NF                 # 0.7, IFS-R
     virtual_coefficient::NF        # 0.608 in (6.56), IFS
     cfl_factor::NF                 # 1, IFS (F4 strict)
+    limiter_timestep_factor::Int   # 2, RE (D41 r15): the host leapfrog applies tendencies over 2 dt; 1 for forward Euler
     # ReadyESM choices
     newton_iterations::Int         # 3, RE (D03)
     rh_min::NF                     # 0, RE (D05 clip)
@@ -130,13 +131,15 @@ function TiedtkeBechtoldParameters(
     c0 = 1.4e-3, l_crit = 5.0e-4, w_factor = 0.75, w_cap = 10,
     l_threshold_water = 3.0e-4, l_threshold_land = 5.0e-4,
     alpha1 = 5.44e-4, alpha2 = 5.09e-3, alpha3 = 0.5777, C_conv = 0.05,
-    RH_cr_water = 0.9, RH_cr_land = 0.7, virtual_coefficient = 0.608, cfl_factor = 1,
+    RH_cr_water = 0.9, RH_cr_land = 0.7, virtual_coefficient = 0.608, cfl_factor = 1, limiter_timestep_factor::Integer = 2,
     newton_iterations::Integer = 3, rh_min = 0, rh_max = 1, land_threshold = 0.5,
     rain_loading::Bool = false,
 ) where {NF <: AbstractFloat}
     truncation > 0 || throw(ArgumentError("TB grid spacing needs a positive spectral truncation"))
     PCAPE_bl == 0 || throw(ArgumentError("TB stage 1a fixes PCAPE_bl = 0 (F5)"))
     cfl_factor == 1 || throw(ArgumentError("TB stage 1a uses the strict CFL factor 1 (F4)"))
+    limiter_timestep_factor in (1, 2) || throw(ArgumentError(
+        "TB D41 limiter_timestep_factor is 2 (host leapfrog) or 1 (forward-Euler driver), contract r15"))
     subcloud_exponent == 1 || throw(ArgumentError("TB stage 1a deep sub-cloud scaling uses m = 1 (D40)"))
     rain_loading && throw(ArgumentError("TB stage 1a contract instantaneous_rain_no_rup_v1 has no rain loading (D28)"))
     f_scale_exponent >= 1 && test_entrainment_exponent >= 1 ||
@@ -156,7 +159,7 @@ function TiedtkeBechtoldParameters(
         NF(PCAPE_bl), Int(subcloud_exponent), grid_spacing,
         NF(c0), NF(l_crit), NF(w_factor), NF(w_cap), NF(l_threshold_water), NF(l_threshold_land),
         NF(alpha1), NF(alpha2), NF(alpha3), NF(C_conv), NF(RH_cr_water), NF(RH_cr_land),
-        NF(virtual_coefficient), NF(cfl_factor),
+        NF(virtual_coefficient), NF(cfl_factor), Int(limiter_timestep_factor),
         Int(newton_iterations), NF(rh_min), NF(rh_max), NF(land_threshold), rain_loading,
     )
 end
@@ -862,6 +865,8 @@ function tiedtke_bechtold_column!(
     end
 
     # Step 6. D41 limiters on the closed unit-flux profiles: one column factor f = min(1, f_CFL, f_pos).
+    # Contract r15: both limits use the step the host applies, limiter_timestep_factor * dt (2 dt for the leapfrog).
+    limiter_step = par.limiter_timestep_factor * timestep
     f_CFL = one(NF)
     f_pos = one(NF)
     if closure_factor > 0
@@ -869,7 +874,7 @@ function tiedtke_bechtold_column!(
             M_closed = closure_factor * mass_flux_half[j]
             if M_closed > 0
                 dp_j = min(p_half[j] - p_half[j - 1], p_half[j + 1] - p_half[j])
-                f_CFL = min(f_CFL, par.cfl_factor * dp_j / (g * timestep * M_closed))
+                f_CFL = min(f_CFL, par.cfl_factor * dp_j / (g * limiter_step * M_closed))
             end
         end
         @inbounds for k in 1:n
@@ -877,7 +882,7 @@ function tiedtke_bechtold_column!(
             dq_closed = closure_factor *
                 (g / dp * (total_water_flux_half[k + 1] - total_water_flux_half[k]) - generation[k])
             if dq_closed < 0
-                f_pos = min(f_pos, max(q[k], z) / (-dq_closed * timestep))
+                f_pos = min(f_pos, max(q[k], z) / (-dq_closed * limiter_step))
             end
         end
     end

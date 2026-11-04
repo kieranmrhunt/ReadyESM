@@ -1,8 +1,8 @@
 # Tiedtke-Bechtold convection, stage 1a, part 2: host integration of the pure column (tiedtke_bechtold_column.jl).
 #
-# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/frozen_v3/FROZEN_CONTRACT_v3.sha256
-# (sha256 f99d3c3ec2754af6afac513bb38f0a5454aafc5a0aa1d00ccc7dbf113bbd0913). Specification: DESIGN.md "Integration gate
-# after Paul's code audit" items 1-6 and STAGE1_CHOICES_DRAFT.md r14 D43 (outputs, the single unit boundary, the host
+# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/frozen_v4/FROZEN_CONTRACT_v4.sha256
+# (sha256 b07062d259455a207fb45afd1d2a0283387c167f10f8e7a57bb150d36b8c0e76). Specification: DESIGN.md "Integration gate
+# after Paul's code audit" items 1-6 and STAGE1_CHOICES_DRAFT.md r15 D43 (outputs, the single unit boundary, the host
 # cloud-top rule), T4 (restart), T12 (unit boundary) and T14 (cloud top). The column arithmetic is not changed here.
 #
 # Two types (DESIGN item 2):
