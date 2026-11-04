@@ -700,7 +700,8 @@ function _sea_ice_branch_source_commit()
     end
 end
 
-function _sea_ice_branch_provenance(every, Δt, arm, identity, lead_closing_thickness_m, FT)
+function _sea_ice_branch_provenance(every, Δt, arm, identity, lead_closing_thickness_m, FT;
+                                    lead_closing_thickness_south_m = nothing)
     settings = join((
         "schema=$(SEA_ICE_BRANCH_OBSERVER_SCHEMA)",
         "field_schema_version=$(SEA_ICE_BRANCH_OBSERVER_FIELD_SCHEMA_VERSION)",
@@ -715,7 +716,7 @@ function _sea_ice_branch_provenance(every, Δt, arm, identity, lead_closing_thic
         "boundary_quantities=$(join([String(name) for (name, _) in _SEA_ICE_BRANCH_BOUNDARY_QUANTITIES], ","))",
     ), "\n")
     status = _sea_ice_branch_git("status", "--porcelain")
-    return Dict{String, Any}(
+    provenance = Dict{String, Any}(
         "schema" => SEA_ICE_BRANCH_OBSERVER_SCHEMA,
         "field_schema_version" => SEA_ICE_BRANCH_OBSERVER_FIELD_SCHEMA_VERSION,
         "contract_manifest_sha256" => SEA_ICE_BRANCH_CONTRACT_MANIFEST_SHA256,
@@ -737,6 +738,10 @@ function _sea_ice_branch_provenance(every, Δt, arm, identity, lead_closing_thic
         "cadence" => SEA_ICE_BRANCH_OBSERVER_CADENCE,
         "observer_mutates_live_state" => 0,
     )
+    # Recorded only when set, so the record of every other configuration is unchanged.
+    isnothing(lead_closing_thickness_south_m) ||
+        (provenance["sea_ice_lead_closing_thickness_south_m"] = Float64(lead_closing_thickness_south_m))
+    return provenance
 end
 
 """
@@ -755,6 +760,7 @@ function install_sea_ice_branch_observer!(
     arm::AbstractString = "",
     config_identity_sha256::AbstractString = "",
     lead_closing_thickness_m::Real = 0.0,
+    lead_closing_thickness_south_m::Union{Nothing, Real} = nothing,
 )
     earth = simulation.model
     ice = earth.sea_ice.model
@@ -809,7 +815,8 @@ function install_sea_ice_branch_observer!(
         arm,
         config_identity_sha256,
         lead_closing_thickness_m,
-        FT,
+        FT;
+        lead_closing_thickness_south_m,
     )
     observer = SeaIceBranchObserver(
         ice,
@@ -862,6 +869,7 @@ function install_sea_ice_branch_observer!(simulation, config::ExperimentConfig; 
         arm = config.name,
         config_identity_sha256 = _dynamic_config_identity_hash(config),
         lead_closing_thickness_m = config.sea_ice_lead_closing_thickness_m,
+        lead_closing_thickness_south_m = config.sea_ice_lead_closing_thickness_south_m,
         kwargs...,
     )
 end

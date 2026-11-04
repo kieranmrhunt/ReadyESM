@@ -27,3 +27,13 @@ this patch alone is not proof that CUDA700 is resolved.
 thickness `hc`. `freezing_concentration_thickness` returns `hc` for `ProportionalEvolution`, so the closed-form snow
 step and the concentration step keep their released arithmetic exactly. ReadyESM selects the new rule only with
 `sea_ice_lead_closing_thickness_m > 0`.
+
+## Opt-in hemispheric lead-closing thickness (4 Nov 2026)
+
+`SeaIceThermodynamics.HemisphericLeadClosingEvolution(north, south)` picks the lead-closing thickness per cell from
+the sign of the cell-centre latitude (`φnode`, equator counted as north). A zero value keeps `hc` in that hemisphere.
+`local_concentration_evolution(evolution, i, j, grid, hc)` returns the cell's rule. It returns the same object for
+every other rule, and it returns `LeadClosingEvolution(h0)` (with `h0 = hc` for a zero value) for the hemispheric rule.
+The slab and layered kernels now call it once per cell and pass the result to `freezing_concentration_thickness` and,
+as `(; concentration_evolution = evolution)`, to `ice_volume_update`. For the existing rules this gives the same
+arithmetic. ReadyESM selects the new rule only when `sea_ice_lead_closing_thickness_south_m` is set.
