@@ -312,7 +312,8 @@ end
         for k in A
             mixed, lower, upper = R.tb_departure_window(column.p_full, column.p_half, k, par)
             @test mixed == (NF(p_s) - column.p_full[k] <= NF(6000))
-            @test upper - lower == NF(5000)
+            # The window bounds are pressures near p_s, so their difference carries rounding of order eps(NF) p_s.
+            @test abs(upper - lower - NF(5000)) <= 16 * eps(NF) * NF(p_s)
             @test upper <= NF(p_s)
         end
     end
