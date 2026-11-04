@@ -999,6 +999,8 @@ function Oceananigans.restore_prognostic_state!(
     _validate_full_temperature_restart(model.atmosphere, state.atmosphere)
     _validate_pbl_k_profile_restart(model.atmosphere, state.atmosphere)
     _validate_dissipative_heating_restart(model.atmosphere, state.atmosphere)
+    # Not waived by with_dynamic_restart_identity_override (tiedtke_bechtold_host.jl, TB DESIGN.md item 5).
+    _validate_convection_restart(model.atmosphere, state.atmosphere)
     _validate_carbon_restart_compatibility(
         model,
         hasproperty(state, :carbon) ? state.carbon : nothing,
@@ -1575,6 +1577,8 @@ function Oceananigans.prognostic_state(simulation::SpeedyWeather.Simulation)
         _seasonal_vegetation_restart_state(simulation)...,
         _seasonal_albedo_restart_state(simulation)...,
         _dissipative_heating_restart_state(simulation)...,
+        # Empty except with Tiedtke-Bechtold convection, so Betts-Miller checkpoints are unchanged.
+        _convection_restart_state(simulation)...,
     )
 end
 
@@ -1590,6 +1594,7 @@ function Oceananigans.restore_prognostic_state!(
     _validate_pbl_k_profile_restart(simulation, state)
     _validate_seasonal_albedo_restart(simulation, state)
     _validate_dissipative_heating_restart(simulation, state)
+    _validate_convection_restart(simulation, state)
     # JLD2 reconstructs the checkpointed Variables tree on the CPU.
     # SpeedyWeather's alias-aware copy handles ordinary host-to-device arrays.
     # The narrowly typed lower-triangular, RingGrids.Field, and ScratchMemory

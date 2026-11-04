@@ -680,6 +680,66 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
     return config
 end
 
+# Prognostic cloud selector. Release 4caab68 has one prognostic cloud scheme, prognostic_condensate. The atmosphere
+# builder (baseline.jl) uses this selector to wrap the convection in PrognosticCondensateConvection, and the
+# Tiedtke-Bechtold stage 1a validation below refuses every member, so a prognostic mode added here is refused with
+# Tiedtke-Bechtold too (TB DESIGN.md integration item 6). Same name and form as the root development tree.
+const _PROGNOSTIC_CLOUD_SCHEMES = (:prognostic_condensate,)
+_uses_prognostic_cloud_condensate(scheme::Symbol) = scheme in _PROGNOSTIC_CLOUD_SCHEMES
+
+# Settings of the Betts-Miller (relaxation time scale, reference relative humidity and its sigma transition) and
+# C08/C07 schemes. Tiedtke-Bechtold stage 1a reads none of them, so it requires their defaults.
+const _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS = (
+    :atmosphere_convection_timescale_seconds,
+    :atmosphere_convection_upper_relative_humidity,
+    :atmosphere_convection_lower_relative_humidity,
+    :atmosphere_convection_transition_top_sigma,
+    :atmosphere_convection_transition_bottom_sigma,
+    :atmosphere_c08_entrainment_scale,
+    :atmosphere_c08_precipitation_conversion_m_inv,
+    :atmosphere_c08_condensate_threshold_kg_kg,
+    :atmosphere_c07_momentum_strength,
+    :atmosphere_c07_maximum_subcycles,
+)
+
+"""
+Combinations refused with atmosphere_convection = tiedtke_bechtold_eqcape_stage1 (frozen contract
+tiedtke_bechtold_claude_v1/frozen_v3, f99d3c3e: DESIGN.md integration items 1 and 6, STAGE1_CHOICES_DRAFT.md r14 D01,
+D02):
+1. every prognostic cloud scheme, through the host selector `_uses_prognostic_cloud_condensate`:
+   PrognosticCondensateConvection consumes the Betts-Miller process diagnostics and convective rain, and stage 1a
+   has no Tiedtke-Bechtold condensate interface (item 6);
+2. a saturation law other than liquid: D01 is liquid only and D02 takes the host q_sat, the same function as the
+   host large-scale condensation, which holds only for the liquid host law;
+3. moist-mass coupling: its per-layer source adapter supports only the net-column Betts-Miller host (also refused by
+   the moist-mass check below);
+4. a non-default value of any Betts-Miller or C08/C07 setting (`_TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS`): the
+   scheme does not read them, so a changed value would look active while having no effect.
+"""
+function _validate_tiedtke_bechtold_stage1_options(config::ExperimentConfig)
+    _uses_prognostic_cloud_condensate(config.forcing.cloud_scheme) && throw(ArgumentError(
+        "atmosphere_convection=tiedtke_bechtold_eqcape_stage1 cannot be combined with " *
+        "cloud_scheme=$(config.forcing.cloud_scheme): prognostic cloud condensate consumes the Betts-Miller " *
+        "convective diagnostics, and stage 1a has no Tiedtke-Bechtold condensate interface",
+    ))
+    config.atmosphere_saturation_law == :liquid || throw(ArgumentError(
+        "atmosphere_convection=tiedtke_bechtold_eqcape_stage1 requires atmosphere_saturation_law=liquid " *
+        "(stage 1a is liquid only and uses the host liquid saturation humidity)",
+    ))
+    config.atmosphere_moist_mass_coupling && throw(ArgumentError(
+        "atmosphere_convection=tiedtke_bechtold_eqcape_stage1 cannot be combined with " *
+        "atmosphere_moist_mass_coupling, which supports only the net-column Betts-Miller host",
+    ))
+    defaults = ExperimentConfig()
+    for name in _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS
+        getfield(config, name) == getfield(defaults, name) || throw(ArgumentError(
+            "$name is a Betts-Miller or C08/C07 setting that atmosphere_convection=tiedtke_bechtold_eqcape_stage1 " *
+            "does not read; keep its default $(getfield(defaults, name))",
+        ))
+    end
+    return nothing
+end
+
 function validate(config::ExperimentConfig; check_input_files::Bool = true)
     _validate_finite_float_fields(config, "experiment configuration")
     _validate_finite_float_fields(config.forcing, "forcing configuration")
@@ -751,10 +811,15 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         :betts_miller_sigma_rh_v1,
         :finite_multiplume_c08_v1,
         :finite_multiplume_c07_v1,
+        :tiedtke_bechtold_eqcape_stage1,
     ) || throw(ArgumentError(
         "atmosphere_convection must be betts_miller_constant_rh or " *
-        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1 or finite_multiplume_c07_v1",
+        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1 or finite_multiplume_c07_v1 or " *
+        "tiedtke_bechtold_eqcape_stage1",
     ))
+    # Tiedtke-Bechtold stage 1a (tiedtke_bechtold_host.jl): its refusals, before the scheme-specific checks below.
+    config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 &&
+        _validate_tiedtke_bechtold_stage1_options(config)
     if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         config.device == :cpu || throw(ArgumentError(
             "finite multi-plume convection requires device=cpu",

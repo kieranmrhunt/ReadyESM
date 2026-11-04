@@ -264,7 +264,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
     large_scale_condensation =
         _atmosphere_large_scale_condensation(config, spectral_grid)
     prognostic_cloud_condensate =
-        config.forcing.cloud_scheme == :prognostic_condensate ?
+        _uses_prognostic_cloud_condensate(config.forcing.cloud_scheme) ?
         PrognosticCloudCondensateState(
             spectral_grid;
             retention_fraction =

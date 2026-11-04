@@ -3582,25 +3582,33 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             atmosphere_convective_precipitation_scheme =
                 config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ?
                 "finite multi-plume rain and snow fluxes" :
+                config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 ?
+                "Tiedtke-Bechtold column surface rain mass flux over water density" :
                 "Betts-Miller net column humidity drying",
             _atmosphere_saturation_provenance(config)...,
             _finite_multiplume_metadata(config)...,
             _convective_momentum_metadata(config)...,
+            _tiedtke_bechtold_metadata(config)...,
             atmosphere_convection = String(config.atmosphere_convection),
             atmosphere_convection_reference_humidity_profile =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 "piecewise_linear_upper_to_lower_physical_sigma_v1" :
-                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ?
+                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1,
+                                                 :tiedtke_bechtold_eqcape_stage1) ?
                 "not_applicable" :
                 "constant_relative_humidity_0.7",
             atmosphere_convection_upper_relative_humidity =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_upper_relative_humidity :
-                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ? NaN : 0.7,
+                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1,
+                                                 :tiedtke_bechtold_eqcape_stage1) ?
+                NaN : 0.7,
             atmosphere_convection_lower_relative_humidity =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_lower_relative_humidity :
-                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ? NaN : 0.7,
+                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1,
+                                                 :tiedtke_bechtold_eqcape_stage1) ?
+                NaN : 0.7,
             atmosphere_convection_transition_top_sigma =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_transition_top_sigma : NaN,
@@ -3622,6 +3630,10 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 atmosphere_budget.process_diagnostic_start_timestep *
                 Float64(atmosphere.model.time_stepping.Δt_sec) / 86_400,
             atmosphere_precipitation_mass_correction_diagnostics =
+                config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 ?
+                (config.atmosphere_large_scale_precipitation == :upstream_observed ?
+                 "convective_never_written_tiedtke_bechtold_and_zero_large_scale_control_v1" :
+                 "convective_never_written_tiedtke_bechtold_and_large_scale_net_column_minus_upstream_v1") :
                 config.atmosphere_large_scale_precipitation ==
                     :upstream_observed ?
                 "convective_net_column_correction_and_zero_large_scale_control_v1" :

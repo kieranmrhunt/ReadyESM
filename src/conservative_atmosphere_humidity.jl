@@ -285,6 +285,11 @@ function _atmosphere_convection(
     config::ExperimentConfig,
     spectral_grid::SpeedyWeather.SpectralGrid,
 )
+    # Tiedtke-Bechtold stage 1a (tiedtke_bechtold_host.jl, TB DESIGN.md integration items 1-3): its own scheme and
+    # host wrapper. It never passes through NetColumnBettsMillerConvection, whose net-humidity rain would replace the
+    # column's own rain flux. The Betts-Miller and C08/C07 branches below are unchanged.
+    config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 &&
+        return TiedtkeBechtoldHostConvection(spectral_grid)
     if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         base = FiniteMultiPlumeConvection(spectral_grid;
             saturation_law = config.atmosphere_saturation_law,
