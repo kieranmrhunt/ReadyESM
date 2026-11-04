@@ -1,5 +1,5 @@
 # Tests of the stage 1a Tiedtke-Bechtold pure column (src/tiedtke_bechtold_column.jl) against the frozen contract
-# FROZEN_CONTRACT_v1.sha256 b2953c07 (STAGE1_CHOICES_DRAFT.md r12, Sect. 10). Pure-column tests only: T1, T2, T3,
+# FROZEN_CONTRACT_v2.sha256 af02434f (STAGE1_CHOICES_DRAFT.md r13, Sect. 10). Pure-column tests only: T1, T2, T3,
 # T5, T6, T6b, T7, T8, T9, T11 and T13. T4 (default-off and restart identity), T10 (stage 1b), T12 and T14 (host
 # wrapper) belong to later parts. Every test runs in Float64 and Float32, and every value is built in that format.
 module TiedtkeBechtoldColumnTests
@@ -250,7 +250,7 @@ const PRECISIONS = (Float64, Float32)
     @test R.TIEDTKE_BECHTOLD_KE_VERSION == "tb_ke_v1"
     @test R.TIEDTKE_BECHTOLD_ORGDET_VERSION == "tb_orgdet_v1"
     @test R.TIEDTKE_BECHTOLD_CONTRACT_MANIFEST_SHA256 ==
-          "b2953c077772f6027eba2c1aa693b07509fa5e6ff922ed107260fe87f068fb95"
+          "af02434ff10ca3149a72504e2213b41474e8ad741c210ba357befc1be1c2348a"
 end
 
 @testset "Column call: allocation-free, isbits, scratch-safe, latitude unused $NF" for NF in PRECISIONS

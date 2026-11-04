@@ -1,8 +1,8 @@
 # Tiedtke-Bechtold convection, stage 1a: the pure column function (no host wiring).
 #
-# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/FROZEN_CONTRACT_v1.sha256
-# (sha256 b2953c077772f6027eba2c1aa693b07509fa5e6ff922ed107260fe87f068fb95), which pins DESIGN.md 42b7a0d6,
-# STAGE1_CHOICES_DRAFT.md b908ca04 (r12) and SPEC_CHAPTER6.md 57d18c70. "Dnn" and "Fn" below are the decision rows
+# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/FROZEN_CONTRACT_v2.sha256
+# (sha256 af02434ff10ca3149a72504e2213b41474e8ad741c210ba357befc1be1c2348a), which pins DESIGN.md 42b7a0d6,
+# STAGE1_CHOICES_DRAFT.md 2452ba82 (r13) and SPEC_CHAPTER6.md 57d18c70. "Dnn" and "Fn" below are the decision rows
 # of STAGE1_CHOICES_DRAFT.md. Stage 1a scope (F1-F7): deep-only trigger from k = n-2, updraught only, liquid only,
 # rain only under the water contract instantaneous_rain_no_rup_v1 (no rain loading), PCAPE_bl = 0, strict CFL, no
 # downdraughts, no shallow or mid-level convection, no momentum and no surface-flux input.
@@ -13,7 +13,7 @@
 # inside a CPU or GPU column kernel and in the offline replay and SCM harness.
 
 const TIEDTKE_BECHTOLD_CONTRACT_MANIFEST_SHA256 =
-    "b2953c077772f6027eba2c1aa693b07509fa5e6ff922ed107260fe87f068fb95"
+    "af02434ff10ca3149a72504e2213b41474e8ad741c210ba357befc1be1c2348a"
 const TIEDTKE_BECHTOLD_WATER_CONTRACT = "instantaneous_rain_no_rup_v1"   # D28
 const TIEDTKE_BECHTOLD_KE_VERSION = "tb_ke_v1"                           # D20, D21
 const TIEDTKE_BECHTOLD_ORGDET_VERSION = "tb_orgdet_v1"                   # D19
@@ -23,7 +23,7 @@ const TIEDTKE_BECHTOLD_CLOSURE_NAME =
     "pre-Cy40r1 equilibrium CAPE closure (IFS Cy41r2 Eq. 6.25 with PCAPE_bl = 0)"  # D31, F5
 
 """
-Parameters of the stage 1a Tiedtke-Bechtold column (STAGE1_CHOICES_DRAFT.md r12, Sect. 9). Source tags per field:
+Parameters of the stage 1a Tiedtke-Bechtold column (STAGE1_CHOICES_DRAFT.md r13, Sect. 9). Source tags per field:
 IFS = IFS Cy41r2 Part IV Chapter 6 as printed, IFS-R = Cy41r2 with a stated reading, RE = ReadyESM choice,
 HOST = SpeedyWeather 0.21.1 value, always read from the live planet and atmosphere objects (see
 `tiedtke_bechtold_parameters`), never a literal copy. The struct is isbits, so it passes to GPU kernels unchanged.
