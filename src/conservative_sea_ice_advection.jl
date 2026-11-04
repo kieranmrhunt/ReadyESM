@@ -631,6 +631,10 @@ end
 # V/A, so consolidate once more before the substep returns to momentum,
 # coupling, or the next RK stage. The four upstream calls and their order are
 # retained; only the final volume-preserving representation repair is added.
+# Two read-only calls of the opt-in sea-ice branch observer
+# (sea_ice_branch_observer.jl) bracket the thermodynamic update. With no
+# observer installed each returns after testing an empty registry. Installed,
+# each copies the final-stage state to host memory and writes no model field.
 function Oceananigans.TimeSteppers.rk_substep!(
     model::ClimaSeaIce.SeaIceModel{
         GR, TD, SNT, D, TS, CL, U, T, IT, IC, SNH, ID, SND, PT, CT, SP,
@@ -650,12 +654,14 @@ function Oceananigans.TimeSteppers.rk_substep!(
     )
     _observe_sea_ice_momentum_endpoint!(model, Δτ)
     ClimaSeaIce.dynamic_time_step!(model, Δτ)
+    _observe_sea_ice_branch_before_thermodynamics!(model, Δτ)
     ClimaSeaIce.SeaIceThermodynamics.thermodynamic_time_step!(
         model,
         model.ice_thermodynamics,
         model.snow_thermodynamics,
         Δτ,
     )
+    _observe_sea_ice_branch_after_thermodynamics!(model, Δτ)
     _consolidate_conditional_ice_state!(model)
     return nothing
 end

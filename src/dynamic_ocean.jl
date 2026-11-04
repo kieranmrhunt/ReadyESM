@@ -2651,6 +2651,8 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
     end
     # Scored output files exist only with the option on.
     config.scored_outputs && install_scored_outputs!(simulation, config)
+    # The read-only sea-ice branch observer exists only with the option on. It adds no callback or field.
+    config.sea_ice_branch_observer && install_sea_ice_branch_observer!(simulation, config)
     return simulation
 end
 

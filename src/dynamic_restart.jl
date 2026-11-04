@@ -14,10 +14,12 @@ const _DYNAMIC_RESTART_IDENTITY_LOCK = ReentrantLock()
 const _DYNAMIC_RESTART_IDENTITY_OVERRIDE = Ref(false)
 const _DYNAMIC_RESTART_RUN_CONTROL_FIELDS = (
     :name, :output_dir, :duration_days, :analysis_start_day, :scored_outputs,
+    :sea_ice_branch_observer,
 )
 
 function _dynamic_config_identity_hash(config::ExperimentConfig)
-    # These fields control run naming, output and scoring, not state evolution.
+    # These fields control run naming, output, scoring and read-only observation,
+    # not state evolution.
     # All physical, initial-state and execution-backend settings remain bound.
     canonical = join((
         string(name, "=", repr(getfield(config, name)))
