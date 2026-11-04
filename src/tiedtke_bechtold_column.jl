@@ -829,17 +829,18 @@ function tiedtke_bechtold_column!(
     end
     j_top = k_top + 1                                                                # cloud-top half level
 
-    # D40: sub-cloud fluxes, Z_j = (p_s - p_j)/(p_s - p_base) with m = 1 on half levels, scaling M, M q_t,up and
-    # M s_l,up together, net flux against the local half-level environment, zero at the surface.
+    # D40 (contract r13, a stage-1a adaptation): the unit cloud-base NET conserved-variable fluxes are scaled by
+    # Z_j = (p_s - p_j)/(p_s - p_base) (m = 1, linear in pressure) to zero at the surface, F(j) = Z_j F(j_base), and
+    # M(j) = Z_j M_base. With the elevated n-2 departure, forming the net flux against the local half-level
+    # environment (r12) could reverse its sign near a moist surface and moisten layer n (the C08 failure).
     @inbounds begin
-        total_water_base = q_base + l_base
-        liquid_static_energy_base = s_base - Lv * l_base
+        total_water_base_flux = total_water_flux_half[j_base]
+        liquid_static_energy_base_flux = liquid_static_energy_flux_half[j_base]
         for j in (j_base + 1):n
             Z = (surface_pressure - p_half[j]) / (surface_pressure - p_base)
             mass_flux_half[j] = Z * unit_base_mass_flux
-            total_water_flux_half[j] = Z * unit_base_mass_flux * (total_water_base - humidity_half[j])
-            liquid_static_energy_flux_half[j] =
-                Z * unit_base_mass_flux * (liquid_static_energy_base - dry_static_energy_half[j])
+            total_water_flux_half[j] = Z * total_water_base_flux
+            liquid_static_energy_flux_half[j] = Z * liquid_static_energy_base_flux
         end
         mass_flux_half[n + 1] = z
         total_water_flux_half[n + 1] = z

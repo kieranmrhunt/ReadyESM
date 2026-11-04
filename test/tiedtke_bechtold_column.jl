@@ -458,11 +458,12 @@ end
     l = ledgers(out, column, par)
     @test abs(l.water) <= closure_tolerance(NF, n) * l.water_gross
     @test abs(l.transform) <= closure_tolerance(NF, n) * l.transform_gross
-    # Forced positivity: the same tropical column with its two lowest layers made very dry (2 g/kg and 0.02 g/kg,
-    # a synthetic limiter case). The sub-cloud flux removes moisture from layer n faster than it holds it.
+    # Forced positivity: the same tropical column with its two lowest layers made very dry (2 g/kg and 2e-4 g/kg,
+    # a synthetic limiter case). The sub-cloud flux (D40 r13: the scaled cloud-base net flux) removes moisture from
+    # layer n faster than it holds it.
     q = copy(column.q)
     q[n - 1] = NF(2e-3)
-    q[n] = NF(2e-5)
+    q[n] = NF(2e-7)
     dry = with_humidity(column, q, zero(NF))                       # tropical surface geopotential is 0
     out = run_column(dry, par)
     @test out.res.convection_type == 1
@@ -796,6 +797,42 @@ end
                        rtol = local_tolerance(NF))
     end
     @test all(out.work.dry_static_energy_half[j] >= out.work.dry_static_energy_half[j + 1] for j in 2:n)
+end
+
+@testset "T15 sub-cloud flux closure, D40 contract r13 $NF" for NF in PRECISIONS
+    par = R.tiedtke_bechtold_parameters(NF)
+    for name in keys(DEEP_CASES)
+        column = build_column(NF, DEEP_CASES[name])
+        out = run_column(column, par)
+        n = length(column.T)
+        @test out.res.convection_type == 1
+        j_base = out.res.cloud_base_half_level
+        @test 2 <= j_base <= n
+        p_s = column.p_half[n + 1]
+        p_base = column.p_half[j_base]
+        F_qt = out.work.total_water_flux_half
+        F_sl = out.work.liquid_static_energy_flux_half
+        M = out.work.mass_flux_half
+        # 1. Every sub-cloud interface carries the scaled cloud-base net flux, F(j) = Z(j) F(j_base), and the same
+        # scaling of the mass flux.
+        for j in (j_base + 1):n
+            Z = (p_s - column.p_half[j]) / (p_s - p_base)
+            @test abs(F_qt[j] - Z * F_qt[j_base]) <= local_tolerance(NF) * abs(F_qt[j_base])
+            @test abs(F_sl[j] - Z * F_sl[j_base]) <= local_tolerance(NF) * abs(F_sl[j_base])
+            @test abs(M[j] - Z * M[j_base]) <= local_tolerance(NF) * M[j_base]
+        end
+        # 2. Exactly zero at the surface (the telescoping column budgets are T2).
+        @test F_qt[n + 1] == 0
+        @test F_sl[n + 1] == 0
+        @test M[n + 1] == 0
+    end
+    # 3. The moist-surface C08 regression: the tropical case (RH 85 % below 900 hPa) has an upward cloud-base
+    # total-water flux, and the lowest layer dries. Under the r12 reading of D40 this layer was moistened.
+    column = build_column(NF, DEEP_CASES.tropical)
+    out = run_column(column, par)
+    n = length(column.T)
+    @test out.work.total_water_flux_half[out.res.cloud_base_half_level] > 0
+    @test out.dq[n] < 0
 end
 
 end # top-level testset
