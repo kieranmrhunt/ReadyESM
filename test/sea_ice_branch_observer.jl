@@ -423,5 +423,42 @@ else
     end
     println("SEA_ICE_BRANCH_OBSERVER_PARENT_EQUIVALENCE_PASS")
 end
+
+# v1.1 ledger floor (LC1 pair v3, job 64575899): subnormal snow and ice states whose fluxes are flushed to zero pass;
+# normal cells that close at rounding pass; a normal cell broken by 1e-4 of its snow mass still fails.
+@testset "Sea-ice branch observer: v1.1 ledger floor for subnormal states, $FT" for FT in (Float32, Float64)
+    ρi, ρs, Δτ = 900.0, 330.0, 900.0
+    tiny = floatmin(FT)
+    # Cells: 1 subnormal snow melting to zero with a flushed snow flux (the pair v3 case), 2 subnormal ice lost with a
+    # flushed ice flux, 3 normal and closed, 4 normal with a snow flux broken by 1e-4 of its snow mass.
+    A0 = FT[0.4770869, 0.4, 0.5, 0.5]
+    A1 = FT[0.4778271, 0.4, 0.52, 0.52]
+    h0 = FT[1.0, tiny / 64, 1.2, 1.2]
+    h1 = FT[1.0, 0, 1.25, 1.25]
+    hs0 = FT[tiny / 64, 0, 0.2, 0.2]
+    hs1 = FT[0, 0, 0.19, 0.19]
+    exact_ice(i) = ρi * (Float64(A1[i]) * Float64(h1[i]) - Float64(A0[i]) * Float64(h0[i])) / Δτ
+    exact_snow(i) = ρs * (Float64(A1[i]) * Float64(hs1[i]) - Float64(A0[i]) * Float64(hs0[i])) / Δτ
+    broken = 1e-4 * ρs * (Float64(A1[4]) * Float64(hs1[4]) + Float64(A0[4]) * Float64(hs0[4])) / Δτ
+    Fi = FT[exact_ice(1), 0, exact_ice(3), exact_ice(4)]
+    Fs = FT[0, 0, exact_snow(3), exact_snow(4) + broken]
+    column(v) = reshape(v, 4, 1)
+    s = (; A0 = column(A0), h0 = column(h0), hs0 = column(hs0), A1 = column(A1), h1 = column(h1), hs1 = column(hs1),
+         Fi = column(Fi), Fs = column(Fs), P = column(zeros(FT, 4)))
+    observer = (; weight = ones(4, 1), ice_density = fill(ρi, 4, 1), snow_density = fill(ρs, 4, 1),
+                ledger_epsilon = Float64(eps(FT)), float_type = FT)
+    v = R._sea_ice_branch_stage_values(observer, trues(4, 1), s, Δτ)
+    @test v.invalid_cells == 0
+    @test v.ice_ledger_failed_cells == 0
+    @test v.snow_ledger_failed_cells == 1
+    # Without the floor, cells 1 and 2 would fail: their residual exceeds the relative bound alone.
+    relative = 8 * eps(FT)
+    r_snow_1 = -ρs * (Float64(A1[1]) * Float64(hs1[1]) - Float64(A0[1]) * Float64(hs0[1]))
+    @test abs(r_snow_1) > relative * ρs * Float64(A0[1]) * Float64(hs0[1])
+    r_ice_2 = -ρi * (Float64(A1[2]) * Float64(h1[2]) - Float64(A0[2]) * Float64(h0[2]))
+    @test abs(r_ice_2) > relative * ρi * Float64(A0[2]) * Float64(h0[2])
+    # The floor is negligible: at most 8 floatmin(FT) (2 rho + 2 dt) per cell.
+    @test 8 * Float64(tiny) * (2ρs + 2Δτ) < 1e-30
+end
 println("SEA_ICE_BRANCH_OBSERVER_TESTS_PASS")
 end

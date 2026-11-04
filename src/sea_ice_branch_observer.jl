@@ -60,6 +60,12 @@ const _SEA_ICE_BRANCH_SECTOR = (120.0, 180.0)
 # Per-cell ledger tolerance in units of the model's machine epsilon. The kernel's own rounding is at most about
 # 2 eps (two products, one difference, one product and one quotient), so 8 eps leaves a factor of four.
 const _SEA_ICE_BRANCH_LEDGER_FACTOR = 8.0
+# v1.1 (4 Nov 2026): the relative bound cannot hold for subnormal states and fluxes, which carry few significant bits
+# and which the GPU may flush to zero (LC1 pair v3, job 64575899: 1295 fixed-mask snow failures, every one with
+# subnormal Float32 snow depth, largest residual 8e-43 kg m-2). Each per-cell tolerance therefore adds an absolute
+# floor of 8 floatmin(FT) for every term that can underflow: rho * (A0 h0) and rho * (A1 h1), and each mass flux
+# times dt. In Float32 that is at most about 2e-34 kg m-2, far below any physical mass.
+const _SEA_ICE_BRANCH_LEDGER_FLOOR_VERSION = "v1.1_floatmin_floor"
 
 const _SEA_ICE_BRANCH_REGIONS = (
     :north_of_50S,
@@ -412,6 +418,7 @@ function _sea_ice_branch_stage_values(observer, selected, s, Δτ)
     ice_density = observer.ice_density
     snow_density = observer.snow_density
     ε = _SEA_ICE_BRANCH_LEDGER_FACTOR * observer.ledger_epsilon
+    ledger_floor = _SEA_ICE_BRANCH_LEDGER_FACTOR * Float64(floatmin(observer.float_type))
     cells = 0
     cell_area = 0.0
     pre_ice_area = 0.0
@@ -491,13 +498,13 @@ function _sea_ice_branch_stage_values(observer, selected, s, Δτ)
         intercepted += w * pint
         # Ice ledger: the kernel writes F_ice = rho_i * (h1*A1 - h0*A0) / dt.
         r_ice = fi * Δτ - ρi * dV
-        t_ice = ε * ρi * (abs(v1) + abs(v0))
+        t_ice = ε * ρi * (abs(v1) + abs(v0)) + ledger_floor * (2ρi + Δτ)
         ice_residual += w * r_ice
         ice_tolerance += w * t_ice
         abs(r_ice) <= t_ice || (ice_failed += 1)
         # Two-term snow ledger: the kernel writes F_snow = rho_s * (hs1*A1 - hs0*A0) / dt - P_intercepted.
         r_snow = (fs + pint) * Δτ - ρs * dS
-        t_snow = ε * (ρs * (abs(s1) + abs(s0)) + abs(pint) * Δτ)
+        t_snow = ε * (ρs * (abs(s1) + abs(s0)) + abs(pint) * Δτ) + ledger_floor * (2ρs + 2Δτ)
         snow_residual += w * r_snow
         snow_tolerance += w * t_snow
         abs(r_snow) <= t_snow || (snow_failed += 1)
@@ -702,6 +709,7 @@ function _sea_ice_branch_provenance(every, Δt, arm, identity, lead_closing_thic
         "loose_pack=$(_SEA_ICE_BRANCH_LOOSE_MIN),$(_SEA_ICE_BRANCH_LOOSE_MAX)",
         "sector_east_deg=$(_SEA_ICE_BRANCH_SECTOR[1]),$(_SEA_ICE_BRANCH_SECTOR[2])",
         "ledger_factor=$(_SEA_ICE_BRANCH_LEDGER_FACTOR)",
+        "ledger_floor=$(_SEA_ICE_BRANCH_LEDGER_FLOOR_VERSION)",
         "regions=$(join(String.(_SEA_ICE_BRANCH_REGIONS), ","))",
         "stage_quantities=$(join([String(name) for (name, _) in _SEA_ICE_BRANCH_STAGE_QUANTITIES], ","))",
         "boundary_quantities=$(join([String(name) for (name, _) in _SEA_ICE_BRANCH_BOUNDARY_QUANTITIES], ","))",
