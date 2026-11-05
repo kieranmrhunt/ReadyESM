@@ -10,7 +10,9 @@ published release or the production-resolution timings in the README.
 
 `READYESM_PRECOMPILE_WORKLOAD_MODE` supports `bounded` (the default), `off`,
 and experimental `full`. The older `READYESM_PRECOMPILE_WORKLOAD` variable is
-used only when `_MODE` is unset.
+used only when `_MODE` is unset. Empty values select `bounded`; common boolean
+aliases are accepted. An unrecognised nonempty value raises an error while
+building the cache, so a typo cannot silently select a different image.
 
 - `bounded` loads and validates small analytic configurations, constructs a
   T7 spectral grid, exercises selected atmosphere helpers, and requests four

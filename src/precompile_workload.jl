@@ -1,15 +1,19 @@
 import PrecompileTools
 
-function _precompile_mode()
-    raw = lowercase(strip(get(ENV, "READYESM_PRECOMPILE_WORKLOAD_MODE", get(ENV, "READYESM_PRECOMPILE_WORKLOAD", "bounded"))))
+function _precompile_mode(raw::AbstractString)
+    raw = lowercase(strip(raw))
     if raw in ("0", "false", "no", "off", "none")
         return :off
     elseif raw in ("full", "all", "coupled")
         return :full
-    else
+    elseif raw in ("", "bounded", "default", "1", "true", "yes", "on")
         return :bounded
+    else
+        throw(ArgumentError("unknown ReadyESM precompile workload mode $(repr(raw)); expected bounded, off, or full"))
     end
 end
+_precompile_mode() = _precompile_mode(get(ENV, "READYESM_PRECOMPILE_WORKLOAD_MODE",
+                                        get(ENV, "READYESM_PRECOMPILE_WORKLOAD", "bounded")))
 const _precompile_workload_mode = _precompile_mode
 
 function _clear_precompile_global_caches!()
