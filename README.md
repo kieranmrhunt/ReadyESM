@@ -89,6 +89,12 @@ T63 and T127 used a wider land-data search for a few island cells during
 initialization, for timing only.
 [Timing details](docs/performance.md).
 
+ReadyESM also has a bounded package-precompile workload on the v0.2
+development line. It changes first-use and cache-creation costs, and has not
+changed the v0.1.19 production speed measurements above. See the
+[precompile mode and measurement guide](docs/precompile-performance-v020.md)
+before choosing a cache mode or reusing a compiled depot.
+
 ## Run
 
 Use Julia 1.12 and Python 3.11 or newer. The standard configuration uses an NVIDIA GPU
