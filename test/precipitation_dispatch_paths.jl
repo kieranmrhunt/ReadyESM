@@ -48,9 +48,11 @@ function makevars(; rain=3.9f-6, convection=0f0, large_rain=0f0,
         convective_humidity_tendency = zeros2(),
         convective_temperature_tendency = zeros2(),
         convective_precipitation_mass_correction = zeros1(),
+        convective_precipitation_surface_pressure = zeros1(),
         large_scale_condensation_humidity_tendency = zeros2(),
         large_scale_condensation_temperature_tendency = zeros2(),
         large_scale_precipitation_mass_correction = zeros1(),
+        large_scale_precipitation_surface_pressure = zeros1(),
     )
     return (
         tendencies = (grid = (humidity = zeros2(), temperature = zeros2()),),
