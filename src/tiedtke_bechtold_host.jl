@@ -165,9 +165,11 @@ Call the pure column on host column `ij`: T, q and geopotential from `vars.grid.
 Betts-Miller path obtains it), the D30 land flag from `model.land_sea_mask.mask` (the land-sea field the other
 schemes use) and the latitude from `model.geometry.latds` (diagnostics only, unused by the column). The work arrays
 are the scheme's ScratchVariables, sliced per column without allocation. `dT` and `dq` receive the tendencies.
+`stage1b` is empty for stage 1a. The stage 1B host passes (shallow parameters, lagged flux, closure), which select the
+stage 1B column method (tiedtke_bechtold_stage1b_host.jl).
 """
 Base.@propagate_inbounds function _tiedtke_bechtold_column_call!(
-    dT, dq, ij, vars, scheme::TiedtkeBechtoldConvection, model,
+    dT, dq, ij, vars, scheme::TiedtkeBechtoldConvection, model, stage1b...,
 )
     (; geometry, time_stepping, land_sea_mask) = model
     parameters = scheme.parameters
@@ -212,6 +214,7 @@ Base.@propagate_inbounds function _tiedtke_bechtold_column_call!(
         tb_land_flag(land_sea_mask.mask[ij], parameters),
         geometry.latds[ij],
         parameters,
+        stage1b...,
     )
 end
 
@@ -400,6 +403,11 @@ tiedtke_bechtold_restart_contract() = (;
     contract_manifest_sha256 = TIEDTKE_BECHTOLD_CONTRACT_MANIFEST_SHA256,
 )
 
+"""The restart contract of a constructed Tiedtke-Bechtold host: stage 1a here, stage 1B in its own file."""
+tiedtke_bechtold_restart_contract(::TiedtkeBechtoldHostConvection) = tiedtke_bechtold_restart_contract()
+tiedtke_bechtold_restart_contract(convection::PrognosticCondensateConvection) =
+    tiedtke_bechtold_restart_contract(convection.convection)
+
 """Whether a constructed convection component is the Tiedtke-Bechtold host (also under a condensate wrapper)."""
 _uses_tiedtke_bechtold_convection(convection) = convection isa TiedtkeBechtoldHostConvection
 _uses_tiedtke_bechtold_convection(convection::PrognosticCondensateConvection) =
@@ -411,7 +419,7 @@ checkpoints keep exactly their release content.
 """
 _convection_restart_state(simulation) =
     _uses_tiedtke_bechtold_convection(simulation.model.convection) ?
-        (; convection_restart_contract = tiedtke_bechtold_restart_contract()) : (;)
+        (; convection_restart_contract = tiedtke_bechtold_restart_contract(simulation.model.convection)) : (;)
 
 """
     _validate_convection_restart(simulation, state)
@@ -439,7 +447,7 @@ function _validate_convection_restart(simulation, state)
         "checkpoint has no convection restart contract (it was written with Betts-Miller or another scheme)",
     ))
     record = state.convection_restart_contract
-    expected = tiedtke_bechtold_restart_contract()
+    expected = tiedtke_bechtold_restart_contract(convection)
     names = propertynames(record)
     (length(names) == length(expected) && all(name -> name in names, keys(expected))) || throw(ArgumentError(
         "checkpoint convection restart contract has keys $(Tuple(names)), expected $(keys(expected))",
@@ -460,6 +468,8 @@ end
 
 """Diagnostics provenance of the Tiedtke-Bechtold stage 1a convection, empty for every other scheme."""
 function _tiedtke_bechtold_metadata(config::ExperimentConfig)
+    config.atmosphere_convection == TIEDTKE_BECHTOLD_STAGE1B_CONVECTION_SYMBOL &&
+        return _tiedtke_bechtold_stage1b_metadata()                 # tiedtke_bechtold_stage1b_host.jl
     config.atmosphere_convection == TIEDTKE_BECHTOLD_CONVECTION_SYMBOL || return (;)
     return (
         atmosphere_convection_closure = TIEDTKE_BECHTOLD_CLOSURE_NAME,

@@ -210,8 +210,9 @@ tb_production = with(production; atmosphere_convection = TB, atmosphere_saturati
         write(path, join(lines, "\n") * "\n")
         @test R.load_config(path; check_input_files = false).atmosphere_convection == TB
     end
-    # Every other unknown value is still rejected.
-    for name in (:tiedtke_bechtold, :tiedtke_bechtold_v1, :tiedtke_bechtold_eqcape_stage1b, :tiedtke_bechtold_stage1,
+    # Every other unknown value is still rejected. (tiedtke_bechtold_eqcape_stage1b was in this list until stage 1B
+    # PART B made it a valid name; test/tiedtke_bechtold_stage1b_host.jl tests it.)
+    for name in (:tiedtke_bechtold, :tiedtke_bechtold_v1, :tiedtke_bechtold_eqcape_stage2, :tiedtke_bechtold_stage1,
                  :dilute_cape_adjustment_v1, :Tiedtke_Bechtold_eqcape_stage1)
         @test_throws ArgumentError R.validate(with(tb_production; atmosphere_convection = name);
                                               check_input_files = false)

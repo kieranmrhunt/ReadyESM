@@ -290,6 +290,9 @@ function _atmosphere_convection(
     # column's own rain flux. The Betts-Miller and C08/C07 branches below are unchanged.
     config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 &&
         return TiedtkeBechtoldHostConvection(spectral_grid)
+    # Stage 1B (tiedtke_bechtold_stage1b_host.jl): the shallow branch with the HOST closure, its own wrapper.
+    config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1b &&
+        return TiedtkeBechtoldStage1BHostConvection(spectral_grid)
     if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         base = FiniteMultiPlumeConvection(spectral_grid;
             saturation_law = config.atmosphere_saturation_law,

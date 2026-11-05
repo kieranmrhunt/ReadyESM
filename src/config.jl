@@ -716,24 +716,29 @@ D02):
 4. a non-default value of any Betts-Miller or C08/C07 setting (`_TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS`): the
    scheme does not read them, so a changed value would look active while having no effect.
 """
+"""Whether a convection symbol selects Tiedtke-Bechtold (stage 1a or stage 1B)."""
+_is_tiedtke_bechtold_convection(scheme::Symbol) =
+    scheme in (:tiedtke_bechtold_eqcape_stage1, :tiedtke_bechtold_eqcape_stage1b)
+
 function _validate_tiedtke_bechtold_stage1_options(config::ExperimentConfig)
+    selected = "atmosphere_convection=$(config.atmosphere_convection)"
     _uses_prognostic_cloud_condensate(config.forcing.cloud_scheme) && throw(ArgumentError(
-        "atmosphere_convection=tiedtke_bechtold_eqcape_stage1 cannot be combined with " *
+        "$selected cannot be combined with " *
         "cloud_scheme=$(config.forcing.cloud_scheme): prognostic cloud condensate consumes the Betts-Miller " *
         "convective diagnostics, and stage 1a has no Tiedtke-Bechtold condensate interface",
     ))
     config.atmosphere_saturation_law == :liquid || throw(ArgumentError(
-        "atmosphere_convection=tiedtke_bechtold_eqcape_stage1 requires atmosphere_saturation_law=liquid " *
+        "$selected requires atmosphere_saturation_law=liquid " *
         "(stage 1a is liquid only and uses the host liquid saturation humidity)",
     ))
     config.atmosphere_moist_mass_coupling && throw(ArgumentError(
-        "atmosphere_convection=tiedtke_bechtold_eqcape_stage1 cannot be combined with " *
+        "$selected cannot be combined with " *
         "atmosphere_moist_mass_coupling, which supports only the net-column Betts-Miller host",
     ))
     defaults = ExperimentConfig()
     for name in _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS
         getfield(config, name) == getfield(defaults, name) || throw(ArgumentError(
-            "$name is a Betts-Miller or C08/C07 setting that atmosphere_convection=tiedtke_bechtold_eqcape_stage1 " *
+            "$name is a Betts-Miller or C08/C07 setting that $selected " *
             "does not read; keep its default $(getfield(defaults, name))",
         ))
     end
@@ -812,13 +817,15 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         :finite_multiplume_c08_v1,
         :finite_multiplume_c07_v1,
         :tiedtke_bechtold_eqcape_stage1,
+        :tiedtke_bechtold_eqcape_stage1b,
     ) || throw(ArgumentError(
         "atmosphere_convection must be betts_miller_constant_rh or " *
         "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1 or finite_multiplume_c07_v1 or " *
-        "tiedtke_bechtold_eqcape_stage1",
+        "tiedtke_bechtold_eqcape_stage1 or tiedtke_bechtold_eqcape_stage1b",
     ))
-    # Tiedtke-Bechtold stage 1a (tiedtke_bechtold_host.jl): its refusals, before the scheme-specific checks below.
-    config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 &&
+    # Tiedtke-Bechtold stage 1a and stage 1B (tiedtke_bechtold_host.jl, tiedtke_bechtold_stage1b_host.jl): the same
+    # refusals, before the scheme-specific checks below.
+    _is_tiedtke_bechtold_convection(config.atmosphere_convection) &&
         _validate_tiedtke_bechtold_stage1_options(config)
     if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         config.device == :cpu || throw(ArgumentError(
