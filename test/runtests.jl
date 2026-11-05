@@ -2,6 +2,7 @@ using ReadyESM
 using Test
 
 include("precompile_mode.jl")
+include("lazy_plotting_first_load.jl")
 include("production_config.jl")
 include("calendar_centred_ecco.jl")
 include("moist_mass_coupling.jl")
