@@ -403,7 +403,10 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
     )
     correction = net_convective_rain_rate - gross_convective_rain_rate
 
-    vars.parameterizations.rain_rate[ij] += correction
+    # Keep the stored total equal to the stored process component; adding a
+    # correction to the rounded gross total can leave a one-ULP discrepancy.
+    vars.parameterizations.rain_rate[ij] =
+        rain_rate_before + net_convective_rain_rate
     vars.parameterizations.rain_rate_convection[ij] =
         net_convective_rain_rate
     vars.parameterizations.convective_precipitation_mass_correction[ij] =
@@ -843,8 +846,9 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
 
     parameterizations.rain_rate_large_scale[ij] = corrected_rain_rate
     parameterizations.snow_rate_large_scale[ij] = corrected_snow_rate
-    parameterizations.rain_rate[ij] += rain_correction
-    parameterizations.snow_rate[ij] += snow_correction
+    parameterizations.rain_rate[ij] =
+        parameterizations.rain_rate_convection[ij] + corrected_rain_rate
+    parameterizations.snow_rate[ij] = corrected_snow_rate
     parameterizations.large_scale_precipitation_mass_correction[ij] =
         rain_correction + snow_correction
     parameterizations.rain_large_scale[ij] +=
