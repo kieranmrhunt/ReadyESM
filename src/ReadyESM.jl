@@ -82,6 +82,7 @@ include("sea_ice_mechanics_diagnostics.jl")
 include("balanced_launch.jl")
 include("dynamic_restart.jl")
 include("scored_outputs.jl")
+include("precompile_workload.jl")
 
 export ExperimentConfig,
     ForcingConfig,
