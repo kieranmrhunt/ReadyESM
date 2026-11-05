@@ -34,6 +34,212 @@ const INPUTS = ((:ocean, :sensible_heat_flux), (:land, :sensible_heat_flux),
                 (:ocean, :surface_humidity_flux), (:land, :surface_humidity_flux))
 input_field(atmosphere, (space, name)) = getproperty(getproperty(atmosphere.variables.prognostic, space), name)
 
+# --------------------------------------------------------------------------------------------------------------
+# Fixed-column wrapper fixture (GPU-interface form), copied from test/tiedtke_bechtold_host.jl at e9a4133 and the
+# stage 1B column test at afb714d (so this file does not depend on those test modules), with the stage 1B additions:
+# the D81 flag in `prognostic.convection`, the four prescribed flux inputs in `prognostic.ocean` and `.land`, and a
+# trade-wind column that convects shallow.
+# --------------------------------------------------------------------------------------------------------------
+const TROPICAL = (T_s = 300.0, sigma_m = 1.0, q_m = 0.0, lapse1 = 6.5e-3, sigma_i = 0.0, inversion = 0.0,
+    lapse2 = 6.5e-3, T_trop = 195.0, nodes = ((0.9, 0.85), (0.6, 0.6), (0.2, 0.3)))
+const MIDLATITUDE = (T_s = 298.0, sigma_m = 0.85, q_m = 0.0105, lapse1 = 6.5e-3, sigma_i = 0.0, inversion = 0.0,
+    lapse2 = 6.5e-3, T_trop = 215.0, nodes = ((0.85, 0.7), (0.5, 0.5), (0.2, 0.3)))
+const STABLE = (T_s = 260.0, sigma_m = 1.0, q_m = 0.0, lapse1 = 0.0, sigma_i = 0.0, inversion = 0.0,
+    lapse2 = 0.0, T_trop = 100.0, nodes = ((1.0, 0.5),))
+trade(sigma_i) = (T_s = 300.0, sigma_m = 0.89, q_m = 0.0128, lapse1 = 5.5e-3, sigma_i = sigma_i, inversion = 6.0,
+    lapse2 = 5.0e-3, T_trop = 200.0,
+    nodes = ((0.89, 0.9), (sigma_i + 0.01, 0.9), (sigma_i - 0.01, 0.25), (0.2, 0.2)))
+
+function relative_humidity_profile(sigma::NF, nodes) where {NF}
+    s0, r0 = NF(nodes[1][1]), NF(nodes[1][2])
+    sigma >= s0 && return r0
+    for i in 2:length(nodes)
+        s1, r1 = NF(nodes[i][1]), NF(nodes[i][2])
+        sigma >= s1 && return r0 + (r1 - r0) * (sigma - s0) / (s1 - s0)
+        s0, r0 = s1, r1
+    end
+    return r0
+end
+
+function analytic_profile(::Type{NF}, p_full, p_s, spec, atmosphere, gravity) where {NF}
+    kappa = atmosphere.R_dry / atmosphere.heat_capacity
+    exponent1 = atmosphere.R_dry * NF(spec.lapse1) / gravity
+    exponent2 = atmosphere.R_dry * NF(spec.lapse2) / gravity
+    T_s, sigma_m, sigma_i, T_trop = NF(spec.T_s), NF(spec.sigma_m), NF(spec.sigma_i), NF(spec.T_trop)
+    T_m = T_s * sigma_m^kappa
+    T_i = sigma_i > 0 ? max(T_m * (sigma_i / sigma_m)^exponent1, T_trop) + NF(spec.inversion) : zero(NF)
+    T = zeros(NF, length(p_full))
+    q = zeros(NF, length(p_full))
+    for k in eachindex(p_full)
+        sigma = p_full[k] / NF(p_s)
+        if sigma >= sigma_m
+            T[k] = T_s * sigma^kappa
+            q[k] = NF(spec.q_m)
+        else
+            T[k] = sigma >= sigma_i ? max(T_m * (sigma / sigma_m)^exponent1, T_trop) :
+                                      max(T_i * (sigma / sigma_i)^exponent2, T_trop)
+            q[k] = relative_humidity_profile(sigma, spec.nodes) * S.saturation_humidity(T[k], p_full[k], atmosphere)
+        end
+    end
+    return T, q
+end
+
+function host_geopotential(T::Vector{NF}, q, p_full, p_half, surface_geopotential, atmosphere) where {NF}
+    n = length(T)
+    R_dry = atmosphere.R_dry
+    mu = atmosphere.μ_virt_temp
+    geopotential = zeros(NF, n)
+    geopotential[n] = surface_geopotential + R_dry * T[n] * (1 + mu * q[n]) * log(p_half[n + 1] / p_full[n])
+    for k in (n - 1):-1:1
+        geopotential[k] = geopotential[k + 1] +
+            R_dry * T[k + 1] * (1 + mu * q[k + 1]) * log(p_full[k + 1] / p_half[k + 1]) +
+            R_dry * T[k] * (1 + mu * q[k]) * log(p_half[k + 1] / p_full[k])
+    end
+    return geopotential
+end
+
+# Columns: ocean and land inputs differ, so the D48 weighting is exercised in the partial-land column.
+const HOST_COLUMNS_1B = (
+    tropical = (profile = TROPICAL, p_s = 101325.0, land = 0.0),
+    midlatitude = (profile = MIDLATITUDE, p_s = 100000.0, land = 1.0),
+    trade = (profile = trade(0.75), p_s = 101325.0, land = 0.0),
+    coast = (profile = trade(0.75), p_s = 101325.0, land = 0.4),
+    stable = (profile = STABLE, p_s = 100000.0, land = 0.3),
+)
+const OCEAN_INPUT = (H = 15.0, E = 6.0e-5)     # W m-2, kg m-2 s-1, upward
+const LAND_INPUT = (H = 40.0, E = 3.0e-5)
+
+function host_fixture_1b(::Type{NF}, convection; prefill = zero(NF), set = 1) where {NF}
+    n = 27
+    sigma_half = [NF(j) / NF(n) for j in 0:n]
+    sigma_full = [NF(0.5) * (sigma_half[k + 1] + sigma_half[k]) for k in 1:n]
+    sigma_thick = [sigma_half[k + 1] - sigma_half[k] for k in 1:n]
+    atmosphere = S.EarthAtmosphere(NF)
+    gravity = S.Earth(NF).gravity
+    npoints = length(HOST_COLUMNS_1B)
+    T, q, phi = zeros(NF, npoints, n), zeros(NF, npoints, n), zeros(NF, npoints, n)
+    ps, land, latitude = zeros(NF, npoints), zeros(NF, npoints), zeros(NF, npoints)
+    for (ij, column) in enumerate(HOST_COLUMNS_1B)
+        ps[ij] = NF(column.p_s)
+        p_full = sigma_full .* ps[ij]
+        p_half = sigma_half .* ps[ij]
+        Tc, qc = analytic_profile(NF, p_full, column.p_s, column.profile, atmosphere, gravity)
+        T[ij, :] = Tc
+        q[ij, :] = qc
+        phi[ij, :] = host_geopotential(Tc, qc, p_full, p_half, zero(NF), atmosphere)
+        land[ij] = NF(column.land)
+    end
+    allocate(v, value) = v.dims isa S.Grid3D ? fill(value, npoints, n) :
+                         v.dims isa S.Grid2D ? fill(value, npoints) : error("unexpected dims $(v.dims)")
+    declared = S.variables(convection)
+    scratch = (; (v.name => allocate(v, prefill) for v in declared if v isa S.ScratchVariable)...)
+    parameterizations = (; (v.name => allocate(v, zero(NF)) for v in declared if v isa S.ParameterizationVariable)...)
+    fill!(parameterizations.cloud_top, NF(n + 1))
+    fill!(parameterizations.convective_temperature_tendency, prefill)
+    fill!(parameterizations.convective_humidity_tendency, prefill)
+    prognostic = (;
+        convection = (; tiedtke_bechtold_lagged_flux_set = fill(NF(set), npoints)),
+        ocean = (; sensible_heat_flux = fill(NF(OCEAN_INPUT.H), npoints),
+                   surface_humidity_flux = fill(NF(OCEAN_INPUT.E), npoints)),
+        land = (; sensible_heat_flux = fill(NF(LAND_INPUT.H), npoints),
+                  surface_humidity_flux = fill(NF(LAND_INPUT.E), npoints)),
+    )
+    vars = (;
+        grid = (; temperature_prev = T, humidity_prev = q, geopotential = phi, pressure_prev = ps),
+        tendencies = (; grid = (; temperature = zeros(NF, npoints, n), humidity = zeros(NF, npoints, n))),
+        parameterizations,
+        prognostic,
+        scratch = (; grid = scratch),
+    )
+    model = (;
+        geometry = (; σ_levels_full = sigma_full, σ_levels_half = sigma_half, σ_levels_thick = sigma_thick,
+                    latds = latitude),
+        time_stepping = (; Δt_sec = NF(900)),
+        land_sea_mask = (; mask = land),
+    )
+    return (; vars, model, n)
+end
+
+"""The stage 1B column on fixture column `ij` with plain vectors (the reference), and the lagged value it used."""
+function direct_column_1b(vars, model, ij, convection)
+    parameters = convection.convection.parameters
+    NF = typeof(parameters.gravity)
+    n = length(model.geometry.σ_levels_full)
+    ps = vars.grid.pressure_prev[ij]
+    f = NF(model.land_sea_mask.mask[ij])
+    # The D48 weighting written out independently of `_pbl_area_weighted` (land first, then ocean, zero-area tiles
+    # skipped), so the reference does not reuse the code under test.
+    weighted(land_value, ocean_value) = (f > 0 ? f * NF(land_value) : zero(NF)) + (f < 1 ? (1 - f) * NF(ocean_value) : zero(NF))
+    lagged = vars.prognostic.convection.tiedtke_bechtold_lagged_flux_set[ij] > 0 ?
+        R.TiedtkeBechtoldLaggedSurfaceFlux(weighted(LAND_INPUT.H, OCEAN_INPUT.H), weighted(LAND_INPUT.E, OCEAN_INPUT.E)) :
+        R.TiedtkeBechtoldLaggedSurfaceFlux{NF}()
+    dT, dq, P = zeros(NF, n), zeros(NF, n), zeros(NF, n + 1)
+    work = R.tiedtke_bechtold_column_work(NF, n)
+    result = R.tiedtke_bechtold_column!(dT, dq, P, work,
+        NF[vars.grid.temperature_prev[ij, k] for k in 1:n], NF[vars.grid.humidity_prev[ij, k] for k in 1:n],
+        NF[model.geometry.σ_levels_full[k] * ps for k in 1:n], NF[model.geometry.σ_levels_half[j] * ps for j in 1:(n + 1)],
+        NF[vars.grid.geopotential[ij, k] for k in 1:n], model.time_stepping.Δt_sec,
+        R.tb_land_flag(model.land_sea_mask.mask[ij], parameters), model.geometry.latds[ij], parameters,
+        convection.shallow, lagged, R.TiedtkeBechtoldHostClosure())
+    return (; dT, dq, P, result, lagged)
+end
+row(field, ij) = [field[ij, k] for k in 1:size(field, 2)]
+function wrapper_allocations(vars, convection, model, ij)
+    S.parameterization!(ij, vars, convection, model)
+    return @allocated S.parameterization!(ij, vars, convection, model)
+end
+
+@testset "Stage 1B wrapper equals the plain column; D81 set/unset; NaN scratch; no allocation; inference $NF" for NF in PRECISIONS
+    convection = R.TiedtkeBechtoldStage1BHostConvection(R.TiedtkeBechtoldConvection(R.tiedtke_bechtold_parameters(NF)),
+                                                        R.tiedtke_bechtold_shallow_parameters(NF))
+    types_seen = Set{Int}()
+    for set in (0, 1)
+        clean = host_fixture_1b(NF, convection; set)
+        poisoned = host_fixture_1b(NF, convection; set, prefill = NF(NaN))
+        for ij in 1:length(HOST_COLUMNS_1B)
+            reference = direct_column_1b(clean.vars, clean.model, ij, convection)
+            r = reference.result
+            set == 1 && push!(types_seen, r.convection_type)
+            for fixture in (clean, poisoned)
+                S.parameterization!(ij, fixture.vars, convection, fixture.model)
+                p = fixture.vars.parameterizations
+                @test same_bits(row(p.convective_temperature_tendency, ij), reference.dT)
+                @test same_bits(row(p.convective_humidity_tendency, ij), reference.dq)
+                @test same_bits(row(fixture.vars.tendencies.grid.temperature, ij), reference.dT)   # tendencies start at 0
+                @test same_bits(row(fixture.vars.tendencies.grid.humidity, ij), reference.dq)
+                @test bits(p.tiedtke_bechtold_rain_mass_flux_surface[ij]) == bits(r.rain_mass_flux_surface)
+                @test p.tiedtke_bechtold_convection_type[ij] == r.convection_type
+                @test p.tiedtke_bechtold_trigger_path[ij] == r.trigger_path == (set == 1 ? 2 : 1)
+                @test bits(p.tiedtke_bechtold_lagged_sensible_heat_flux[ij]) == bits(reference.lagged.sensible_heat_flux)
+                @test bits(p.tiedtke_bechtold_lagged_humidity_flux[ij]) == bits(reference.lagged.humidity_flux)
+                @test bits(p.tiedtke_bechtold_shallow_source[ij]) == bits(r.shallow_source)
+                @test bits(p.tiedtke_bechtold_shallow_closure_mass_flux[ij]) == bits(r.shallow_closure_mass_flux)
+                @test bits(p.tiedtke_bechtold_cloud_base_mass_flux[ij]) == bits(r.cloud_base_mass_flux)
+                @test p.tiedtke_bechtold_lagged_flux_unset_steps[ij] == r.lagged_flux_unset          # one call
+                @test p.tiedtke_bechtold_shallow_cfl_capped_steps[ij] == r.shallow_cfl_capped
+                @test p.cloud_top[ij] == (r.convection_type == 1 ? r.tb_top_full_level : clean.n + 1)  # D79 (a)
+                @test fixture.vars.prognostic.convection.tiedtke_bechtold_lagged_flux_set[ij] == 1  # D81: set after
+                # A second call on a set column runs stage 1B and adds the counters once more.
+                fixture === clean && set == 0 && begin
+                    S.parameterization!(ij, fixture.vars, convection, fixture.model)
+                    @test p.tiedtke_bechtold_trigger_path[ij] == 2
+                    @test p.tiedtke_bechtold_lagged_flux_unset_steps[ij] == 1
+                end
+            end
+        end
+    end
+    @test 2 in types_seen && 1 in types_seen          # the fixture exercises shallow and deep columns
+    # The CPU form of the GPU interface: no allocation and fully inferred.
+    clean = host_fixture_1b(NF, convection)
+    for ij in 1:length(HOST_COLUMNS_1B)
+        @test wrapper_allocations(clean.vars, convection, clean.model, ij) == 0
+    end
+    @test (@inferred R._tiedtke_bechtold_lagged_flux(1, clean.vars, clean.model, NF)) isa
+          R.TiedtkeBechtoldLaggedSurfaceFlux{NF}
+    @test (@inferred S.parameterization!(1, clean.vars, convection, clean.model)) === nothing
+    @test isbits(convection)
+end
+
 @testset "Tiedtke-Bechtold stage 1B host integration" begin
 
 production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
@@ -135,7 +341,7 @@ end
     @test R._convection_restart_state(sim(tb1a)) == record_1a
     @test R._convection_restart_state(sim(bm)) == (;)
     @test R._validate_convection_restart(sim(tb1b), record_1b) === nothing
-    @test R._validate_convection_restart(sim(tb1b), (; convection_restart_contract = NamedTuple{reverse(keys(contract))}(reverse(values(contract)))))) ===
+    @test R._validate_convection_restart(sim(tb1b), (; convection_restart_contract = NamedTuple{reverse(keys(contract))}(reverse(values(contract))))) ===
           nothing                                                          # JLD2 key order does not matter
     @test_throws r"stage_version" R._validate_convection_restart(sim(tb1b), record_1a)     # 1a -> 1B
     @test_throws r"stage_version" R._validate_convection_restart(sim(tb1a), record_1b)     # 1B -> 1a
