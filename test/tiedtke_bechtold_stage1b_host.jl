@@ -135,7 +135,7 @@ end
     @test R._convection_restart_state(sim(tb1a)) == record_1a
     @test R._convection_restart_state(sim(bm)) == (;)
     @test R._validate_convection_restart(sim(tb1b), record_1b) === nothing
-    @test R._validate_convection_restart(sim(tb1b), (; convection_restart_contract = (; reverse(pairs(contract))...))) ===
+    @test R._validate_convection_restart(sim(tb1b), (; convection_restart_contract = NamedTuple{reverse(keys(contract))}(reverse(values(contract)))))) ===
           nothing                                                          # JLD2 key order does not matter
     @test_throws r"stage_version" R._validate_convection_restart(sim(tb1b), record_1a)     # 1a -> 1B
     @test_throws r"stage_version" R._validate_convection_restart(sim(tb1a), record_1b)     # 1B -> 1a
@@ -225,10 +225,18 @@ end
         @test all(x -> all(isfinite, x), final)
         stepped = Dict(a.iteration => a for a in activity if a.iteration >= 1)
         @test Set(keys(stepped)) == Set(1:4)
-        # D81: step 1 ran the stage 1a fallback everywhere and set every flag; later steps run stage 1B.
-        @test all(==(1), stepped[1].trigger_path) && all(==(1), stepped[1].unset_steps)
+        # D81. At a fresh start the first coupled iteration holds two atmosphere steps (SpeedyWeather's first Euler half
+        # step, then the leapfrog step; the land coupling period is split the same way, terrarium_gpu_coupling.jl
+        # l. 1178-1190). So the first TB call is unset (stage 1a fallback) and sets the flag, and the second TB call in
+        # iteration 1 already runs stage 1B. 65411434 showed exactly this; v1 of this test wrongly expected the fallback
+        # in the iteration-1 record. Before any step (the iteration-0 callback, if it runs) every flag and counter is 0.
+        initial = filter(a -> a.iteration == 0, activity)
+        for a in initial
+            @test all(iszero, a.flag) && all(iszero, a.unset_steps)
+        end
+        @test all(==(1), stepped[1].unset_steps)                  # exactly one unset call per column, ever
         @test all(==(1), stepped[1].flag)
-        @test all(iszero, stepped[1].lagged_H) && all(iszero, stepped[1].lagged_E)
+        @test all(==(2), stepped[1].trigger_path)                 # the record is the second (stage 1B) call
         for k in 2:4
             @test all(==(2), stepped[k].trigger_path) && all(==(1), stepped[k].unset_steps)
         end
