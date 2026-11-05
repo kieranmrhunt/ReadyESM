@@ -1,7 +1,7 @@
 # Tests of the stage 1B Tiedtke-Bechtold column science (src/tiedtke_bechtold_column.jl, the stage 1B method of
-# `tiedtke_bechtold_column!`) against the frozen contract frozen_v5/FROZEN_CONTRACT_v5.sha256 c6327c89
-# (STAGE1B_CHOICES.md r4 b725f19f, Sect. 10). Column-level tests only: T1B, T16-T25, T28, T29 and the column-level part
-# of T23. Stage 2 (PART B, host realisation) owns:
+# `tiedtke_bechtold_column!`) against the frozen contract frozen_v6/FROZEN_CONTRACT_v6.sha256 8d0f295c
+# (STAGE1B_CHOICES.md r5 d764525e, Sect. 10; r5 adds T30 and the D83 counter `shallow_cfl_capped`). Column-level
+# tests only: T1B, T16-T25, T28-T30 and the column-level part of T23. Stage 2 (PART B, host realisation) owns:
 #   OPEN(D81, D82, T23): the two-step sentinel, the fresh-process pickup and the refusal of an absent, mismatched or
 #     stage 1a checkpoint need the persistent lagged state, which is not column code.
 #   OPEN(D79, T26, T27): the host `cloud_top` rule for shallow columns and the Betts-Miller / TB regression pair need the
@@ -248,12 +248,12 @@ const STAGE1B_FIELDS = (:trigger_path, :lagged_flux_unset, :shallow_nonupward_bu
     :shallow_test_base_half_level, :shallow_test_top_half_level, :shallow_test_depth, :shallow_test_base_w,
     :surface_parcel_wstar, :surface_parcel_delta_T, :surface_parcel_delta_q, :shallow_source,
     :shallow_large_scale_source, :shallow_moist_static_energy_jump, :shallow_closure_mass_flux,
-    :shallow_mass_guard_top)
+    :shallow_mass_guard_top, :shallow_cfl_capped)
 # Fields that describe the shallow candidate or closure (all zero in a deep or a fallback column).
 const SHALLOW_ONLY_FIELDS = (:shallow_nonpositive_jump, :shallow_nonpositive_source, :shallow_test_base_half_level,
     :shallow_test_top_half_level, :shallow_test_depth, :shallow_test_base_w, :shallow_source,
     :shallow_large_scale_source, :shallow_moist_static_energy_jump, :shallow_closure_mass_flux,
-    :shallow_mass_guard_top)
+    :shallow_mass_guard_top, :shallow_cfl_capped)
 
 const PRECISIONS = (Float64, Float32)
 
@@ -294,7 +294,7 @@ const PRECISIONS = (Float64, Float32)
     @test R._tb_shallow_closure_source(R.TiedtkeBechtoldHostClosure(), F, 24, zeros(NF, 28), par) === (F, zero(NF))
     # Identity strings (D82 names are proposals, fixed with Codex in stage 2).
     @test R.TIEDTKE_BECHTOLD_STAGE1B_CONTRACT_MANIFEST_SHA256 ==
-          "c6327c89e97ee1b4676a0d737f46f07cafa87351622b37fcff7db927284eb898"
+          "8d0f295c947a3466877bb25f26a1710d857c210f9c8e944804c48630d676108c"
     @test R.TIEDTKE_BECHTOLD_STAGE1B_TRIGGER_VARIANT == "shallow_n_deep_n1_v1"
     @test (R.TIEDTKE_BECHTOLD_TRIGGER_PATH_STAGE1A_FALLBACK, R.TIEDTKE_BECHTOLD_TRIGGER_PATH_STAGE1B) == (1, 2)
     # The stage 1a identity is untouched.
@@ -730,6 +730,7 @@ end
         @test r.convection_type == 2
         @test (r.cloud_base_half_level == n) == base_at_n
         @test r.f_CFL == 1 && r.f_pos == 1
+        @test r.shallow_cfl_capped == 0
         @test r.final_factor == r.closure_factor
         # D71: S_sub = H + L_v F_q (L_v once); D68: M_base Delta h_base = S_sub before limiters; D74: final = M_base.
         @test r.shallow_source == F_h
@@ -899,11 +900,13 @@ end
         host_step = run_stage1b(column, par, strong)
         @test host_step.res.convection_type == 2
         @test (host_step.res.f_CFL < 1) == (factor == 2)
+        @test host_step.res.shallow_cfl_capped == Int(factor == 2)              # D83 r5
         # Forced: a 1 h step (the closed mass flux does not depend on dt, the limit does).
         out = run_stage1b(column, par, strong; dt = 3600)
         results[factor] = out
         @test out.res.convection_type == 2
         @test out.res.f_CFL < 1
+        @test out.res.shallow_cfl_capped == 1
         @test isapprox(out.res.final_factor, out.res.closure_factor * min(out.res.f_CFL, out.res.f_pos);
                        rtol = local_tolerance(NF))
         numbers = cfl_numbers(out, factor, 3600)
@@ -976,6 +979,56 @@ end
         @test 1 <= out.res.tb_top_full_level < j_base
     end
     @test raining >= 3                                    # mirror: generated rain in every default trade column
+end
+
+@testset "T30 near-neutral shallow closure: Delta h_base -> 0+ (D68, D76 r5, D83) $NF" for NF in PRECISIONS
+    par = R.tiedtke_bechtold_parameters(NF)
+    g = par.gravity
+    column = build_column(NF, case(trade(0.75)))
+    n = length(column.T)
+    limiter_step = par.limiter_timestep_factor * column.dt
+    out = run_stage1b(column, par, lagged(NF))
+    r = out.res
+    @test r.convection_type == 2 && r.shallow_cfl_capped == 0
+    j_base = r.cloud_base_half_level
+    # After the run the work profiles are the applied ones, final_factor times the unit profiles. The closure is
+    # homogeneous of degree zero in that scale, so these profiles with their own base value stand in for M*.
+    work = map(copy, out.work)
+    unit_base = work.mass_flux_half[j_base]
+    source = r.shallow_source
+    jumps = [r.shallow_moist_static_energy_jump * NF(10)^NF(-e) for e in -2:0.25:20]
+    applied_previous = zero(NF)
+    uncapped = capped = 0
+    for jump in jumps
+        c = R._tb_shallow_mass_closure(work, source, jump, unit_base, column.q, column.p_half, column.dt, par)
+        @test c.final_factor isa NF
+        @test isfinite(c.closure_mass_flux) && c.closure_mass_flux > 0
+        @test isfinite(c.final_factor) && c.final_factor >= 0
+        applied = c.final_factor * unit_base
+        @test applied >= applied_previous * (1 - 64 * eps(NF))            # non-decreasing as the raw quotient grows
+        applied_previous = applied
+        if c.f_CFL == 1 && c.f_pos == 1
+            uncapped += 1
+            @test isapprox(applied, c.closure_mass_flux; rtol = local_tolerance(NF))
+        end
+        if c.f_CFL < 1 && c.f_CFL <= c.f_pos
+            capped += 1
+            # The binding layer carries exactly the D41 bound dp/(g Delta t_lim) (it need not be cloud base).
+            dp_half(j) = min(column.p_half[j] - column.p_half[j - 1], column.p_half[j + 1] - column.p_half[j])
+            numbers = [c.final_factor * work.mass_flux_half[j] * g * limiter_step / dp_half(j) for j in 2:n]
+            @test isapprox(maximum(numbers), par.cfl_factor; rtol = 64 * eps(NF))
+        end
+    end
+    @test uncapped > 0 && capped > 0                                     # both regimes are visited
+    # D83 r5 end to end: the counter is one exactly when f_CFL < 1, as the raw quotient grows through the cap.
+    seen = Set{Int}()
+    for scale in (1, 2, 4, 8, 16, 32, 64)
+        s = run_stage1b(column, par, lagged(NF, 15.0 * scale, 6.0e-5 * scale)).res
+        s.convection_type == 2 || continue
+        @test s.shallow_cfl_capped == Int(s.f_CFL < 1)
+        push!(seen, s.shallow_cfl_capped)
+    end
+    @test seen == Set([0, 1])                                            # the sweep crosses the cap
 end
 
 end # top-level testset

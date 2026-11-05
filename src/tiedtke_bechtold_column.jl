@@ -12,7 +12,7 @@
 # Everything here is allocation-free, isbits and branch-only (no dynamic dispatch), so the same function can run
 # inside a CPU or GPU column kernel and in the offline replay and SCM harness.
 #
-# Stage 1B (frozen_v5, shallow branch and surface-flux parcel, column science only) is the second method of
+# Stage 1B (frozen_v6, shallow branch and surface-flux parcel, column science only) is the second method of
 # `tiedtke_bechtold_column!`, after the stage 1a method; see the section "Stage 1B, column science" below.
 
 const TIEDTKE_BECHTOLD_CONTRACT_MANIFEST_SHA256 =
@@ -971,9 +971,11 @@ end
 # Stage 1B, column science: the Cy41r2 shallow branch and the surface-flux test parcel
 # ================================================================================================================
 #
-# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/frozen_v5/FROZEN_CONTRACT_v5.sha256
-# (sha256 c6327c89e97ee1b4676a0d737f46f07cafa87351622b37fcff7db927284eb898), which pins STAGE1B_CHOICES.md b725f19f
-# (r4) and DESIGN_STAGE2_v1.md 30a65da1 on top of the stage 1a manifest above. Rows from D45 on and tests T1B, T16-T29
+# Frozen contract: artifacts/development_wave_20261103/tiedtke_bechtold_claude_v1/frozen_v6/FROZEN_CONTRACT_v6.sha256
+# (sha256 8d0f295c947a3466877bb25f26a1710d857c210f9c8e944804c48630d676108c), which pins STAGE1B_CHOICES.md d764525e
+# (r5) and DESIGN_STAGE2_v1.md 30a65da1 on top of frozen_v5 (c6327c89) and the stage 1a manifest above. r5 adds no new
+# physical rule (D76 declares the D41 cap as the near-neutral protection, D83 `shallow_cfl_capped`, D84 rho_bar, T30).
+# Rows from D45 on and tests T1B, T16-T30
 # are those of STAGE1B_CHOICES.md (D45-D48 restate the stage 1a Sect. 7 rows). This is the scientific contract only
 # (F10): the persistent lagged-flux state, its restart and reset immunity, and the host wiring are stage 2.
 #
@@ -988,7 +990,7 @@ end
 # test/tiedtke_bechtold_stage1b.jl checks that a stage 1B deep cloud from n-2 equals the stage 1a column bit for bit.
 
 const TIEDTKE_BECHTOLD_STAGE1B_CONTRACT_MANIFEST_SHA256 =
-    "c6327c89e97ee1b4676a0d737f46f07cafa87351622b37fcff7db927284eb898"
+    "8d0f295c947a3466877bb25f26a1710d857c210f9c8e944804c48630d676108c"
 const TIEDTKE_BECHTOLD_STAGE1B_TRIGGER_VARIANT = "shallow_n_deep_n1_v1"   # D82 proposed name (fixed in stage 2)
 const TIEDTKE_BECHTOLD_TRIGGER_PATH_STAGE1A_FALLBACK = 1                   # D81, D83
 const TIEDTKE_BECHTOLD_TRIGGER_PATH_STAGE1B = 2                            # D83
@@ -1128,6 +1130,18 @@ end
     return F_h + S_LS, S_LS
 end
 
+# D68, D74, D41 / D76 r5: M_base = S_sub / Delta h_base (no floor, the D73 guard runs first), closure factor
+# M_base / M*_base, then the one D41 column factor. As Delta h_base -> 0+ the raw M_base grows without bound, and the
+# applied M_base (closure factor times min(f_CFL, f_pos), times M*_base) stays at or below the D41 bound (T30).
+@inline function _tb_shallow_mass_closure(work, source, jump, unit_base_mass_flux, q, p_half, timestep,
+                                          par::TiedtkeBechtoldParameters)
+    closure_mass_flux = source / jump
+    closure_factor = closure_mass_flux / unit_base_mass_flux                             # M_base / M*_base (D61)
+    f_CFL, f_pos = _tb_limiter_factors(work, closure_factor, q, p_half, timestep, par)
+    final_factor = closure_factor * min(f_CFL, f_pos)
+    return (; closure_mass_flux, closure_factor, f_CFL, f_pos, final_factor)
+end
+
 # ----------------------------------------------------------------------------------------------------------------
 # Surface parcel (D45-D53)
 # ----------------------------------------------------------------------------------------------------------------
@@ -1150,9 +1164,8 @@ z_n, rho_bar and T_bar are those of level n (D47). `nonupward` marks a zero or d
     cp = par.heat_capacity
     H = lagged.sensible_heat_flux
     F_q = lagged.humidity_flux
-    # OPEN(D47): the contract fixes rho_bar "of the lowest full level n" but not its virtual-temperature form. Read
-    # here as the host state density p_n/(R_d T_n (1 + mu q_n)) with the host mu of the D04 hydrostatics (the same
-    # relation that gives z_n). The (6.56) 0.608 form differs by about 1e-6 relative. Reviewer to confirm.
+    # D84 (r5): rho_bar = p_n / (R_dry T_n (1 + mu q_n)), mu = atmosphere.μ_virt_temp, the SpeedyWeather virtual
+    # temperature that the host also uses (the D04 relation that gives z_n). A point value at level n.
     density = p_n / (par.R_dry * _tb_host_virtual_temperature(T_n, q_n, par))
     buoyancy_flux = H / cp + shp.wstar_virtual_coefficient * T_n * F_q
     ustar_cubed = _tb_ipow(shp.friction_velocity, 3)
@@ -1713,7 +1726,8 @@ end
 @inline function _tb_stage1b_result(::Type{NF}, base::NamedTuple, trigger_path, lagged_flux_unset, nonupward,
                                     nonpositive_jump, nonpositive_source, candidate_replaced, test_base_half_level,
                                     test_top_half_level, test_depth, test_base_w, wstar, delta_T, delta_q, source,
-                                    large_scale_source, jump, closure_mass_flux, mass_guard_top) where {NF}
+                                    large_scale_source, jump, closure_mass_flux, mass_guard_top,
+                                    cfl_capped = false) where {NF}
     return merge(base, (;
         trigger_path = Int(trigger_path),                          # 1 stage1a_fallback (D81), 2 stage1b
         lagged_flux_unset = Int(lagged_flux_unset),                # D81: tb_lagged_flux_unset_steps increment
@@ -1733,6 +1747,7 @@ end
         shallow_moist_static_energy_jump = NF(jump),               # Delta h_base (J kg-1), D69
         shallow_closure_mass_flux = NF(closure_mass_flux),         # M_base = S_sub/Delta h_base before D41 (kg m-2 s-1)
         shallow_mass_guard_top = Bool(mass_guard_top),             # D65 set the shallow cloud top
+        shallow_cfl_capped = Int(cfl_capped),                      # D83 r5: f_CFL < 1 in a shallow column (D76)
     ))
 end
 
@@ -1740,7 +1755,7 @@ end
     tiedtke_bechtold_column!(dT, dq, rain_mass_flux_half, work, T, q, p_full, p_half, geopotential, dt,
                              land_flag, latitude, parameters, shallow, lagged, closure) -> NamedTuple
 
-Stage 1B column (STAGE1B_CHOICES.md r4, Sect. 8). The inputs and outputs of the stage 1a method, plus
+Stage 1B column (STAGE1B_CHOICES.md r5, Sect. 8). The inputs and outputs of the stage 1a method, plus
 `shallow::TiedtkeBechtoldShallowParameters`, `lagged::TiedtkeBechtoldLaggedSurfaceFlux` (the D45-D48 adapter values)
 and `closure` (`TiedtkeBechtoldHostClosure()` for the host, D71, or `TiedtkeBechtoldSCMClosure` for the SCM
 harness only, D72).
@@ -1898,12 +1913,10 @@ function tiedtke_bechtold_column!(
                                   excess.wstar, excess.delta_T, excess.delta_q, source, large_scale_source, jump, z,
                                   plume.mass_guard_top)
     end
-    closure_mass_flux = source / jump
-    closure_factor = closure_mass_flux / plume.unit_base_mass_flux                       # M_base / M*_base (D61)
-
-    # Step 8. D41 / D76 limiter: final factor = (M_base/M*_base) f (D74).
-    f_CFL, f_pos = _tb_limiter_factors(work, closure_factor, q, p_half, timestep, par)
-    final_factor = closure_factor * min(f_CFL, f_pos)
+    # Step 8. D41 / D76 limiter: final factor = (M_base/M*_base) f (D74). D76 r5: this CFL cap is the declared
+    # near-neutral protection (no Delta h_base floor), T30.
+    (; closure_mass_flux, closure_factor, f_CFL, f_pos, final_factor) =
+        _tb_shallow_mass_closure(work, source, jump, plume.unit_base_mass_flux, q, p_half, timestep, par)
     if !(final_factor > 0)
         _tb_zero_profiles!(work, n)
         base = _tb_result(NF, z, n + 1, j_base, 0, closure_factor, f_CFL, f_pos, z, z, z, z,
@@ -1912,7 +1925,7 @@ function tiedtke_bechtold_column!(
         return _tb_stage1b_result(NF, base, stage1b, false, nonupward, false, false, false, shallow_test.j_base,
                                   shallow_test.j_top, shallow_test_depth, shallow_test_base_w, excess.wstar,
                                   excess.delta_T, excess.delta_q, source, large_scale_source, jump,
-                                  closure_mass_flux, plume.mass_guard_top)
+                                  closure_mass_flux, plume.mass_guard_top)    # type none: no D83 capped count
     end
 
     # Steps 9-10. D36 scaling, D28 rain, D29 sub-cloud evaporation, D39 tendencies (D75: unchanged for shallow).
@@ -1926,5 +1939,5 @@ function tiedtke_bechtold_column!(
     return _tb_stage1b_result(NF, base, stage1b, false, nonupward, false, false, false, shallow_test.j_base,
                               shallow_test.j_top, shallow_test_depth, shallow_test_base_w, excess.wstar,
                               excess.delta_T, excess.delta_q, source, large_scale_source, jump, closure_mass_flux,
-                              plume.mass_guard_top)
+                              plume.mass_guard_top, f_CFL < 1)
 end
