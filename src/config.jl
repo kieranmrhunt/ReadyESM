@@ -702,6 +702,10 @@ const _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS = (
     :atmosphere_c07_maximum_subcycles,
 )
 
+"""Whether a convection symbol selects Tiedtke-Bechtold (stage 1a or stage 1B)."""
+_is_tiedtke_bechtold_convection(scheme::Symbol) =
+    scheme in (:tiedtke_bechtold_eqcape_stage1, :tiedtke_bechtold_eqcape_stage1b)
+
 """
 Combinations refused with atmosphere_convection = tiedtke_bechtold_eqcape_stage1 (frozen contract
 tiedtke_bechtold_claude_v1/frozen_v4, b07062d2: DESIGN.md integration items 1 and 6, STAGE1_CHOICES_DRAFT.md r15 D01,
@@ -716,10 +720,6 @@ D02):
 4. a non-default value of any Betts-Miller or C08/C07 setting (`_TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS`): the
    scheme does not read them, so a changed value would look active while having no effect.
 """
-"""Whether a convection symbol selects Tiedtke-Bechtold (stage 1a or stage 1B)."""
-_is_tiedtke_bechtold_convection(scheme::Symbol) =
-    scheme in (:tiedtke_bechtold_eqcape_stage1, :tiedtke_bechtold_eqcape_stage1b)
-
 function _validate_tiedtke_bechtold_stage1_options(config::ExperimentConfig)
     selected = "atmosphere_convection=$(config.atmosphere_convection)"
     _uses_prognostic_cloud_condensate(config.forcing.cloud_scheme) && throw(ArgumentError(

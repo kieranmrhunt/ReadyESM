@@ -207,7 +207,11 @@ end
                 source = copy(Array(p.tiedtke_bechtold_shallow_source.data)), type = copy(type),
                 shallow_columns = count(==(2), type), deep_columns = count(==(1), type),
                 shallow_tests = count(>(0), Array(p.tiedtke_bechtold_shallow_test_base_half_level.data))))
-            k == 2 && R.save_dynamic_restart_state(sim, path)
+            if k == 2
+                R.save_dynamic_restart_state(sim, path)
+                push!(activity, (; iteration = -2,
+                    inputs = map(name -> copy(Array(input_field(sim.model.atmosphere, name).data)), INPUTS)))
+            end
             if k == 3
                 apply_sentinel!(sim.model.atmosphere)
                 push!(activity, (; iteration = -3, expected = [expected_lagged(ij) for ij in eachindex(land_fraction)]))
@@ -270,6 +274,14 @@ end
         continued = R.build_dynamic_esm(with(tb_config; output_dir = output("continued")))
         R.restore_dynamic_restart_state!(continued, path)
         @test continued.model.clock.iteration == 2
+        # Paul's T23 (iii) requirement: right after restore, before any step, the four persistent inputs are the saved
+        # step-2 values bit for bit (so no restore-time update changes them and a later step compensates), and so is
+        # the flag.
+        saved_inputs = only(a for a in activity if a.iteration == -2).inputs
+        for (name, saved) in zip(INPUTS, saved_inputs)
+            @test same_bits(Array(input_field(continued.model.atmosphere, name).data), saved)
+        end
+        @test same_bits(flag(continued.model.atmosphere), stepped[2].flag)
         @test all(==(1), flag(continued.model.atmosphere))
         @test all(==(1), Array(continued.model.atmosphere.variables.parameterizations.tiedtke_bechtold_lagged_flux_unset_steps.data))
         continued.stop_iteration = 4
