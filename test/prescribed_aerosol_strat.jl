@@ -192,8 +192,14 @@ end
         @test 0.02 < gm < 0.3
         on = slab(; aerosol_scheme = :cmip_prescribed, aerosol_cmip_background_path = BACKGROUND,
                   aerosol_cmip_plumes_path = PLUMES, aerosol_cmip_stratospheric_path = STRAT)
-        simulation = R.build_rrtmgp(on)
+        # The slab builder's clock starts on 2000-01-01 whatever start_date says (as in prescribed_ozone.jl), and the
+        # stratospheric file refuses any date outside its months (job 65718246), so this run is initialized at the
+        # configured start, as build_dynamic_esm does.
+        simulation = R._initial_spectral_truncation!(S.initialize!(R._rrtmgp_atmosphere_model(on); time = on.start_date),
+                                                     on)
+        @test simulation.variables.prognostic.clock.time == DateTime(1993, 1, 1)
         S.run!(simulation; steps = 3)
+        @test simulation.variables.prognostic.clock.time > DateTime(1993, 1, 1)
         radiation = simulation.model.longwave_radiation
         a = radiation.cmip_aerosol
         @test a.stratospheric isa R.StratosphericAerosol && a.writes >= 1
