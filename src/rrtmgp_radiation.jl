@@ -1070,7 +1070,9 @@ function _enable_diagnostic_clouds(base_solver)
     )
 end
 
-function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
+# `band_optics = true` also gives the aerosol state zero prescribed per-band optics arrays (vendored RRTMGP band-optics
+# hook, vendor/RRTMGP/READYESM_PATCH.md) for a prescribed-optics scheme to fill; false keeps the unpatched state.
+function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false, band_optics::Bool = false)
     grid_params = base_solver.grid_params
     NF = eltype(grid_params)
     DA = ClimaComms.array_type(grid_params)
@@ -1088,6 +1090,7 @@ function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
         DA{Bool}(falses(nlay, ncol)),
         DA{NF}(zeros(NF, n_aerosize, nlay, ncol)),
         DA{NF}(zeros(NF, n_aerosols, nlay, ncol)),
+        band_optics ? _zero_band_optics(DA, NF, lookups.nbnd_sw, lookups.nbnd_lw, nlay, ncol) : nothing,
     )
     old_state = base_solver.as
     state = RRTMGP.AtmosphericStates.AtmosphericState(
@@ -1130,6 +1133,13 @@ function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
     RRTMGP.update_fluxes!(solver)
     return solver
 end
+
+"""Zero prescribed band optics (tau, ssa, g for every SW and LW band, layer and column) on the solver's architecture."""
+_zero_band_optics(DA, NF, nbnd_sw, nbnd_lw, nlay, ncol) = (
+    tau_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)), ssa_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)),
+    g_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)), tau_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)),
+    ssa_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)), g_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)),
+)
 
 """Mole fraction for an optional ppb trace-gas value, or `nothing` to keep the RRTMGP default."""
 function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}

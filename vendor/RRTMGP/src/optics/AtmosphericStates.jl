@@ -278,7 +278,7 @@ end
 
 
 """
-    AerosolState{A, B, D}
+    AerosolState{A, B, D, E}
 
 Aerosol state, used to compute optical properties.
 
@@ -288,14 +288,22 @@ Aerosol state, used to compute optical properties.
 - `aero_mask`: Aerosol mask; `true` if any aerosol is present.
 - `aero_size`: Aerosol size [microns].
 - `aero_mass`: Aerosol column mass [kg/m²].
+- `band_optics`: ReadyESM patch. Optional prescribed per-band aerosol optics added on top of the MERRA lookup:
+  `nothing` (the default, unpatched behaviour) or a NamedTuple with `tau_sw`, `ssa_sw`, `g_sw` of size
+  `(n_sw_bands, nlay, ncol)` and `tau_lw`, `ssa_lw`, `g_lw` of size `(n_lw_bands, nlay, ncol)`; `tau` is the layer
+  extinction optical depth, `ssa` the single-scattering albedo and `g` the asymmetry parameter.
 """
-struct AerosolState{A, B, D}
+struct AerosolState{A, B, D, E}
     aod_sw_ext::A
     aod_sw_sca::A
     aero_mask::B
     aero_size::D
     aero_mass::D
+    band_optics::E
 end
+# ReadyESM patch: the five-argument form of the unpatched package, with no prescribed band optics.
+AerosolState(aod_sw_ext, aod_sw_sca, aero_mask, aero_size, aero_mass) =
+    AerosolState(aod_sw_ext, aod_sw_sca, aero_mask, aero_size, aero_mass, nothing)
 Adapt.@adapt_structure AerosolState
 
 end

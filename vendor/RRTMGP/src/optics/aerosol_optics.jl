@@ -481,3 +481,67 @@ function compute_aero_mask!(
     end
     return nothing
 end
+
+#####
+##### ReadyESM patch: prescribed per-band aerosol optics (see READYESM_PATCH.md)
+#####
+
+"""
+    add_band_optics_lw_1scalar!(τ, band_optics, ibnd, gcol)
+
+Add prescribed LW band optics to a `OneScalar` (absorption-only) problem: τ += τ_b (1 - ssa_b), as the MERRA lookup
+path does. `nothing` adds nothing.
+"""
+@inline add_band_optics_lw_1scalar!(τ, ::Nothing, ibnd, gcol) = nothing
+@inline function add_band_optics_lw_1scalar!(τ, band_optics, ibnd, gcol)
+    (; tau_lw, ssa_lw) = band_optics
+    @inbounds for glay in eachindex(τ)
+        τ_b = tau_lw[ibnd, glay, gcol]
+        τ_b > 0 && (τ[glay] += τ_b * (1 - ssa_lw[ibnd, glay, gcol]))
+    end
+    return nothing
+end
+
+"""
+    add_band_optics_lw_2stream!(τ, ssa, g, band_optics, ibnd, gcol)
+
+Add prescribed LW band optics to a `TwoStream` problem with `increment_2stream`. `nothing` adds nothing.
+"""
+@inline add_band_optics_lw_2stream!(τ, ssa, g, ::Nothing, ibnd, gcol) = nothing
+@inline function add_band_optics_lw_2stream!(τ, ssa, g, band_optics, ibnd, gcol)
+    (; tau_lw, ssa_lw, g_lw) = band_optics
+    @inbounds for glay in eachindex(τ)
+        τ_b = tau_lw[ibnd, glay, gcol]
+        if τ_b > 0
+            τ[glay], ssa[glay], g[glay] = increment_2stream(
+                τ[glay], ssa[glay], g[glay], τ_b, ssa_lw[ibnd, glay, gcol], g_lw[ibnd, glay, gcol])
+        end
+    end
+    return nothing
+end
+
+"""
+    add_band_optics_sw_2stream!(τ, ssa, g, aod_ext, aod_sca, band_optics, ibnd, gcol, iband_550nm)
+
+Add prescribed SW band optics to a `TwoStream` problem: the 550 nm band's extinction and scattering are added to the
+AOD diagnostics before delta scaling, then the delta-scaled optics are combined with `increment_2stream`, as the MERRA
+lookup path does. `nothing` adds nothing.
+"""
+@inline add_band_optics_sw_2stream!(τ, ssa, g, aod_ext, aod_sca, ::Nothing, ibnd, gcol, iband_550nm) = nothing
+@inline function add_band_optics_sw_2stream!(τ, ssa, g, aod_ext, aod_sca, band_optics, ibnd, gcol, iband_550nm)
+    (; tau_sw, ssa_sw, g_sw) = band_optics
+    collect_aod = !isnothing(aod_ext) && (ibnd == iband_550nm)
+    @inbounds for glay in eachindex(τ)
+        τ_b = tau_sw[ibnd, glay, gcol]
+        if τ_b > 0
+            ssa_b, g_b = ssa_sw[ibnd, glay, gcol], g_sw[ibnd, glay, gcol]
+            if collect_aod
+                aod_ext[] += τ_b
+                aod_sca[] += τ_b * ssa_b
+            end
+            τ_d, ssa_d, g_d = delta_scale(τ_b, ssa_b, g_b)
+            τ[glay], ssa[glay], g[glay] = increment_2stream(τ[glay], ssa[glay], g[glay], τ_d, ssa_d, g_d)
+        end
+    end
+    return nothing
+end

@@ -121,6 +121,8 @@ GPU access) when one is provided, and from `as` directly otherwise.
                 ibnd,
                 iband_550nm,
             )
+            # ReadyESM patch: prescribed LW band optics (no-op without them).
+            add_band_optics_lw_1scalar!(τ, as.aerosol_state.band_optics, ibnd, gcol)
         end
     end
     return nothing
@@ -240,6 +242,8 @@ end
             ibnd,
             iband_550nm,
         )
+        # ReadyESM patch: prescribed LW band optics (no-op without them).
+        add_band_optics_lw_2stream!(τ, ssa, g, as.aerosol_state.band_optics, ibnd, gcol)
     end
     return nothing
 end
@@ -382,6 +386,18 @@ end
             ibnd,
             iband_550nm,
             delta_scaling = true,
+        )
+        # ReadyESM patch: prescribed SW band optics, delta-scaled, and counted in the 550 nm AOD diagnostic.
+        add_band_optics_sw_2stream!(
+            τ,
+            ssa,
+            g,
+            aod_sw_ext,
+            aod_sw_sca,
+            as.aerosol_state.band_optics,
+            ibnd,
+            gcol,
+            iband_550nm,
         )
     end
     return nothing
