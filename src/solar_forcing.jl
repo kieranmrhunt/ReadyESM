@@ -104,6 +104,11 @@ function _validate_solar_constant_entry(forcing)
         isempty(entry) || throw(ArgumentError(
             "forcing.solar_constant_entry = \"$entry\" needs its own forcing.solar_constant_w_m2, not the default",
         ))
+        # Otherwise the output would record a free source label for the default value (Barry, port read note 2).
+        isempty(strip(forcing.solar_constant_source)) || throw(ArgumentError(
+            "forcing.solar_constant_source = \"$(forcing.solar_constant_source)\" needs a pinned entry and its value; " *
+            "leave it empty for the default",
+        ))
         return nothing
     end
     haskey(SOLAR_CONSTANT_ENTRIES, entry) || throw(ArgumentError(
@@ -128,6 +133,8 @@ function _validate_solar_constant_provenance(metadata)
     value = metadata.solar_constant_w_m2
     if value == DEFAULT_SOLAR_CONSTANT_W_M2
         hasproperty(metadata, :solar_constant_entry) && error("default solar constant output carries an entry")
+        metadata.solar_constant_source == "SpeedyWeather Earth default" ||
+            error("default solar constant output carries the source \"$(metadata.solar_constant_source)\"")
         return nothing
     end
     hasproperty(metadata, :solar_constant_entry) && haskey(SOLAR_CONSTANT_ENTRIES, metadata.solar_constant_entry) ||

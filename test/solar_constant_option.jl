@@ -48,7 +48,10 @@ end
     for bad in (0.0, -1.0, NaN, Inf)
         @test_throws ArgumentError R.validate(with_forcing(on; solar_constant_w_m2 = bad); check_input_files = false)
     end
-    @test R.validate(with_forcing(production; solar_constant_source = "stated default"); check_input_files = false) isa
+    # The default value carries no source label of its own (Barry, port read note 2).
+    @test_throws ArgumentError R.validate(with_forcing(production; solar_constant_source = "stated default");
+        check_input_files = false)
+    @test R.validate(with_forcing(production; solar_constant_source = "  "); check_input_files = false) isa
           R.ExperimentConfig
     # A non-default value must name a pinned entry, agree with its value and carry its label (design v2 amendment 2).
     invalid(; kwargs...) = @test_throws ArgumentError R.validate(with_forcing(on; kwargs...); check_input_files = false)
@@ -91,6 +94,8 @@ end
     @test R._validate_solar_constant_provenance(meta(hist)) === nothing
     @test_throws ErrorException R._validate_solar_constant_provenance(
         merge(meta(production), (; solar_constant_entry = "picontrol")))
+    @test_throws ErrorException R._validate_solar_constant_provenance(
+        merge(meta(production), (; solar_constant_source = "stated default")))
     @test_throws ErrorException R._validate_solar_constant_provenance(
         merge(meta(on), (; solar_constant_archive_sha256 = "0"^64)))
     @test_throws ErrorException R._validate_solar_constant_provenance(
