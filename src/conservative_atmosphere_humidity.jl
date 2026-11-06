@@ -846,8 +846,11 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
 
     parameterizations.rain_rate_large_scale[ij] = corrected_rain_rate
     parameterizations.snow_rate_large_scale[ij] = corrected_snow_rate
-    parameterizations.rain_rate[ij] =
-        parameterizations.rain_rate_convection[ij] + corrected_rain_rate
+    # SpeedyWeather resets the total rain rate but leaves this component from
+    # the preceding step. Large-scale condensation runs before convection, so
+    # clear that stale value before recording the current step's total.
+    parameterizations.rain_rate_convection[ij] = zero(corrected_rain_rate)
+    parameterizations.rain_rate[ij] = corrected_rain_rate
     parameterizations.snow_rate[ij] = corrected_snow_rate
     parameterizations.large_scale_precipitation_mass_correction[ij] =
         rain_correction + snow_correction

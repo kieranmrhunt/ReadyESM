@@ -11,7 +11,7 @@ function SW.parameterization!(ij, vars, ::ControlledConvection, model)
     vars.tendencies.grid.humidity[ij, 1] -= 2f-8
     vars.tendencies.grid.humidity[ij, 2] += 1f-8
     vars.parameterizations.rain_rate[ij] += 1f-7
-    vars.parameterizations.rain_rate_convection[ij] += 1f-7
+    vars.parameterizations.rain_rate_convection[ij] = 1f-7
     vars.parameterizations.rain_convection[ij] += model.time_stepping.Δt_sec * 1f-7
     return nothing
 end
@@ -20,8 +20,8 @@ function SW.parameterization!(ij, vars, process::ControlledCondensation, model)
     # Equal layer tendencies give a column-average loss of target/10.
     vars.tendencies.grid.humidity[ij, 1] -= process.target / 10f0
     vars.tendencies.grid.humidity[ij, 2] -= process.target / 10f0
-    vars.parameterizations.rain_rate_large_scale[ij] += 2f-7
-    vars.parameterizations.snow_rate_large_scale[ij] += 1f-7
+    vars.parameterizations.rain_rate_large_scale[ij] = 2f-7
+    vars.parameterizations.snow_rate_large_scale[ij] = 1f-7
     vars.parameterizations.rain_rate[ij] += 2f-7
     vars.parameterizations.snow_rate[ij] += 1f-7
     vars.parameterizations.rain_large_scale[ij] += model.time_stepping.Δt_sec * 2f-7
@@ -102,6 +102,32 @@ end
     @test ip2.snow_rate[1] == ip2.snow_rate_large_scale[1]
     println("CONTROLLED_IMPLICIT_POSITIVE_RAIN_PASS rain=", ip2.rain_rate_large_scale[1])
 end
+@testset "large-scale phase clears stale convection before the next step" begin
+    # SpeedyWeather resets only the combined rain rate at the start of a step.
+    # The large-scale process runs before convection, so this component still
+    # contains the preceding step's value when large-scale condensation begins.
+    ordered = makevars(rain=0f0, convection=9f-7, large_rain=0f0,
+                       large_snow=0f0, snow=0f0)
+    p = ordered.parameterizations
+    large = ReadyESM.NetColumnImplicitCondensation{ControlledCondensation}(
+        ControlledCondensation(4f-7))
+    conv = ReadyESM.NetColumnBettsMillerConvection{ControlledConvection}(
+        ControlledConvection())
+    for step in 1:2
+        p.rain_rate[1] = 0f0
+        ordered.tendencies.grid.humidity .= 0f0
+        ordered.tendencies.grid.temperature .= 0f0
+        SW.parameterization!(1, ordered, large, model)
+        @test p.rain_rate_convection[1] == 0f0
+        @test p.rain_rate[1] == p.rain_rate_large_scale[1]
+        SW.parameterization!(1, ordered, conv, model)
+        @test p.rain_rate_convection[1] > 0f0
+        @test p.rain_rate[1] == p.rain_rate_convection[1] +
+                                 p.rain_rate_large_scale[1]
+    end
+    println("ORDERED_PRECIPITATION_TWO_STEP_PASS")
+end
+
 println("CONTROLLED_PRECIPITATION_DISPATCH_PASS")
 
 end # module PrecipitationDispatchPathTests
