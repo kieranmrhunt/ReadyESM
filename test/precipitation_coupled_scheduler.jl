@@ -32,6 +32,7 @@ end
 
 fields(x) = (; (name => getfield(x, name) for name in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
+mass_flux(rate) = Float64(R._FRESHWATER_DENSITY_KG_M3) .* Float64.(rate)
 
 @testset "two coupled steps preserve precipitation before freshwater exchange" begin
     mktempdir() do dir
@@ -89,9 +90,12 @@ with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs..
         @test length(ocean_samples) == 2
         @test any(sample -> any(>(0), sample.convection), atmosphere_observer.samples)
         for (step, sample) in enumerate(atmosphere_observer.samples)
+            # The production validator's absolute floor is in kg m⁻² s⁻¹;
+            # passing native m s⁻¹ rates would weaken it by a factor of 1000.
             R._validate_precipitation_phase_components(
-                sample.rain, sample.convection, sample.large_scale,
-                sample.snow, sample.snow_convection, sample.snow_large_scale)
+                mass_flux(sample.rain), mass_flux(sample.convection),
+                mass_flux(sample.large_scale), mass_flux(sample.snow),
+                mass_flux(sample.snow_convection), mass_flux(sample.snow_large_scale))
             @test sample.land_rainfall == sample.rain[sample.land_indices] .+
                                           sample.snow[sample.land_indices]
             @test sample.land_snowfall == sample.snow[sample.land_indices]
