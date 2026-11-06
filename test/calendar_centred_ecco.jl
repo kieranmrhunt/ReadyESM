@@ -11,6 +11,9 @@ using ReadyESM, Test
 
     @test "EVEL_1993_01_centered_velocity_v1.jld2" in CALENDAR_CENTRED_ECCO_CACHE_FILES
     @test "NVEL_1993_01_centered_velocity_v1.jld2" in CALENDAR_CENTRED_ECCO_CACHE_FILES
+    @test length(CALENDAR_CENTRED_ECCO_PREPARED_FILES) == 10
+    @test CALENDAR_CENTRED_ECCO_PREPARED_FILES ==
+        union(CALENDAR_CENTRED_ECCO_BASE_FILES, CALENDAR_CENTRED_ECCO_VELOCITY_CACHE_FILES)
     @test !("EVEL_1993_01_inpainted.jld2" in CALENDAR_CENTRED_ECCO_FILES)
     @test !("NVEL_1993_01_inpainted.jld2" in CALENDAR_CENTRED_ECCO_FILES)
     @test Set(keys(_calendar_centred_ecco_manifest(joinpath(
@@ -108,6 +111,25 @@ using ReadyESM, Test
             bundle,
             manifest,
         )
+    end
+
+    mktempdir() do directory
+        bundle = joinpath(directory, "bundle")
+        manifest = joinpath(directory, "manifest.sha256")
+        write_test_bundle(bundle, manifest)
+        for filename in setdiff(
+            CALENDAR_CENTRED_ECCO_CACHE_FILES,
+            CALENDAR_CENTRED_ECCO_VELOCITY_CACHE_FILES,
+        )
+            rm(joinpath(bundle, filename))
+        end
+        @test isnothing(redirect_stdout(devnull) do
+            verify_calendar_centred_ecco_bundle(bundle, manifest)
+        end)
+        @test_throws ErrorException verify_calendar_centred_ecco_bundle(
+            bundle, manifest; require_caches=true)
+        rm(joinpath(bundle, "NVEL_1993_01_centered_velocity_v1.jld2"))
+        @test_throws ErrorException verify_calendar_centred_ecco_bundle(bundle, manifest)
     end
 
     mktempdir() do directory

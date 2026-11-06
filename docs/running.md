@@ -49,6 +49,8 @@ python -I scripts/download_ecco_january_mirror.py \
 python -I scripts/prepare_calendar_centred_ecco.py \
     data/ecco_v4r4_1992_12 data/ecco_january_mirror_1993_01 \
     data/ecco_calendar_centred_1993_01
+julia --project=. scripts/prepare_centered_ecco_velocity.jl \
+    data/ecco_calendar_centred_1993_01
 ```
 
 The January downloader uses the public
@@ -56,11 +58,15 @@ The January downloader uses the public
 The prepared ocean state is the midpoint of the December and January
 monthly means. Sea ice uses the January state.
 
-The run script checks input hashes before model construction. It also checks
-five generated ocean-fill caches before stepping. Those cache hashes were
-tested on an A100. If another architecture produces different cache bytes,
-the run stops at that check. See the
-[v0.1.10 validation record](validation-v0.1.10.md).
+The velocity preparation command creates the two centered EVEL/NVEL caches
+required before model construction. It checks their readback and exact hashes
+against [the qualified 13-file manifest](../config/ecco_calendar_centred_1993_01.sha256).
+The first model build creates the remaining temperature, salinity, and sea
+surface height caches. The run script accepts only the exact 8-file raw,
+10-file velocity-prepared, or 13-file complete input set before construction,
+and requires all 13 files with matching hashes before stepping. A cache whose
+bytes differ from the manifest stops the run. The old EVEL/NVEL inpainting
+caches are not valid for the centered velocity reader.
 
 ## Run and output
 

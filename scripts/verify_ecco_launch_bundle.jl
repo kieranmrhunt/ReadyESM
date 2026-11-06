@@ -10,13 +10,22 @@ const CALENDAR_CENTRED_ECCO_BASE_FILES = Set((
     "SSH_1993_01.nc",
     "THETA_1993_01.nc",
 ))
-const CALENDAR_CENTRED_ECCO_CACHE_FILES = Set((
+const CALENDAR_CENTRED_ECCO_VELOCITY_CACHE_FILES = Set((
     "EVEL_1993_01_centered_velocity_v1.jld2",
     "NVEL_1993_01_centered_velocity_v1.jld2",
+))
+const CALENDAR_CENTRED_ECCO_CACHE_FILES = union(
+    CALENDAR_CENTRED_ECCO_VELOCITY_CACHE_FILES,
+    Set((
     "SALT_1993_01_inpainted.jld2",
     "SSH_1993_01_inpainted.jld2",
     "THETA_1993_01_inpainted.jld2",
-))
+    )),
+)
+const CALENDAR_CENTRED_ECCO_PREPARED_FILES = union(
+    CALENDAR_CENTRED_ECCO_BASE_FILES,
+    CALENDAR_CENTRED_ECCO_VELOCITY_CACHE_FILES,
+)
 const CALENDAR_CENTRED_ECCO_FILES = union(
     CALENDAR_CENTRED_ECCO_BASE_FILES,
     CALENDAR_CENTRED_ECCO_CACHE_FILES,
@@ -67,6 +76,7 @@ function verify_calendar_centred_ecco_bundle(
     entries = _calendar_centred_ecco_manifest(manifest_path)
     actual_files = Set(readdir(directory))
     valid_file_set = actual_files == CALENDAR_CENTRED_ECCO_BASE_FILES ||
+        actual_files == CALENDAR_CENTRED_ECCO_PREPARED_FILES ||
         actual_files == CALENDAR_CENTRED_ECCO_FILES
     valid_file_set || error(
         "ECCO launch directory has an unexpected file set",
