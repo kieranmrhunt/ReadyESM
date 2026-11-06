@@ -192,11 +192,9 @@ end
         @test 0.02 < gm < 0.3
         on = slab(; aerosol_scheme = :cmip_prescribed, aerosol_cmip_background_path = BACKGROUND,
                   aerosol_cmip_plumes_path = PLUMES, aerosol_cmip_stratospheric_path = STRAT)
-        # The slab builder's clock starts on 2000-01-01 whatever start_date says (as in prescribed_ozone.jl), and the
-        # stratospheric file refuses any date outside its months (job 65718246), so this run is initialized at the
-        # configured start, as build_dynamic_esm does.
-        simulation = R._initial_spectral_truncation!(S.initialize!(R._rrtmgp_atmosphere_model(on); time = on.start_date),
-                                                     on)
+        # The public slab builder starts at the configured date (job 65718246 found it started on 2000-01-01, which the
+        # stratospheric file correctly refused).
+        simulation = R.build_rrtmgp(on)
         @test simulation.variables.prognostic.clock.time == DateTime(1993, 1, 1)
         S.run!(simulation; steps = 3)
         @test simulation.variables.prognostic.clock.time > DateTime(1993, 1, 1)
@@ -210,6 +208,23 @@ end
         @test provenance.cmip_aerosol_stratospheric_sha256 == a.stratospheric.sha256
         state = R._rrtmgp_radiation_state(radiation)
         @test state.cmip_aerosol.stratospheric_sha256 == a.stratospheric.sha256
+        # A configuration outside the file's months is refused at the first radiation application (whether that is in
+        # the build or the first step), with no optics written: the clock is at the configured date from the start.
+        late = R.ExperimentConfig(; merge(fields(on), (; start_date = DateTime(1995, 1, 1)))...)
+        late_refused = try
+            sim = R.build_rrtmgp(late)
+            @test sim.variables.prognostic.clock.time == DateTime(1995, 1, 1)
+            try
+                S.run!(sim; steps = 1)
+                false
+            catch err
+                err isa ArgumentError && occursin("outside the stratospheric aerosol months", err.msg) &&
+                    sim.model.longwave_radiation.cmip_aerosol.writes == 0
+            end
+        catch err
+            err isa ArgumentError && occursin("outside the stratospheric aerosol months", err.msg)
+        end
+        @test late_refused
         # A checkpoint with the stratospheric file does not restore into radiation without it.
         trop = R.build_rrtmgp(with_forcing(on; aerosol_cmip_stratospheric_path = ""))
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(trop.model.longwave_radiation, state)
