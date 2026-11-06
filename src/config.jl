@@ -109,6 +109,13 @@ Base.@kwdef struct ExperimentConfig
     sea_ice_dynamics::Bool = false
     sea_ice_momentum_substeps::Int = 240
     sea_ice_pressure_formulation::Symbol = :replacement_pressure
+    # Opt-in lead-closing thickness h_0 (m) for the freezing term of the sea-ice concentration rule
+    # (src/sea_ice_lead_closing.jl). 0 keeps the release rule, which uses the 0.05 m consolidation thickness.
+    sea_ice_lead_closing_thickness_m::Float64 = 0.0
+    # Optional southern h_0 (m). `nothing` applies sea_ice_lead_closing_thickness_m everywhere. A number applies that
+    # key from the equator northward (cell-centre latitude >= 0) and this one south of it, with 0 keeping the release
+    # rule in that hemisphere.
+    sea_ice_lead_closing_thickness_south_m::Union{Nothing, Float64} = nothing
     sea_ice_immersed_boundary_drag_coefficient::Float64 = 0.0
     ocean_nlongitude::Int = 32
     ocean_nlatitude::Int = 16
@@ -166,6 +173,9 @@ Base.@kwdef struct ExperimentConfig
     output_dir::String = joinpath(PROJECT_ROOT, "artifacts", "baseline")
     # Opt-in: write the files the release scorer reads (monthly.nc, wind.nc, toa_monthly.nc, eddy_6hourly.nc).
     scored_outputs::Bool = false
+    # Opt-in read-only sea-ice branch observer v1 (src/sea_ice_branch_observer.jl). A run-control field: it records the
+    # final-stage sea-ice thermodynamic update without changing the model state, so it is not in the restart identity.
+    sea_ice_branch_observer::Bool = false
     forcing::ForcingConfig = ForcingConfig()
     carbon::CarbonConfig = CarbonConfig()
 end
@@ -534,6 +544,12 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "replacement_pressure",
             ),
         ),
+        sea_ice_lead_closing_thickness_m = Float64(
+            _mapping_value(raw, "sea_ice_lead_closing_thickness_m", 0.0),
+        ),
+        sea_ice_lead_closing_thickness_south_m = _optional_float(
+            _mapping_value(raw, "sea_ice_lead_closing_thickness_south_m", nothing),
+        ),
         sea_ice_immersed_boundary_drag_coefficient = Float64(
             _mapping_value(
                 raw,
@@ -691,6 +707,7 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         terrarium_precision = Symbol(_mapping_value(raw, "terrarium_precision", "float32")),
         output_dir = output_dir,
         scored_outputs = Bool(_mapping_value(raw, "scored_outputs", false)),
+        sea_ice_branch_observer = Bool(_mapping_value(raw, "sea_ice_branch_observer", false)),
         forcing = forcing,
         carbon = carbon,
     )
@@ -1451,6 +1468,30 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     config.sea_ice_momentum_substeps >= 1 || throw(ArgumentError(
         "sea_ice_momentum_substeps must be positive",
     ))
+    h0 = config.sea_ice_lead_closing_thickness_m
+    iszero(h0) || (isfinite(h0) && SEA_ICE_LEAD_CLOSING_RANGE_M[1] <= h0 <= SEA_ICE_LEAD_CLOSING_RANGE_M[2]) ||
+        throw(ArgumentError(
+            "sea_ice_lead_closing_thickness_m must be 0 or between $(SEA_ICE_LEAD_CLOSING_RANGE_M[1]) and " *
+            "$(SEA_ICE_LEAD_CLOSING_RANGE_M[2]) m",
+        ))
+    h0_south = config.sea_ice_lead_closing_thickness_south_m
+    if !isnothing(h0_south)
+        iszero(h0_south) || (isfinite(h0_south) &&
+            SEA_ICE_LEAD_CLOSING_RANGE_M[1] <= h0_south <= SEA_ICE_LEAD_CLOSING_RANGE_M[2]) ||
+            throw(ArgumentError(
+                "sea_ice_lead_closing_thickness_south_m must be 0 or between $(SEA_ICE_LEAD_CLOSING_RANGE_M[1]) " *
+                "and $(SEA_ICE_LEAD_CLOSING_RANGE_M[2]) m",
+            ))
+        h0 != h0_south || throw(ArgumentError(
+            "sea_ice_lead_closing_thickness_south_m equal to sea_ice_lead_closing_thickness_m is the global rule; " *
+            "leave it unset",
+        ))
+    end
+    !config.sea_ice_branch_observer || (config.ocean_model == :oceananigans && config.sea_ice_dynamics) ||
+        throw(ArgumentError(
+            "sea_ice_branch_observer requires ocean_model=oceananigans and sea_ice_dynamics=true, because it " *
+            "observes the conservative sea-ice Runge-Kutta stage",
+        ))
     config.sea_ice_pressure_formulation in (
         :replacement_pressure,
         :ice_strength,

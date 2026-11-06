@@ -9,7 +9,7 @@
         changed = ReadyESM.ExperimentConfig(; merge(
             (; (name => getfield(config, name) for name in fieldnames(typeof(config)))...),
             (; field => field in (:duration_days, :analysis_start_day) ? 20.0 :
-                field == :scored_outputs ? true : "changed"),
+                field in (:scored_outputs, :sea_ice_branch_observer) ? true : "changed"),
         )...)
         @test ReadyESM._dynamic_config_identity_hash(config) ==
               ReadyESM._dynamic_config_identity_hash(changed)

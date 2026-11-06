@@ -66,12 +66,21 @@ if config.scored_outputs
             "hourly_samples=$(scored["monthly"]["state_samples"]) sixhourly_samples=$(scored["sixhourly"]["samples"])")
     flush(stdout)
 end
+branch_observer = nothing
+if config.sea_ice_branch_observer
+    branch_observer = ReadyESM.save_sea_ice_branch_observer(simulation, config)
+    println("SEA_ICE_BRANCH_OBSERVER_WRITTEN path=$(branch_observer.path) stages=$(branch_observer.stages) " *
+            "pass=$(branch_observer.pass) observer_seconds=$(branch_observer.observer_seconds)")
+    flush(stdout)
+end
 diagnostics = collect_dynamic_diagnostics(simulation, config)
 paths = save_dynamic_diagnostics(diagnostics, config; render_figure = false)
 println("SIMULATION_COMPLETION_PASS iteration=$(simulation.model.clock.iteration) " *
         "diagnostics=$(paths.netcdf_path)")
 flush(stdout)
 validate_dynamic_diagnostics(diagnostics)
+isnothing(branch_observer) || branch_observer.pass ||
+    error("the sea-ice branch observer record failed its validation")
 ReadyESM._write_dynamic_figure(paths.figure_path, diagnostics)
 flush(stdout)
 println("SCIENTIFIC_ACCEPTANCE_PASS")

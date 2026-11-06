@@ -1,5 +1,6 @@
 using Oceananigans: prognostic_state, restore_prognostic_state!
 using Oceananigans.Fields: set!
+using Oceananigans.Grids: φnode, Center
 
 """
     ProportionalEvolution()
@@ -14,6 +15,44 @@ References
 - Hibler, W. D. III (1979). A Dynamic Thermodynamic Sea Ice Model. Journal of Physical Oceanography, 9(4), 815-846. doi:10.1175/1520-0485(1979)009<0815:ADTSIM>2.0.CO;2.
 """
 struct ProportionalEvolution end
+
+"""
+    LeadClosingEvolution(lead_closing_thickness)
+
+ReadyESM patch (opt-in, design artifacts/development_wave_20261103/sea_ice_lead_closing_claude/DESIGN.md): the
+[`ProportionalEvolution`](@ref) rule with its freezing term using a separate lead-closing (thick/thin demarcation)
+thickness `h₀` instead of the ice consolidation thickness. Hibler (1979) uses h₀ = 0.5 m for the Arctic; values of
+0.1-1.0 m are used in the literature. The consolidation thickness keeps its other role (the surface solve).
+"""
+struct LeadClosingEvolution{FT}
+    lead_closing_thickness :: FT
+end
+
+# Thickness of the freezing (lead-closing) term of the concentration rule.
+@inline freezing_concentration_thickness(::ProportionalEvolution, hᶜ) = hᶜ
+@inline freezing_concentration_thickness(evolution::LeadClosingEvolution, hᶜ) =
+    convert(typeof(hᶜ), evolution.lead_closing_thickness)
+
+"""
+    HemisphericLeadClosingEvolution(north, south)
+
+ReadyESM patch (opt-in, design artifacts/development_wave_20261104/lead_closing_hemispheric_claude_v1/DESIGN.md):
+[`LeadClosingEvolution`](@ref) with one lead-closing thickness north of the equator and another south of it, chosen
+per cell by the sign of the cell-centre latitude (a cell centred on the equator counts as north). A zero thickness
+keeps the consolidation thickness hᶜ in that hemisphere, which is the [`ProportionalEvolution`](@ref) arithmetic.
+"""
+struct HemisphericLeadClosingEvolution{FT}
+    north :: FT
+    south :: FT
+end
+
+# The rule used in cell (i, j). Every other rule is the same in every cell.
+@inline local_concentration_evolution(evolution, i, j, grid, hᶜ) = evolution
+@inline function local_concentration_evolution(evolution::HemisphericLeadClosingEvolution, i, j, grid, hᶜ)
+    φ  = φnode(i, j, 1, grid, Center(), Center(), Center())
+    h₀ = convert(typeof(hᶜ), ifelse(φ ≥ 0, evolution.north, evolution.south))
+    return LeadClosingEvolution(ifelse(h₀ > zero(h₀), h₀, hᶜ))
+end
 
 struct SlabThermodynamics{ST, HBC, CF, CE}
     top_surface_temperature   :: ST
