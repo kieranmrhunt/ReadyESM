@@ -127,6 +127,9 @@ end
         time = DateTime(1993, 1, 16, 12)
         trop = R.CMIPAerosol(BACKGROUND, PLUMES, model.spectral_grid)
         full = R.CMIPAerosol(BACKGROUND, PLUMES, model.spectral_grid; stratospheric_path = syn)
+        # Without the file the scheme holds no stratospheric state at all (no empty array either).
+        @test isnothing(trop.stratospheric) && isnothing(trop.strat_lat_weights)
+        @test full.strat_lat_weights isa Vector{Tuple{Int, Int, Float64}} && length(full.strat_lat_weights) == size(zc, 2)
         nsw, nlw = solver.lookups.nbnd_sw, solver.lookups.nbnd_lw
         ot = R._cmip_aerosol_optics(trop, time, zc, zb, oro, t_lay, p_lay, nsw, nlw)
         of = R._cmip_aerosol_optics(full, time, zc, zb, oro, t_lay, p_lay, nsw, nlw)

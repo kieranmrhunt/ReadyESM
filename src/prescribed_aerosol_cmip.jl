@@ -222,7 +222,8 @@ mutable struct CMIPAerosol
     writes::Int                          # validated writes through `_set_band_optics!`
     tropopause_layer::Vector{Int}        # at the last write, RRTMGP layer index (bottom to top) per column
     stratospheric::Union{Nothing, StratosphericAerosol}
-    strat_lat_weights::Vector{Tuple{Int, Int, Float64}}
+    # Nothing without a stratospheric file, so the no-C scheme adds no array to the state (Paul, job 65731200).
+    strat_lat_weights::Union{Nothing, Vector{Tuple{Int, Int, Float64}}}
 end
 
 function CMIPAerosol(background_path, plumes_path, spectral_grid::SpectralGrid; fixed_year::Integer = 0,
@@ -236,7 +237,7 @@ function CMIPAerosol(background_path, plumes_path, spectral_grid::SpectralGrid; 
     lon, lat = Float64.(lond), Float64.(latd)
     hw = [_bilinear_weights(bg.lon, bg.lat, lon[c], lat[c]) for c in eachindex(lon)]
     st = isempty(stratospheric_path) ? nothing : StratosphericAerosol(stratospheric_path)
-    sw = isnothing(st) ? Tuple{Int, Int, Float64}[] : [_strat_lat_weights(st.lat, lat[c]) for c in eachindex(lat)]
+    sw = isnothing(st) ? nothing : [_strat_lat_weights(st.lat, lat[c]) for c in eachindex(lat)]
     return CMIPAerosol(bg, sp, Int(fixed_year), lon, lat, hw, 0, zeros(Int, length(lon)), st, sw)
 end
 
