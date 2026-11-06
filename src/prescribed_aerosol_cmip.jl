@@ -31,9 +31,10 @@ const CMIP_AEROSOL_LW_WAVELENGTHS_NM =
     [90000, 30000, 18000, 15100, 13200, 11200, 9750, 8850, 7850, 7000, 6150, 5200, 4600, 4200, 4000, 3600]
 const CMIP_AEROSOL_LABEL_TROPOSPHERIC =
     "prescribed aerosol: MACv2 pre-industrial background + MACv2-SP-1-0 (CMIP6); tropospheric only (no stratospheric file)"
+# The label fixed by design v4/v5 (prescribed_aerosol_species_claude_v1/DESIGN_v5.md); never "CMIP6 prescribed aerosol".
 const CMIP_AEROSOL_LABEL_FULL =
     "prescribed aerosol: MACv2 pre-industrial background + MACv2-SP-1-0 (CMIP6) + " *
-    "UOEXETER-CMIP-2-2-1 stratospheric (CMIP7)"
+    "UOEXETER-CMIP-2-2-1 (CMIP7) stratospheric optics"
 const CMIP_AEROSOL_STRAT_SCHEMA = "readiesm_strat_aerosol_bands_v1"
 const CMIP_AEROSOL_TROPOPAUSE_RULE =
     "WMO lapse rate on model layers (first layer above 500 hPa with lapse rate <= 2 K/km held over 2 km); ETH CMIP6 " *
