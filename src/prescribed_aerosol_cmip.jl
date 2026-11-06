@@ -8,8 +8,10 @@ not as MERRA masses; the MERRA mass stays zero, checked at every write (`_set_ba
   B  MACv2-SP-1-0 anthropogenic plumes for the model year (macv2_simple_plumes.jl), SW only, zero above 3000 nm.
   C  stratospheric optics (CMIP7 UOEXETER-CMIP-2-2-1, prepared separately); until its file exists the stratospheric
      contribution is zero and the provenance says "tropospheric only".
-Each radiation solve: optics of A (time-interpolated between monthly midpoints, bilinear from the 1 degree grid to each
-column, distributed over model layers by height overlap of the MACv2 layers, clipped at the model surface) plus B
+Each radiation solve: optics of A (in every source cell and month the MACv2 layer moments tau f, tau f ssa and
+tau f ssa g are formed first, then interpolated linearly between monthly midpoints and bilinearly from the 1 degree grid
+to each column, and distributed over model layers by height overlap of the MACv2 layers, clipped at the model surface;
+Codex 14:46) plus B
 (evaluated on the model layer heights) form the tropospheric optics; C forms the stratospheric optics; the
 instantaneous local tropopause (WMO lapse-rate rule on model layers) assigns them: tropospheric below the tropopause
 layer, stratospheric above, and in the layer holding the tropopause the ETH CMIP6 procedure, the arithmetic mean of
@@ -18,6 +20,11 @@ Optics within a component combine by optical-depth weighting (ssa) and scatterin
 =#
 
 const CMIP_AEROSOL_BACKGROUND_SCHEMA = "readiesm_macv2_background_v1"
+# The sealed MACv2 -> RRTMGP band table (band_map_macv2_rrtmgp_v1.json) and the band order it implies (Paul 14:5x).
+const CMIP_AEROSOL_BAND_MAP_SHA256 = "4af3094c72101d25458a14742959dc3e953aee4ad44a823ca6535c37ae201383"
+const CMIP_AEROSOL_SW_WAVELENGTHS_NM = [8000, 3470, 2790, 2320, 2050, 1780, 1460, 1270, 1000, 700, 550, 400, 300, 230]
+const CMIP_AEROSOL_LW_WAVELENGTHS_NM =
+    [90000, 30000, 18000, 15100, 13200, 11200, 9750, 8850, 7850, 7000, 6150, 5200, 4600, 4200, 4000, 3600]
 const CMIP_AEROSOL_LABEL_TROPOSPHERIC =
     "prescribed aerosol: MACv2 pre-industrial background + MACv2-SP-1-0 (CMIP6); tropospheric only (no stratospheric file)"
 const CMIP_AEROSOL_TROPOPAUSE_RULE =
@@ -52,6 +59,8 @@ function MACv2Background(path::AbstractString)
     b = NCDatasets.NCDataset(path) do ds
         get(ds.attrib, "schema", "") == CMIP_AEROSOL_BACKGROUND_SCHEMA ||
             throw(ArgumentError("$path does not have schema $CMIP_AEROSOL_BACKGROUND_SCHEMA"))
+        occursin(CMIP_AEROSOL_BAND_MAP_SHA256, get(ds.attrib, "band_map", "")) ||
+            throw(ArgumentError("$path was not prepared with band map $CMIP_AEROSOL_BAND_MAP_SHA256"))
         r(n) = Array(ds[n].var[:, :, :, :])
         for n in ("tau_fine_sw", "ssa_fine_sw", "g_fine_sw", "tau_coarse_sw", "ssa_coarse_sw", "g_coarse_sw",
                   "tau_lw", "ssa_lw", "g_lw", "layer_fraction_fine", "layer_fraction_coarse")
@@ -66,6 +75,8 @@ function MACv2Background(path::AbstractString)
          zb = Float64.(Array(ds["layer_bottom_m"].var[:])), zt = Float64.(Array(ds["layer_top_m"].var[:])))
     end
     all(diff(b.lat) .> 0) && all(diff(b.lon) .> 0) || throw(ArgumentError("$path coordinates are not increasing"))
+    b.sw == CMIP_AEROSOL_SW_WAVELENGTHS_NM && b.lw == CMIP_AEROSOL_LW_WAVELENGTHS_NM ||
+        throw(ArgumentError("$path band wavelengths $(b.sw) / $(b.lw) differ from the sealed band order"))
     for (n, x) in (("tau", (b.tfs, b.tcs, b.tl)), ("ssa", (b.sfs, b.scs, b.sl)), ("g", (b.gfs, b.gcs, b.gl)))
         for a in x
             all(isfinite, a) || throw(ArgumentError("$path $n has nonfinite values"))
@@ -133,25 +144,58 @@ function _month_weights(f)
 end
 
 """
-Instantaneous local tropopause per column (WMO lapse-rate rule on model layers): the lowest layer above 500 hPa whose
-lapse rate to the next layer is <= 2 K/km and stays <= 2 K/km on average over the next 2 km. Returns the RRTMGP
-layer index (bottom to top) of the layer holding the tropopause, or the top layer if none qualifies.
+Instantaneous local tropopause per column (WMO lapse-rate rule on model layers, Codex 14:46): the lowest layer `r`
+above 500 hPa from which the average lapse rate to EVERY higher layer within 2 km is <= 2 K/km. Coverage rule for
+coarse grids: the next higher layer is always tested, even when it is more than 2 km above `r`, so a candidate is never
+accepted without at least one tested interval. Returns the RRTMGP layer index (bottom to top) of the layer holding the
+tropopause, or the top layer if none qualifies.
 """
 function _tropopause_layers(t_lay, p_lay, z)
     nlay, ncol = size(t_lay)
     out = fill(nlay, ncol)
     for c in 1:ncol, r in 1:(nlay - 1)
         p_lay[r, c] < 5.0e4 || continue
-        Γ(r1, r2) = -(t_lay[r2, c] - t_lay[r1, c]) / max((z[r2, c] - z[r1, c]) / 1000, 1.0e-6)
-        Γ(r, r + 1) <= 2 || continue
-        top = findlast(rr -> z[rr, c] <= z[r, c] + 2000, r:nlay)
-        rtop = r + top - 1
-        (rtop == r || Γ(r, rtop) <= 2) || continue
+        Γ(r2) = -(t_lay[r2, c] - t_lay[r, c]) / max((z[r2, c] - z[r, c]) / 1000, 1.0e-6)
+        ok = Γ(r + 1) <= 2
+        rr = r + 2
+        while ok && rr <= nlay && z[rr, c] <= z[r, c] + 2000
+            ok = Γ(rr) <= 2
+            rr += 1
+        end
+        ok || continue
         out[c] = r
         break
     end
     return out
 end
+
+"""
+MACv2 layer moments at one column for band `b`: in each of the four source cells and the two bracketing months the
+layer optical depth e = tau f (f the layer fraction), its scattering e ssa and e ssa g are formed first, then weighted
+bilinearly in space and linearly in time (Codex 14:46: interpolating tau and f separately and multiplying is not the
+interpolated layer optical depth). Fills E, S, A (one value per MACv2 layer).
+"""
+function _background_layer_moments!(E, S, A, tau, ssa, g, frac, w, m0, m1, wm, b)
+    fill!(E, 0.0); fill!(S, 0.0); fill!(A, 0.0)
+    i0, i1, j0, j1 = Int(w[1]), Int(w[2]), Int(w[3]), Int(w[4])
+    wx, wy = w[5], w[6]
+    corners = ((i0, j0, (1 - wx) * (1 - wy)), (i1, j0, wx * (1 - wy)), (i0, j1, (1 - wx) * wy), (i1, j1, wx * wy))
+    for (m, wt) in ((m0, 1 - wm), (m1, wm)), (i, j, wc) in corners
+        ww = wt * wc
+        ww == 0 && continue
+        τ, ω, gg = Float64(tau[i, j, m, b]), Float64(ssa[i, j, m, b]), Float64(g[i, j, m, b])
+        for l in eachindex(E)
+            e = τ * frac[i, j, l, m]
+            E[l] += ww * e
+            S[l] += ww * e * ω
+            A[l] += ww * e * ω * gg
+        end
+    end
+    return nothing
+end
+
+"""Optics (tau, ssa, g) from summed moments: tau = E, ssa = S / E, g = A / S."""
+@inline _from_moments(E, S, A) = E > 0 ? (E, S / E, S > 0 ? A / S : 0.0) : (0.0, 1.0, 0.0)
 
 """Combine optics (tau, ssa, g) tuples by optical-depth and scattering weighting."""
 @inline function _combine_optics(parts)
@@ -217,6 +261,7 @@ function _cmip_aerosol_optics(a::CMIPAerosol, time, zc, zb, orography, t_lay, p_
     tp = _tropopause_layers(t_lay, p_lay, zc)
     a.tropopause_layer .= tp
     over = zeros(nl, nlay)
+    Ef, Sf, Af, Ec, Sc, Ac = (zeros(nl) for _ in 1:6)
     for c in 1:ncol
         w = a.hweights[c]
         # MACv2 layer overlap with each model layer, clipped at the model surface (uniform within a MACv2 layer).
@@ -225,26 +270,34 @@ function _cmip_aerosol_optics(a::CMIPAerosol, time, zc, zb, orography, t_lay, p_
             hi = min(bg.layer_top_m[l], zb[r + 1, c])
             over[l, r] = max(hi - lo, 0.0) / (bg.layer_top_m[l] - bg.layer_bottom_m[l])
         end
-        ff = [(1 - wm) * _bilin(bg.frac_fine, w, l, m0) + wm * _bilin(bg.frac_fine, w, l, m1) for l in 1:nl]
-        fc = [(1 - wm) * _bilin(bg.frac_coarse, w, l, m0) + wm * _bilin(bg.frac_coarse, w, l, m1) for l in 1:nl]
-        sf = [sum(ff[l] * over[l, r] for l in 1:nl) for r in 1:nlay]
-        sc = [sum(fc[l] * over[l, r] for l in 1:nl) for r in 1:nlay]
-        tm(arr, b) = (1 - wm) * _bilin(arr, w, m0, b) + wm * _bilin(arr, w, m1, b)
         for b in 1:nbnd_sw
-            fine = (tm(bg.tau_fine_sw, b), tm(bg.ssa_fine_sw, b), tm(bg.g_fine_sw, b))
-            coarse = (tm(bg.tau_coarse_sw, b), tm(bg.ssa_coarse_sw, b), tm(bg.g_coarse_sw, b))
+            _background_layer_moments!(Ef, Sf, Af, bg.tau_fine_sw, bg.ssa_fine_sw, bg.g_fine_sw, bg.frac_fine, w,
+                                       m0, m1, wm, b)
+            _background_layer_moments!(Ec, Sc, Ac, bg.tau_coarse_sw, bg.ssa_coarse_sw, bg.g_coarse_sw,
+                                       bg.frac_coarse, w, m0, m1, wm, b)
             for r in 1:nlay
-                trop = _combine_optics(((fine[1] * sf[r], fine[2], fine[3]), (coarse[1] * sc[r], coarse[2], coarse[3]),
-                                        (sp_tau[b, c, r], sp_ssa[b, c, r], sp_g[b, c, r])))
+                E = S = Asum = 0.0
+                for l in 1:nl
+                    o = over[l, r]
+                    o == 0 && continue
+                    E += (Ef[l] + Ec[l]) * o; S += (Sf[l] + Sc[l]) * o; Asum += (Af[l] + Ac[l]) * o
+                end
+                τsp = sp_tau[b, c, r]
+                E += τsp; S += τsp * sp_ssa[b, c, r]; Asum += τsp * sp_ssa[b, c, r] * sp_g[b, c, r]
+                trop = _from_moments(E, S, Asum)
                 strat = (0.0, 1.0, 0.0)   # component C: no stratospheric file yet
                 o = r < tp[c] ? trop : r > tp[c] ? strat : _tropopause_mean(trop, strat)
                 tau_sw[b, r, c], ssa_sw[b, r, c], g_sw[b, r, c] = o
             end
         end
         for b in 1:nbnd_lw
-            lw = (tm(bg.tau_lw, b), tm(bg.ssa_lw, b), tm(bg.g_lw, b))
+            # LW: the MACv2 IR total on the coarse profile (design v3).
+            _background_layer_moments!(Ec, Sc, Ac, bg.tau_lw, bg.ssa_lw, bg.g_lw, bg.frac_coarse, w, m0, m1, wm, b)
             for r in 1:nlay
-                trop = (lw[1] * sc[r], lw[2], lw[3])   # LW: the MACv2 IR total on the coarse profile (design v3)
+                E = sum(Ec[l] * over[l, r] for l in 1:nl)
+                S = sum(Sc[l] * over[l, r] for l in 1:nl)
+                Asum = sum(Ac[l] * over[l, r] for l in 1:nl)
+                trop = _from_moments(E, S, Asum)
                 strat = (0.0, 1.0, 0.0)
                 o = r < tp[c] ? trop : r > tp[c] ? strat : _tropopause_mean(trop, strat)
                 tau_lw[b, r, c], ssa_lw[b, r, c], g_lw[b, r, c] = o
@@ -263,6 +316,9 @@ function _set_band_optics!(a::CMIPAerosol, solver, optics)
     bo = solver.as.aerosol_state.band_optics
     isnothing(bo) && throw(ArgumentError("the RRTMGP solver has no band-optics arrays"))
     keys(optics) == keys(bo) || throw(ArgumentError("band optics fields $(keys(optics)) differ from $(keys(bo))"))
+    # Convert to the destination precision first and check what will be stored (Paul 14:5x: a finite Float64 can
+    # become nonfinite in Float32).
+    optics = (; (name => eltype(getproperty(bo, name)).(getproperty(optics, name)) for name in keys(bo))...)
     for name in keys(bo)
         x = getproperty(optics, name)
         size(x) == size(getproperty(bo, name)) ||
@@ -277,7 +333,7 @@ function _set_band_optics!(a::CMIPAerosol, solver, optics)
         "MERRA aerosol mass must be zero when prescribed band optics own the aerosol (no double counting)"))
     for name in keys(bo)
         dst = getproperty(bo, name)
-        copyto!(dst, eltype(dst).(getproperty(optics, name)))
+        copyto!(dst, getproperty(optics, name))
     end
     a.writes += 1
     return nothing

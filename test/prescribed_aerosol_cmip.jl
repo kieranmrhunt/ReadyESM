@@ -43,6 +43,43 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         tp = R._tropopause_layers(t, p, z)
         # 10500 -> 11500 m still cools at 3.25 K/km; the first layer with <= 2 K/km held over 2 km is at 11500 m.
         @test z[tp[1], 1] ≈ 11500.0
+        # Adversarial profile (Codex 14:46): from 11 km the average lapse rate to the level 1.5 km above and to the
+        # top of the 2 km window is <= 2 K/km, but to the level 1 km above it is 3 K/km. An endpoint-only test would
+        # accept 11 km; the WMO rule (every higher level within 2 km) must reject it and find 12 km.
+        za = reshape(collect(0.0:500.0:20000.0), :, 1)
+        T11 = 288 - 6.5e-3 * 11000
+        Ta = reshape([zz <= 11000 ? 288 - 6.5e-3 * zz : zz == 11500 ? T11 - 0.25 : T11 - 3.0 for zz in vec(za)], :, 1)
+        pa = reshape([101325 * exp(-zz / 7500) for zz in vec(za)], :, 1)
+        @test za[R._tropopause_layers(Ta, pa, za)[1], 1] ≈ 12000.0
+        # Coverage rule: on a coarse grid with no layer within 2 km, the next layer is still tested.
+        zc = reshape([500.0, 4500.0, 9000.0, 14000.0, 20000.0], :, 1)
+        # 9 -> 14 km cools at 2.2 K/km (rejected); 14 -> 20 km at 0.17 K/km (accepted, the next layer is 6 km up).
+        Tc = reshape([285.0, 259.0, 231.0, 220.0, 219.0], :, 1)
+        pc = reshape([101325 * exp(-zz / 7500) for zz in vec(zc)], :, 1)
+        @test R._tropopause_layers(Tc, pc, zc)[1] == 4
+    end
+
+    @testset "background layer moments: interpolate tau f, not tau and f separately (Codex 14:46)" begin
+        # Two source cells along longitude (wx = 0.5) with anticorrelated column AOD and layer-1 fraction.
+        tau = zeros(Float32, 2, 2, 12, 1); ssa = ones(Float32, 2, 2, 12, 1); g = zeros(Float32, 2, 2, 12, 1)
+        frac = zeros(Float32, 2, 2, 2, 12)
+        tau[1, :, :, 1] .= 1; tau[2, :, :, 1] .= 3
+        frac[1, :, 1, :] .= 1; frac[2, :, 2, :] .= 1           # cell 1 all in layer 1, cell 2 all in layer 2
+        E, S, A = zeros(2), zeros(2), zeros(2)
+        w = (1.0, 2.0, 1.0, 2.0, 0.5, 0.0)
+        R._background_layer_moments!(E, S, A, tau, ssa, g, frac, w, 1, 2, 0.0, 1)
+        @test E ≈ [0.5, 1.5]                                     # not [1.0, 1.0] from (2 x 0.5)
+        # The same in time: month 1 has tau 1 in layer 1, month 2 tau 3 in layer 2, half way between midpoints.
+        tau2 = zeros(Float32, 2, 2, 12, 1); frac2 = zeros(Float32, 2, 2, 2, 12)
+        tau2[:, :, 1, 1] .= 1; tau2[:, :, 2, 1] .= 3
+        frac2[:, :, 1, 1] .= 1; frac2[:, :, 2, 2] .= 1
+        R._background_layer_moments!(E, S, A, tau2, ssa, g, frac2, (1.0, 2.0, 1.0, 2.0, 0.0, 0.0), 1, 2, 0.5, 1)
+        @test E ≈ [0.5, 1.5]
+        # Moments carry ssa and g consistently: ssa = S / E and g = A / S per layer.
+        ssa3 = copy(ssa); g3 = copy(g); ssa3[1, :, :, 1] .= 0.8; g3[1, :, :, 1] .= 0.6
+        R._background_layer_moments!(E, S, A, tau, ssa3, g3, frac, w, 1, 2, 0.0, 1)
+        @test all(R._from_moments(E[1], S[1], A[1]) .≈ (0.5, 0.8, 0.6))
+        @test R._from_moments(0.0, 0.0, 0.0) == (0.0, 1.0, 0.0)
     end
 
     @testset "config validation" begin
@@ -56,6 +93,11 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_year = 1700); check_input_files = false)
         @test_throws ArgumentError R.validate(slab(; aerosol_cmip_year = 1993); check_input_files = false)
         @test_throws ArgumentError R.validate(slab(; aerosol_scheme = :macv2); check_input_files = false)
+        # Model-date mode must stay inside the MACv2-SP years; a held year lifts that.
+        early = R.ExperimentConfig(; merge(fields(on), (; start_date = DateTime(1800, 1, 1)))...)
+        @test_throws ArgumentError R.validate(early; check_input_files = false)
+        held = R.ExperimentConfig(; merge(fields(with_forcing(on; aerosol_cmip_year = 1993)), (; start_date = DateTime(1800, 1, 1)))...)
+        @test R.validate(held; check_input_files = false) === held
         production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
         @test production.forcing.aerosol_scheme == :none
     end
