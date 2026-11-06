@@ -84,6 +84,14 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         @test all(isnan, R._from_moments(NaN, 0.0, 0.0)) && all(isnan, R._from_moments(-1.0, 0.0, 0.0))
         @test all(isnan, R._combine_optics(((NaN, 1.0, 0.0), (0.1, 0.9, 0.5))))
         @test all(isnan, R._tropopause_mean((NaN, 1.0, 0.0), (0.0, 1.0, 0.0)))
+        # Negative and out-of-range components are refused directly by both helpers (Paul 15:3x).
+        for bad in ((-0.1, 0.9, 0.5), (0.1, -0.1, 0.5), (0.1, 1.1, 0.5), (0.1, 0.9, -0.1), (0.1, 0.9, 1.0))
+            @test all(isnan, R._combine_optics((bad, (0.1, 0.9, 0.5))))
+            @test all(isnan, R._combine_optics(((0.1, 0.9, 0.5), bad)))
+            @test all(isnan, R._tropopause_mean(bad, (0.1, 0.9, 0.5)))
+            @test all(isnan, R._tropopause_mean((0.1, 0.9, 0.5), bad))
+        end
+        @test R._combine_optics(((0.0, 1.0, 0.0), (0.1, 0.9, 0.5)))[1] ≈ 0.1   # admissible zero part still allowed
     end
 
     @testset "config validation" begin

@@ -204,9 +204,15 @@ turning it into zero (job 65679738: `NaN > 0` is false).
     return E > 0 ? (E, S / E, S > 0 ? A / S : 0.0) : (0.0, 1.0, 0.0)
 end
 
-"""Combine optics (tau, ssa, g) tuples by optical-depth and scattering weighting; nonfinite input gives NaN optics."""
+"""Optics (tau, ssa, g) inside the admissible domain: finite, tau >= 0, 0 <= ssa <= 1, 0 <= g < 1."""
+@inline _admissible_optics(p) = all(isfinite, p) && p[1] >= 0 && 0 <= p[2] <= 1 && 0 <= p[3] < 1
+
+"""
+Combine optics (tau, ssa, g) tuples by optical-depth and scattering weighting; any part outside the admissible domain
+(nonfinite, negative tau, ssa outside [0, 1], g outside [0, 1)) gives NaN optics (Paul 15:3x).
+"""
 @inline function _combine_optics(parts)
-    all(p -> all(isfinite, p), parts) || return (NaN, NaN, NaN)
+    all(_admissible_optics, parts) || return (NaN, NaN, NaN)
     τ = sum(p[1] for p in parts)
     τ > 0 || return (0.0, 1.0, 0.0)
     sca = sum(p[1] * p[2] for p in parts)
@@ -215,11 +221,11 @@ end
 end
 
 """
-ETH CMIP6 tropopause-layer rule: arithmetic means, or 50 % of the extinction where one side is absent. Nonfinite
-input gives NaN optics.
+ETH CMIP6 tropopause-layer rule: arithmetic means, or 50 % of the extinction where one side is absent. Input outside
+the admissible domain on either side gives NaN optics.
 """
 @inline function _tropopause_mean(trop, strat)
-    all(isfinite, trop) && all(isfinite, strat) || return (NaN, NaN, NaN)
+    _admissible_optics(trop) && _admissible_optics(strat) || return (NaN, NaN, NaN)
     trop[1] > 0 && strat[1] > 0 &&
         return ((trop[1] + strat[1]) / 2, (trop[2] + strat[2]) / 2, (trop[3] + strat[3]) / 2)
     trop[1] > 0 && return (trop[1] / 2, trop[2], trop[3])
