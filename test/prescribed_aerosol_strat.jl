@@ -27,7 +27,8 @@ Synthetic prepared file: 14 SW and 16 LW bands, 70 layers of 500 m from 5 km, la
 1992 to February 1993. Extinction E0 x (latitude index) x (1, 2, 4 by month) between 15 and 25 km, zero elsewhere;
 ssa 0.9 and g 0.6. `order` permutes the moment variables' dimensions in the file.
 """
-function write_strat(path; order = (1, 2, 3, 4), schema = R.CMIP_AEROSOL_STRAT_SCHEMA, negative = false)
+function write_strat(path; order = (1, 2, 3, 4), schema = R.CMIP_AEROSOL_STRAT_SCHEMA, negative = false,
+                     g_case = :none)
     nsw, nlw, nh, nlat, nt = 14, 16, 70, 3, 3
     bottom = collect(5000.0:500.0:39500.0)
     NC.NCDataset(path, "c") do ds
@@ -48,7 +49,12 @@ function write_strat(path; order = (1, 2, 3, 4), schema = R.CMIP_AEROSOL_STRAT_S
             end
             negative && (E[1, 25, 1, 1] = -E0)
             names = ("$(spec)_band", "height", "lat", "time")
-            for (m, A) in (("E", E), ("S", 0.9 .* E), ("G", 0.6 .* 0.9 .* E))
+            Sm, Gm = 0.9 .* E, 0.6 .* 0.9 .* E
+            # Emitted moments the reader must refuse: negative G, G = S (g = 1), G > 0 where S = 0.
+            g_case == :negative && (Gm[1, 25, 2, 2] = -1.0e-9)
+            g_case == :equal && (Gm[1, 25, 2, 2] = Sm[1, 25, 2, 2])
+            g_case == :orphan && (Gm[1, 1, 2, 2] = 1.0e-9)
+            for (m, A) in (("E", E), ("S", Sm), ("G", Gm))
                 NC.defVar(ds, "$(m)_$spec", permutedims(A, order), names[collect(order)])
             end
         end
@@ -70,6 +76,9 @@ end
         @test st.height_bottom_m[1] == 5000 && st.height_top_m[end] == 40000
         @test_throws ArgumentError R.StratosphericAerosol(write_strat(joinpath(dir, "bad_schema.nc"); schema = "x"))
         @test_throws ArgumentError R.StratosphericAerosol(write_strat(joinpath(dir, "negative.nc"); negative = true))
+        for g_case in (:negative, :equal, :orphan)
+            @test_throws ArgumentError R.StratosphericAerosol(write_strat(joinpath(dir, "g_$g_case.nc"); g_case))
+        end
         @test_throws ArgumentError R.StratosphericAerosol(joinpath(dir, "missing.nc"))
     end
 

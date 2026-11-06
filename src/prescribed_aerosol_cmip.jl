@@ -160,10 +160,11 @@ function StratosphericAerosol(path::AbstractString)
         E, S, G = s.moments["E_$spec"], s.moments["S_$spec"], s.moments["G_$spec"]
         all(isfinite, E) && all(isfinite, S) && all(isfinite, G) ||
             throw(ArgumentError("$path $spec moments have nonfinite values"))
-        # Admissible moments: 0 <= S <= E (0 <= ssa <= 1) and 0 <= G <= S (0 <= g <= 1); rounding slack 1e-12.
-        all(E .>= 0) && all(S .>= 0) && all(S .<= E .* (1 + 1.0e-12)) &&
-            all(G .>= 0) && all(G .<= S .* (1 + 1.0e-12)) ||
-            throw(ArgumentError("$path $spec moments are outside 0 <= S <= E, 0 <= G <= S"))
+        # Admissible moments, as the band-optics admission (0 <= ssa <= 1, 0 <= g < 1): 0 <= S <= E (rounding slack
+        # 1e-12) and 0 <= G < S where S > 0, G = 0 where S = 0 (Paul's review of ac555fa).
+        all(E .>= 0) && all(S .>= 0) && all(S .<= E .* (1 + 1.0e-12)) && all(G .>= 0) &&
+            all(((s, g),) -> s > 0 ? g < s : g == 0, zip(S, G)) ||
+            throw(ArgumentError("$path $spec moments are outside 0 <= S <= E, 0 <= G < S (G = 0 where S = 0)"))
     end
     m = s.moments
     return StratosphericAerosol(String(path), bytes2hex(open(SHA.sha256, path)), s.lat, bottom, top, s.mid,
