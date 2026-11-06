@@ -21,7 +21,7 @@ struct ConservativeSeaIceAdvection{A, FT, IV, SV}
 end
 
 const _CONSERVATIVE_SEA_ICE_ADVECTION_PROVENANCE =
-    "conservative_A_direct_Ah_direct_Ahs_Az_normalized_WENO5_refreshed_halos_hmax_v3"
+    "conservative_A_direct_Ah_direct_Ahs_2D_face_flux_Az_normalized_WENO5_refreshed_halos_hmax_v4"
 
 @kernel function _conditional_ice_from_effective_thickness_kernel!(
     ice_thickness,
@@ -195,16 +195,35 @@ end
     )
 end
 
+"""
+    _sea_ice_flux_2D_x/y(i, j, k, grid, flux, args...)
+
+Convert Oceananigans' three-dimensional tracer face flux to the horizontal
+flux for a two-dimensional sea-ice inventory. `Ax` and `Ay` contain the
+instantaneous z-star face height; dividing it out before the horizontal
+divergence makes the tendency invariant to that ocean-cell height.
+"""
+@inline function _sea_ice_flux_2D_x(i, j, k, grid, flux, args...)
+    Δz = Oceananigans.Operators.Δzᶠᶜᶜ(i, j, k, grid)
+    return ifelse(Δz > 0, flux(i, j, k, grid, args...) / Δz, zero(grid))
+end
+
+@inline function _sea_ice_flux_2D_y(i, j, k, grid, flux, args...)
+    Δz = Oceananigans.Operators.Δzᶜᶠᶜ(i, j, k, grid)
+    return ifelse(Δz > 0, flux(i, j, k, grid, args...) / Δz, zero(grid))
+end
 
 @inline _conservative_div_UV(i, j, k, grid, ::Nothing, velocities, volume) =
     zero(eltype(grid))
 
 @inline function _conservative_div_UV(i, j, k, grid, scheme, velocities, volume)
     δx_flux = Oceananigans.Operators.δxᶜᵃᵃ(
-        i, j, k, grid, _ice_volume_flux_x, scheme, velocities.u, volume,
+        i, j, k, grid, _sea_ice_flux_2D_x, _ice_volume_flux_x,
+        scheme, velocities.u, volume,
     )
     δy_flux = Oceananigans.Operators.δyᵃᶜᵃ(
-        i, j, k, grid, _ice_volume_flux_y, scheme, velocities.v, volume,
+        i, j, k, grid, _sea_ice_flux_2D_y, _ice_volume_flux_y,
+        scheme, velocities.v, volume,
     )
     # Sea ice is a two-dimensional inventory: `volume` is area-equivalent
     # thickness (m), so its horizontal flux divergence is normalized by the
@@ -225,10 +244,49 @@ end
     volume,
 )
     δx_flux = Oceananigans.Operators.δxᶜᵃᵃ(
-        i, j, k, grid, _ice_volume_flux_x, scheme.x, velocities.u, volume,
+        i, j, k, grid, _sea_ice_flux_2D_x, _ice_volume_flux_x,
+        scheme.x, velocities.u, volume,
     )
     δy_flux = Oceananigans.Operators.δyᵃᶜᵃ(
-        i, j, k, grid, _ice_volume_flux_y, scheme.y, velocities.v, volume,
+        i, j, k, grid, _sea_ice_flux_2D_y, _ice_volume_flux_y,
+        scheme.y, velocities.v, volume,
+    )
+    return (δx_flux + δy_flux) /
+           Oceananigans.Operators.Azᶜᶜᶜ(i, j, k, grid)
+end
+
+@inline _conservative_div_Uc(i, j, k, grid, ::Nothing, velocities, concentration) =
+    zero(eltype(grid))
+
+@inline function _conservative_div_Uc(i, j, k, grid, scheme, velocities, concentration)
+    δx_flux = Oceananigans.Operators.δxᶜᵃᵃ(
+        i, j, k, grid, _sea_ice_flux_2D_x, _ice_volume_flux_x,
+        scheme, velocities.u, concentration,
+    )
+    δy_flux = Oceananigans.Operators.δyᵃᶜᵃ(
+        i, j, k, grid, _sea_ice_flux_2D_y, _ice_volume_flux_y,
+        scheme, velocities.v, concentration,
+    )
+    return (δx_flux + δy_flux) /
+           Oceananigans.Operators.Azᶜᶜᶜ(i, j, k, grid)
+end
+
+@inline function _conservative_div_Uc(
+    i,
+    j,
+    k,
+    grid,
+    scheme::Oceananigans.Advection.FluxFormAdvection,
+    velocities,
+    concentration,
+)
+    δx_flux = Oceananigans.Operators.δxᶜᵃᵃ(
+        i, j, k, grid, _sea_ice_flux_2D_x, _ice_volume_flux_x,
+        scheme.x, velocities.u, concentration,
+    )
+    δy_flux = Oceananigans.Operators.δyᵃᶜᵃ(
+        i, j, k, grid, _sea_ice_flux_2D_y, _ice_volume_flux_y,
+        scheme.y, velocities.v, concentration,
     )
     return (δx_flux + δy_flux) /
            Oceananigans.Operators.Azᶜᶜᶜ(i, j, k, grid)
@@ -351,7 +409,7 @@ end
             velocities,
             ice_volume,
         )
-        G.ℵ[i, j, 1] = -ClimaSeaIce.horizontal_div_Uc(
+        G.ℵ[i, j, 1] = -_conservative_div_Uc(
             i,
             j,
             k,
