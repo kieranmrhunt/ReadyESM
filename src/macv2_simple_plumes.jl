@@ -39,6 +39,7 @@ struct MACv2SPParameters
     ftr_weight::Matrix{Float64}
     year_weight::Matrix{Float64}   # (year, plume)
     ann_cycle::Array{Float64, 3}   # (feature, week, plume)
+    last_year::Int                 # last year with year weights (MACv2-SP-1-0 is the CMIP6 historical file: 2016)
 end
 
 function MACv2SPParameters(path::AbstractString)
@@ -59,11 +60,21 @@ function MACv2SPParameters(path::AbstractString)
                sig_lat_W = get2("sig_lat_W"), theta = get2("theta"), ftr_weight = get2("ftr_weight"),
                year_weight = get2("year_weight"), ann_cycle = Float64.(Array(ds["ann_cycle"].var[:, :, :])))
         for (name, v) in pairs(out)
+            name == :year_weight && continue
             all(isfinite, v) && all(x -> abs(x) < 1.0e30, v) ||
                 throw(ArgumentError("MACv2-SP $name in $path has a fill or nonfinite value"))
         end
         out
     end
+    # The CMIP6 historical file fills year_weight after its last historical year (2017-2100 are the scenario files'
+    # job). Fill is accepted only as one trailing block of years common to all plumes; those years are refused at use.
+    yw = p.year_weight
+    valid = [all(v -> isfinite(v) && abs(v) < 1.0e30, view(yw, iy, :)) for iy in axes(yw, 1)]
+    last_valid = findlast(valid)
+    !isnothing(last_valid) && all(valid[1:last_valid]) && !any(valid[(last_valid + 1):end]) ||
+        throw(ArgumentError("MACv2-SP year_weight in $path has fill values that are not one trailing block of years"))
+    any(iy -> any(v -> !isfinite(v) || abs(v) >= 1.0e30, view(yw, iy, :)), 1:last_valid) &&
+        throw(ArgumentError("MACv2-SP year_weight in $path has fill values inside its valid years"))
     # NCDatasets reverses the NetCDF dimension order, so (nplumes, nfeatures) on disk is (nfeatures, nplumes) here,
     # as the Fortran arrays; year_weight is (years, plumes) and ann_cycle (features, weeks, plumes), as in Fortran.
     size(p.sig_lon_E) == (MACV2SP_NFEATURES, MACV2SP_NPLUMES) &&
@@ -72,7 +83,8 @@ function MACv2SPParameters(path::AbstractString)
         throw(ArgumentError("MACv2-SP arrays in $path have unexpected shapes"))
     return MACv2SPParameters(String(path), bytes2hex(open(SHA.sha256, path)), p.plume_lat, p.plume_lon, p.beta_a,
                              p.beta_b, p.aod_spmx, p.aod_fmbg, p.asy550, p.ssa550, p.angstrom, p.sig_lon_E,
-                             p.sig_lon_W, p.sig_lat_E, p.sig_lat_W, p.theta, p.ftr_weight, p.year_weight, p.ann_cycle)
+                             p.sig_lon_W, p.sig_lat_E, p.sig_lat_W, p.theta, p.ftr_weight, p.year_weight, p.ann_cycle,
+                             MACV2SP_FIRST_YEAR + last_valid - 1)
 end
 
 """Feature time weights for fractional year `year_fr`, as `set_time_weight`: (anthropogenic, background)."""
@@ -81,6 +93,8 @@ function _macv2sp_time_weights(p::MACv2SPParameters, year_fr::Real)
     iweek = floor(Int, (year_fr - floor(year_fr)) * MACV2SP_NTIMES) + 1
     1 <= iweek <= MACV2SP_NTIMES && 1 <= iyear <= MACV2SP_NYEARS ||
         throw(ArgumentError("MACv2-SP time $year_fr is outside 1850-2100"))
+    floor(Int, year_fr) <= p.last_year ||
+        throw(ArgumentError("MACv2-SP time $year_fr is after the last year with weights in $(p.path) ($(p.last_year))"))
     tw = [p.year_weight[iyear, ip] * p.ann_cycle[f, iweek, ip] for f in 1:MACV2SP_NFEATURES, ip in 1:MACV2SP_NPLUMES]
     tw_bg = [p.ann_cycle[f, iweek, ip] for f in 1:MACV2SP_NFEATURES, ip in 1:MACV2SP_NPLUMES]
     return tw, tw_bg

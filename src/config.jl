@@ -1396,14 +1396,21 @@ function _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files
         throw(ArgumentError("aerosol_scheme = cmip_prescribed replaces aerosol_optical_depth_550nm; leave it at zero"))
     !isempty(f.aerosol_cmip_background_path) && !isempty(f.aerosol_cmip_plumes_path) ||
         throw(ArgumentError("aerosol_scheme = cmip_prescribed needs both aerosol_cmip_background_path and _plumes_path"))
-    f.aerosol_cmip_year == 0 || 1850 <= f.aerosol_cmip_year <= 2100 ||
-        throw(ArgumentError("aerosol_cmip_year must be 0 or within the MACv2-SP years 1850-2100"))
+    # MACv2-SP-1-0 (the CMIP6 historical file) has year weights for 1850-2016 only; the reader also checks the file.
+    f.aerosol_cmip_year == 0 || 1850 <= f.aerosol_cmip_year <= 2016 ||
+        throw(ArgumentError("aerosol_cmip_year must be 0 or within the MACv2-SP-1-0 years 1850-2016"))
     if f.aerosol_cmip_year == 0
         # Model-date mode: the whole run must lie inside the MACv2-SP years (Paul 14:5x).
         stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
-        1850 <= Dates.year(config.start_date) && Dates.year(stop) <= 2100 || throw(ArgumentError(
+        1850 <= Dates.year(config.start_date) && Dates.year(stop) <= 2016 || throw(ArgumentError(
             "aerosol_scheme = cmip_prescribed with the model date needs the run $(config.start_date) to $stop " *
-            "inside the MACv2-SP years 1850-2100; set aerosol_cmip_year to hold a year"))
+            "inside the MACv2-SP-1-0 years 1850-2016; set aerosol_cmip_year to hold a year"))
+    end
+    if check_input_files
+        last = MACv2SPParameters(f.aerosol_cmip_plumes_path).last_year
+        year = f.aerosol_cmip_year > 0 ? f.aerosol_cmip_year :
+            Dates.year(config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000)))
+        year <= last || throw(ArgumentError("the MACv2-SP file has year weights only to $last, not $year"))
     end
     check_input_files || return nothing
     MACv2Background(f.aerosol_cmip_background_path)

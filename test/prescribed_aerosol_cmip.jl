@@ -91,6 +91,12 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         @test_throws ArgumentError R.validate(with_forcing(on; radiation = :speedy_simplified); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_plumes_path = ""); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_year = 1700); check_input_files = false)
+        @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_year = 2050); check_input_files = false)
+        # MACv2-SP-1-0 is the CMIP6 historical file: year weights 1850-2016, fill afterwards.
+        sp = R.MACv2SPParameters(PLUMES)
+        @test sp.last_year == 2016
+        @test_throws ArgumentError R._macv2sp_time_weights(sp, 2017.5)
+        @test R._macv2sp_time_weights(sp, 2016.5) isa Tuple
         @test_throws ArgumentError R.validate(slab(; aerosol_cmip_year = 1993); check_input_files = false)
         @test_throws ArgumentError R.validate(slab(; aerosol_scheme = :macv2); check_input_files = false)
         # Model-date mode must stay inside the MACv2-SP years; a held year lifts that.
