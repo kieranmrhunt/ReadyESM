@@ -21,7 +21,7 @@ struct ConservativeSeaIceAdvection{A, FT, IV, SV}
 end
 
 const _CONSERVATIVE_SEA_ICE_ADVECTION_PROVENANCE =
-    "conservative_A_direct_Ah_direct_Ahs_WENO5_refreshed_halos_hmax_v2"
+    "conservative_A_direct_Ah_direct_Ahs_Az_normalized_WENO5_refreshed_halos_hmax_v3"
 
 @kernel function _conditional_ice_from_effective_thickness_kernel!(
     ice_thickness,
@@ -206,8 +206,12 @@ end
     δy_flux = Oceananigans.Operators.δyᵃᶜᵃ(
         i, j, k, grid, _ice_volume_flux_y, scheme, velocities.v, volume,
     )
+    # Sea ice is a two-dimensional inventory: `volume` is area-equivalent
+    # thickness (m), so its horizontal flux divergence is normalized by the
+    # horizontal cell area. Vᶜᶜᶜ adds the ocean-cell height and would make this
+    # tendency vary as z-star changes even when the ice state and fluxes do not.
     return (δx_flux + δy_flux) /
-           Oceananigans.Operators.Vᶜᶜᶜ(i, j, k, grid)
+           Oceananigans.Operators.Azᶜᶜᶜ(i, j, k, grid)
 end
 
 
@@ -227,7 +231,7 @@ end
         i, j, k, grid, _ice_volume_flux_y, scheme.y, velocities.v, volume,
     )
     return (δx_flux + δy_flux) /
-           Oceananigans.Operators.Vᶜᶜᶜ(i, j, k, grid)
+           Oceananigans.Operators.Azᶜᶜᶜ(i, j, k, grid)
 end
 
 @inline function _conservative_snow_volume_tendency!(
