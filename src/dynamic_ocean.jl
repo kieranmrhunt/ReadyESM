@@ -1508,9 +1508,10 @@ Perform that one-off transformation on a CPU copy of the grid and transfer the
 completed native fields to the model architecture.  Launching the two generic
 tripolar transformation kernels directly on CUDA can leave the driver in
 first-use module/JIT work for hours when every production job starts with a
-fresh writable depot.  CPU staging preserves Oceananigans' reference
-mathematics while keeping initialization outside the production timestep's GPU
-specialization barrier.
+fresh writable depot. CPU staging retains Oceananigans' vector rotation and
+uses single-axis center-to-face interpolation, correcting the pinned native
+initializer's extra transverse average. Initialization stays outside the
+production timestep's GPU specialization barrier.
 """
 function _set_extrinsic_ocean_velocity_fields!(
     u_velocity,
@@ -1527,7 +1528,7 @@ function _set_extrinsic_ocean_velocity_fields!(
         u = Oceananigans.XFaceField(cpu_grid),
         v = Oceananigans.YFaceField(cpu_grid),
     )
-    Oceananigans.Models.HydrostaticFreeSurfaceModels.set_from_extrinsic_velocities!(
+    _set_centered_extrinsic_velocities!(
         cpu_velocities,
         cpu_grid,
         eastward,
@@ -1640,8 +1641,8 @@ function _set_ecco_ocean_ice_initial_conditions!(
     if full_state
         _set_extrinsic_ocean_velocities!(
             ocean.model,
-            metadata.u_velocity,
-            metadata.v_velocity,
+            ECCO4CenteredVelocity(metadata.u_velocity),
+            ECCO4CenteredVelocity(metadata.v_velocity),
         )
         _set_surface_metadatum!(
             ocean.model.free_surface.displacement,

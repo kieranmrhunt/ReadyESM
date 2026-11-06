@@ -70,6 +70,7 @@ land_dispatch = which(
 @test land_dispatch.module === ReadyESM
 
 include("config_input_files.jl")
+include("ecco_centered_velocity.jl")
 include("darcy_boundary.jl")
 include("sampled_global_diagnostics.jl")
 include("sampled_history_output.jl")
