@@ -2233,7 +2233,7 @@ version = "1.11.0"
 
 [[deps.RRTMGP]]
 deps = ["Adapt", "Artifacts", "ClimaComms", "Random", "Serialization"]
-git-tree-sha1 = "3d9478c07e05aba9f1b97a5b94f3655f4d2e006c"
+path = "vendor/RRTMGP"
 uuid = "a01a1ee8-cea4-48fc-987c-fc7878d79da1"
 version = "0.22.2"
 
