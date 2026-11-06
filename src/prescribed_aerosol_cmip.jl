@@ -194,11 +194,19 @@ function _background_layer_moments!(E, S, A, tau, ssa, g, frac, w, m0, m1, wm, b
     return nothing
 end
 
-"""Optics (tau, ssa, g) from summed moments: tau = E, ssa = S / E, g = A / S."""
-@inline _from_moments(E, S, A) = E > 0 ? (E, S / E, S > 0 ? A / S : 0.0) : (0.0, 1.0, 0.0)
+"""
+Optics (tau, ssa, g) from summed moments: tau = E, ssa = S / E, g = A / S; zero extinction gives (0, 1, 0). A
+nonfinite or negative moment gives NaN optics, so `_set_band_optics!` refuses it instead of a comparison silently
+turning it into zero (job 65679738: `NaN > 0` is false).
+"""
+@inline function _from_moments(E, S, A)
+    (isfinite(E) && isfinite(S) && isfinite(A) && E >= 0 && S >= 0 && A >= 0) || return (NaN, NaN, NaN)
+    return E > 0 ? (E, S / E, S > 0 ? A / S : 0.0) : (0.0, 1.0, 0.0)
+end
 
-"""Combine optics (tau, ssa, g) tuples by optical-depth and scattering weighting."""
+"""Combine optics (tau, ssa, g) tuples by optical-depth and scattering weighting; nonfinite input gives NaN optics."""
 @inline function _combine_optics(parts)
+    all(p -> all(isfinite, p), parts) || return (NaN, NaN, NaN)
     τ = sum(p[1] for p in parts)
     τ > 0 || return (0.0, 1.0, 0.0)
     sca = sum(p[1] * p[2] for p in parts)
@@ -206,8 +214,12 @@ end
     return (τ, sca / τ, sca > 0 ? asy / sca : 0.0)
 end
 
-"""ETH CMIP6 tropopause-layer rule: arithmetic means, or 50 % of the extinction where one side is absent."""
+"""
+ETH CMIP6 tropopause-layer rule: arithmetic means, or 50 % of the extinction where one side is absent. Nonfinite
+input gives NaN optics.
+"""
 @inline function _tropopause_mean(trop, strat)
+    all(isfinite, trop) && all(isfinite, strat) || return (NaN, NaN, NaN)
     trop[1] > 0 && strat[1] > 0 &&
         return ((trop[1] + strat[1]) / 2, (trop[2] + strat[2]) / 2, (trop[3] + strat[3]) / 2)
     trop[1] > 0 && return (trop[1] / 2, trop[2], trop[3])

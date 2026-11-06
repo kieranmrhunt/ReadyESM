@@ -78,8 +78,12 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         # Moments carry ssa and g consistently: ssa = S / E and g = A / S per layer.
         ssa3 = copy(ssa); g3 = copy(g); ssa3[1, :, :, 1] .= 0.8; g3[1, :, :, 1] .= 0.6
         R._background_layer_moments!(E, S, A, tau, ssa3, g3, frac, w, 1, 2, 0.0, 1)
-        @test all(R._from_moments(E[1], S[1], A[1]) .≈ (0.5, 0.8, 0.6))
+        @test all(isapprox.(R._from_moments(E[1], S[1], A[1]), (0.5, 0.8, 0.6); rtol = 1e-6))  # Float32 inputs
         @test R._from_moments(0.0, 0.0, 0.0) == (0.0, 1.0, 0.0)
+        # Nonfinite or negative moments propagate as NaN (refused by the setter), never as zero optics.
+        @test all(isnan, R._from_moments(NaN, 0.0, 0.0)) && all(isnan, R._from_moments(-1.0, 0.0, 0.0))
+        @test all(isnan, R._combine_optics(((NaN, 1.0, 0.0), (0.1, 0.9, 0.5))))
+        @test all(isnan, R._tropopause_mean((NaN, 1.0, 0.0), (0.0, 1.0, 0.0)))
     end
 
     @testset "config validation" begin
