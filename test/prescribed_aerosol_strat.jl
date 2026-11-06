@@ -208,23 +208,21 @@ end
         @test provenance.cmip_aerosol_stratospheric_sha256 == a.stratospheric.sha256
         state = R._rrtmgp_radiation_state(radiation)
         @test state.cmip_aerosol.stratospheric_sha256 == a.stratospheric.sha256
-        # A configuration outside the file's months is refused at the first radiation application (whether that is in
-        # the build or the first step), with no optics written: the clock is at the configured date from the start.
+        # A configuration outside the file's months is refused by validation (the configured-span contract), and the
+        # public builder refuses it with the same validation error before building anything (it validates first), so
+        # no radiation is applied. A refusal only at the first step would not satisfy this test (Paul, Codex).
         late = R.ExperimentConfig(; merge(fields(on), (; start_date = DateTime(1995, 1, 1)))...)
-        late_refused = try
-            sim = R.build_rrtmgp(late)
-            @test sim.variables.prognostic.clock.time == DateTime(1995, 1, 1)
-            try
-                S.run!(sim; steps = 1)
-                false
-            catch err
-                err isa ArgumentError && occursin("outside the stratospheric aerosol months", err.msg) &&
-                    sim.model.longwave_radiation.cmip_aerosol.writes == 0
-            end
+        span_error(f) = try
+            f()
+            nothing
         catch err
-            err isa ArgumentError && occursin("outside the stratospheric aerosol months", err.msg)
+            err
         end
-        @test late_refused
+        expected = "the run 1995-01-01T00:00:00 to"
+        for refused in (span_error(() -> R.validate(late)), span_error(() -> R.build_rrtmgp(late)))
+            @test refused isa ArgumentError && occursin(expected, refused.msg) &&
+                  occursin("is outside the stratospheric aerosol months", refused.msg)
+        end
         # A checkpoint with the stratospheric file does not restore into radiation without it.
         trop = R.build_rrtmgp(with_forcing(on; aerosol_cmip_stratospheric_path = ""))
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(trop.model.longwave_radiation, state)
