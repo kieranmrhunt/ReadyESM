@@ -20,7 +20,8 @@ function S.callback!(observer::PrecipitationStepObserver, vars::S.Variables, mod
     large_scale = vec(Array(p.rain_rate_large_scale.data))
     snow = vec(Array(p.snow_rate.data))
     snow_large_scale = vec(Array(p.snow_rate_large_scale.data))
-    snow_convection = vec(Array(p.snow_rate_convection.data))
+    snow_convection = haskey(p, :snow_rate_convection) ?
+        vec(Array(p.snow_rate_convection.data)) : zero.(snow)
     land_indices = vec(Array(model.land.model.grid.mask.data))
     land_rainfall = vec(Array(O.interior(vars.prognostic.land.terrarium.inputs.rainfall)))
     land_snowfall = vec(Array(O.interior(vars.prognostic.land.terrarium.inputs.snowfall)))
