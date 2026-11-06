@@ -1073,6 +1073,8 @@ end
 # `band_optics = true` also gives the aerosol state zero prescribed per-band optics arrays (vendored RRTMGP band-optics
 # hook, vendor/RRTMGP/READYESM_PATCH.md) for a prescribed-optics scheme to fill; false keeps the unpatched state.
 function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false, band_optics::Bool = false)
+    band_optics && target_aod != 0 && throw(ArgumentError(
+        "prescribed band optics own the aerosol: the MERRA sulfate target must be zero (no double counting)"))
     grid_params = base_solver.grid_params
     NF = eltype(grid_params)
     DA = ClimaComms.array_type(grid_params)
@@ -1140,6 +1142,40 @@ _zero_band_optics(DA, NF, nbnd_sw, nbnd_lw, nlay, ncol) = (
     g_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)), tau_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)),
     ssa_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)), g_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)),
 )
+
+"""
+Admission check for prescribed band optics, run before a radiation solve that uses them (Codex 14:18, Paul 14:xx).
+Every array must have the (band, layer, column) shape of the solver on the solver's architecture; every value must be
+finite, with tau >= 0, 0 <= ssa <= 1 and 0 <= g < 1 (g < 1 keeps the SW delta scaling nonsingular); and the MERRA
+lookup must carry no aerosol mass, so the prescribed optics are the only aerosol (the hook adds to the lookup, so a
+nonzero mass would count aerosol twice). Throws an ArgumentError naming the first failing field. A no-op without
+band optics.
+"""
+function _validate_band_optics(solver)
+    aerosol = solver.as.aerosol_state
+    bo = aerosol.band_optics
+    isnothing(bo) && return nothing
+    nlay, ncol = solver.grid_params.nlay, solver.grid_params.ncol
+    backend = KernelAbstractions.get_backend(aerosol.aero_mass)
+    shapes = (tau_sw = solver.lookups.nbnd_sw, ssa_sw = solver.lookups.nbnd_sw, g_sw = solver.lookups.nbnd_sw,
+              tau_lw = solver.lookups.nbnd_lw, ssa_lw = solver.lookups.nbnd_lw, g_lw = solver.lookups.nbnd_lw)
+    keys(bo) == keys(shapes) || throw(ArgumentError("band optics fields $(keys(bo)) differ from $(keys(shapes))"))
+    for name in keys(shapes)
+        x = getproperty(bo, name)
+        size(x) == (shapes[name], nlay, ncol) ||
+            throw(ArgumentError("band optics $name has size $(size(x)), expected $((shapes[name], nlay, ncol))"))
+        KernelAbstractions.get_backend(x) == backend ||
+            throw(ArgumentError("band optics $name is not on the solver's architecture"))
+        h = Array(x)
+        all(isfinite, h) || throw(ArgumentError("band optics $name has a nonfinite value"))
+        ok = startswith(String(name), "tau") ? all(>=(0), h) :
+             startswith(String(name), "ssa") ? all(v -> 0 <= v <= 1, h) : all(v -> 0 <= v < 1, h)
+        ok || throw(ArgumentError("band optics $name is outside its physical range"))
+    end
+    all(iszero, Array(aerosol.aero_mass)) || throw(ArgumentError(
+        "MERRA aerosol mass must be zero when prescribed band optics own the aerosol (no double counting)"))
+    return nothing
+end
 
 """Mole fraction for an optional ppb trace-gas value, or `nothing` to keep the RRTMGP default."""
 function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}

@@ -87,6 +87,31 @@ end
         f2 = fluxes(hooked)
         @test f2[3] != f1[3] && all(isfinite, f2[3]) && all(isfinite, f2[2])
     end
+
+    @testset "admission check: shape, range, finiteness and no MERRA double counting" begin
+        grid = S.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
+        base = R.RRTMGPRadiation(grid).solver
+        @test_throws ArgumentError R._enable_sulfate_aerosol(base, 0.1f0; band_optics = true)
+        hooked = R._enable_sulfate_aerosol(base, 0.0f0; band_optics = true)
+        @test R._validate_band_optics(hooked) === nothing                    # zeros are admissible
+        @test R._validate_band_optics(R._enable_sulfate_aerosol(base, 0.0f0)) === nothing  # no band optics
+        bo = hooked.as.aerosol_state.band_optics
+        for (name, bad) in ((:tau_sw, NaN32), (:tau_sw, -1.0f-3), (:tau_lw, Inf32), (:tau_lw, -1.0f0),
+                            (:ssa_sw, 1.01f0), (:ssa_sw, -0.01f0), (:ssa_lw, NaN32), (:g_sw, 1.0f0),
+                            (:g_sw, -0.1f0), (:g_lw, NaN32))
+            x = getproperty(bo, name)
+            old = x[1, 1, 1]
+            x[1, 1, 1] = bad
+            @test_throws ArgumentError R._validate_band_optics(hooked)
+            x[1, 1, 1] = old
+        end
+        @test R._validate_band_optics(hooked) === nothing
+        mass = G.aerosol_column_mass_density(hooked, "sulfate")
+        mass[1, 1] = 1.0f-6
+        @test_throws ArgumentError R._validate_band_optics(hooked)            # MERRA mass plus band optics
+        mass[1, 1] = 0
+        @test R._validate_band_optics(hooked) === nothing
+    end
 end
 end
 println("RRTMGP_BAND_OPTICS_HOOK_PASS")
