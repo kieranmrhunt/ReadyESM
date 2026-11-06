@@ -6,8 +6,12 @@ not as MERRA masses; the MERRA mass stays zero, checked at every write (`_set_ba
   A  MACv2 pre-industrial background (Kinne 2019; prepared file readiesm_macv2_background_v1): SW fine (1850) and
      coarse modes, LW total, monthly climatology on 1 degree, with 20-layer AOD fractions in height above sea level.
   B  MACv2-SP-1-0 anthropogenic plumes for the model year (macv2_simple_plumes.jl), SW only, zero above 3000 nm.
-  C  stratospheric optics (CMIP7 UOEXETER-CMIP-2-2-1, prepared separately); until its file exists the stratospheric
-     contribution is zero and the provenance says "tropospheric only".
+  C  stratospheric optics (CMIP7 UOEXETER-CMIP-2-2-1, prepared by prepare_uoexeter_v1.py into band moments of
+     extinction per metre on the source latitudes and 500 m height layers, schema readiesm_strat_aerosol_bands_v1),
+     optional (forcing.aerosol_cmip_stratospheric_path); without it the stratospheric contribution is zero and the
+     provenance says "tropospheric only". Its moments are interpolated linearly between monthly midpoints (model
+     date; the file covers a run of months and a date outside them is refused) and in latitude (clamped at the end
+     latitudes), then summed over model layers by height overlap (conservative; zero outside 5-40 km).
 Each radiation solve: optics of A (in every source cell and month the MACv2 layer moments tau f, tau f ssa and
 tau f ssa g are formed first, then interpolated linearly between monthly midpoints and bilinearly from the 1 degree grid
 to each column, and distributed over model layers by height overlap of the MACv2 layers, clipped at the model surface;
@@ -27,6 +31,10 @@ const CMIP_AEROSOL_LW_WAVELENGTHS_NM =
     [90000, 30000, 18000, 15100, 13200, 11200, 9750, 8850, 7850, 7000, 6150, 5200, 4600, 4200, 4000, 3600]
 const CMIP_AEROSOL_LABEL_TROPOSPHERIC =
     "prescribed aerosol: MACv2 pre-industrial background + MACv2-SP-1-0 (CMIP6); tropospheric only (no stratospheric file)"
+const CMIP_AEROSOL_LABEL_FULL =
+    "prescribed aerosol: MACv2 pre-industrial background + MACv2-SP-1-0 (CMIP6) + " *
+    "UOEXETER-CMIP-2-2-1 stratospheric (CMIP7)"
+const CMIP_AEROSOL_STRAT_SCHEMA = "readiesm_strat_aerosol_bands_v1"
 const CMIP_AEROSOL_TROPOPAUSE_RULE =
     "WMO lapse rate on model layers (first layer above 500 hPa with lapse rate <= 2 K/km held over 2 km); ETH CMIP6 " *
     "strat-trop rule: tropospheric optics below, stratospheric above, arithmetic mean in the tropopause layer"
@@ -92,6 +100,115 @@ function MACv2Background(path::AbstractString)
                            b.gfs, b.tcs, b.scs, b.gcs, b.tl, b.sl, b.gl, b.ff, b.fc, b.zb, b.zt)
 end
 
+"""
+Prepared stratospheric aerosol optics (component C): band moments per metre, E = extinction, S = extinction x ssa,
+G = extinction x ssa x g, host arrays (band, height, lat, month) on the source latitudes, height layers and months.
+"""
+struct StratosphericAerosol
+    path::String
+    sha256::String
+    lat::Vector{Float64}
+    height_bottom_m::Vector{Float64}
+    height_top_m::Vector{Float64}
+    month_mid::Vector{DateTime}
+    E_sw::Array{Float64, 4}
+    S_sw::Array{Float64, 4}
+    G_sw::Array{Float64, 4}
+    E_lw::Array{Float64, 4}
+    S_lw::Array{Float64, 4}
+    G_lw::Array{Float64, 4}
+end
+
+"""A NetCDF variable as a host array with its axes in the order `names` (by dimension name, not file order)."""
+function _read_by_dim_names(ds, name, names)
+    v = ds[name]
+    dims = Tuple(NCDatasets.dimnames(v))
+    Set(dims) == Set(names) && length(dims) == length(names) ||
+        throw(ArgumentError("$name has dimensions $dims, expected $names"))
+    perm = Tuple(findfirst(==(n), dims) for n in names)
+    return permutedims(Array(v.var[ntuple(_ -> Colon(), length(dims))...]), perm)
+end
+
+function StratosphericAerosol(path::AbstractString)
+    isfile(path) || throw(ArgumentError("stratospheric aerosol file not found: $path"))
+    s = NCDatasets.NCDataset(path) do ds
+        get(ds.attrib, "schema", "") == CMIP_AEROSOL_STRAT_SCHEMA ||
+            throw(ArgumentError("$path does not have schema $CMIP_AEROSOL_STRAT_SCHEMA"))
+        tb = ds["time_bnds"]
+        get(tb.attrib, "units", "") == "days since 1850-01-01" &&
+            get(tb.attrib, "calendar", "") == "proleptic_gregorian" ||
+            throw(ArgumentError("$path time_bnds must be days since 1850-01-01, proleptic_gregorian"))
+        days = _read_by_dim_names(ds, "time_bnds", ("bnds", "time"))
+        mid = [DateTime(1850, 1, 1) + Millisecond(round(Int64, (days[1, i] + days[2, i]) / 2 * 86_400_000))
+               for i in axes(days, 2)]
+        hb = _read_by_dim_names(ds, "height_bnds", ("bnds", "height"))
+        moments = Dict{String, Array{Float64, 4}}()
+        for spec in ("sw", "lw"), m in ("E", "S", "G")
+            n = "$(m)_$spec"
+            any(k -> haskey(ds[n].attrib, k), ("_FillValue", "missing_value")) &&
+                throw(ArgumentError("$n in $path declares a fill value"))
+            moments[n] = Float64.(_read_by_dim_names(ds, n, ("$(spec)_band", "height", "lat", "time")))
+        end
+        (; lat = Float64.(Array(ds["lat"].var[:])), hb = Float64.(hb), mid, moments)
+    end
+    all(diff(s.lat) .> 0) || throw(ArgumentError("$path latitudes are not increasing"))
+    all(diff(s.mid) .> Day(0)) || throw(ArgumentError("$path months are not increasing"))
+    bottom, top = s.hb[1, :], s.hb[2, :]
+    all(top .> bottom) && all(diff(bottom) .> 0) || throw(ArgumentError("$path height bounds are not increasing"))
+    for spec in ("sw", "lw")
+        E, S, G = s.moments["E_$spec"], s.moments["S_$spec"], s.moments["G_$spec"]
+        all(isfinite, E) && all(isfinite, S) && all(isfinite, G) ||
+            throw(ArgumentError("$path $spec moments have nonfinite values"))
+        # Admissible moments: 0 <= S <= E (0 <= ssa <= 1) and 0 <= G <= S (0 <= g <= 1); rounding slack 1e-12.
+        all(E .>= 0) && all(S .>= 0) && all(S .<= E .* (1 + 1.0e-12)) &&
+            all(G .>= 0) && all(G .<= S .* (1 + 1.0e-12)) ||
+            throw(ArgumentError("$path $spec moments are outside 0 <= S <= E, 0 <= G <= S"))
+    end
+    m = s.moments
+    return StratosphericAerosol(String(path), bytes2hex(open(SHA.sha256, path)), s.lat, bottom, top, s.mid,
+                                m["E_sw"], m["S_sw"], m["G_sw"], m["E_lw"], m["S_lw"], m["G_lw"])
+end
+
+"""Linear weights between the stratospheric file's monthly midpoints for `time`; a time outside them is refused."""
+function _strat_time_weights(st::StratosphericAerosol, time::DateTime)
+    st.month_mid[1] <= time <= st.month_mid[end] || throw(ArgumentError(
+        "model time $time is outside the stratospheric aerosol months ($(st.month_mid[1]) to $(st.month_mid[end]))"))
+    i0 = clamp(searchsortedlast(st.month_mid, time), 1, length(st.month_mid) - 1)
+    w = Dates.value(time - st.month_mid[i0]) / Dates.value(st.month_mid[i0 + 1] - st.month_mid[i0])
+    return i0, i0 + 1, w
+end
+
+"""Linear latitude weights on the stratospheric file's latitudes, clamped at the end latitudes."""
+function _strat_lat_weights(glat, lat)
+    y = clamp(lat, glat[1], glat[end])
+    j0 = clamp(searchsortedlast(glat, y), 1, length(glat) - 1)
+    return j0, j0 + 1, (y - glat[j0]) / (glat[j0 + 1] - glat[j0])
+end
+
+"""
+Stratospheric band moments of one column on the model layers, `M[k, band, layer]` with k = 1, 2, 3 for E, S, G as
+optical depths: the moments per metre interpolated in time and latitude, times the overlap length of each source
+height layer with each model layer (`zbc`, layer bounds bottom to top).
+"""
+function _strat_column_moments!(M, E, S, G, st::StratosphericAerosol, lw, tw, zbc)
+    j0, j1, wy = lw
+    t0, t1, wt = tw
+    fill!(M, 0.0)
+    nlay = length(zbc) - 1
+    for h in eachindex(st.height_bottom_m), r in 1:nlay
+        len = min(st.height_top_m[h], zbc[r + 1]) - max(st.height_bottom_m[h], zbc[r])
+        len > 0 || continue
+        for b in axes(M, 2)
+            for (k, A) in ((1, E), (2, S), (3, G))
+                v = (1 - wt) * ((1 - wy) * A[b, h, j0, t0] + wy * A[b, h, j1, t0]) +
+                    wt * ((1 - wy) * A[b, h, j0, t1] + wy * A[b, h, j1, t1])
+                M[k, b, r] += v * len
+            end
+        end
+    end
+    return M
+end
+
 """Prescribed CMIP aerosol for one model grid: sources, per-column interpolation weights and the write counter."""
 mutable struct CMIPAerosol
     background::MACv2Background
@@ -102,16 +219,23 @@ mutable struct CMIPAerosol
     hweights::Vector{NTuple{6, Float64}} # (i0, i1, j0, j1, wx, wy) on the background grid, per column
     writes::Int                          # validated writes through `_set_band_optics!`
     tropopause_layer::Vector{Int}        # at the last write, RRTMGP layer index (bottom to top) per column
+    stratospheric::Union{Nothing, StratosphericAerosol}
+    strat_lat_weights::Vector{Tuple{Int, Int, Float64}}
 end
 
-function CMIPAerosol(background_path, plumes_path, spectral_grid::SpectralGrid; fixed_year::Integer = 0)
+function CMIPAerosol(background_path, plumes_path, spectral_grid::SpectralGrid; fixed_year::Integer = 0,
+                     stratospheric_path::AbstractString = "")
     fixed_year >= 0 || throw(ArgumentError("aerosol_cmip_year must be zero or a positive year"))
+    isempty(stratospheric_path) || fixed_year == 0 || throw(ArgumentError(
+        "the stratospheric aerosol file follows the model date; it cannot be combined with aerosol_cmip_year"))
     bg = MACv2Background(background_path)
     sp = MACv2SPParameters(plumes_path)
     lond, latd = RG.get_londlatds(spectral_grid.grid)
     lon, lat = Float64.(lond), Float64.(latd)
     hw = [_bilinear_weights(bg.lon, bg.lat, lon[c], lat[c]) for c in eachindex(lon)]
-    return CMIPAerosol(bg, sp, Int(fixed_year), lon, lat, hw, 0, zeros(Int, length(lon)))
+    st = isempty(stratospheric_path) ? nothing : StratosphericAerosol(stratospheric_path)
+    sw = isnothing(st) ? Tuple{Int, Int, Float64}[] : [_strat_lat_weights(st.lat, lat[c]) for c in eachindex(lat)]
+    return CMIPAerosol(bg, sp, Int(fixed_year), lon, lat, hw, 0, zeros(Int, length(lon)), st, sw)
 end
 
 """Bilinear weights on a periodic longitude axis and a clamped latitude axis."""
@@ -276,12 +400,24 @@ function _cmip_aerosol_optics(a::CMIPAerosol, time, zc, zb, orography, t_lay, p_
     sp_tau, sp_ssa, sp_g = macv2sp_band_optics(a.plumes, bg.sw_wavelength_nm, orography, a.lon, a.lat, year_fr,
                                                permutedims(zc), permutedims(dz))
     nl = length(bg.layer_bottom_m)
+    st = a.stratospheric
+    if !isnothing(st)
+        size(st.E_sw, 1) == nbnd_sw && size(st.E_lw, 1) == nbnd_lw ||
+            throw(ArgumentError("stratospheric aerosol bands differ from the RRTMGP bands"))
+        tw = _strat_time_weights(st, time)
+    end
+    Msw, Mlw = zeros(3, nbnd_sw, nlay), zeros(3, nbnd_lw, nlay)
     tp = _tropopause_layers(t_lay, p_lay, zc)
     a.tropopause_layer .= tp
     over = zeros(nl, nlay)
     Ef, Sf, Af, Ec, Sc, Ac = (zeros(nl) for _ in 1:6)
     for c in 1:ncol
         w = a.hweights[c]
+        if !isnothing(st)
+            zbc = view(zb, :, c)
+            _strat_column_moments!(Msw, st.E_sw, st.S_sw, st.G_sw, st, a.strat_lat_weights[c], tw, zbc)
+            _strat_column_moments!(Mlw, st.E_lw, st.S_lw, st.G_lw, st, a.strat_lat_weights[c], tw, zbc)
+        end
         # MACv2 layer overlap with each model layer, clipped at the model surface (uniform within a MACv2 layer).
         for r in 1:nlay, l in 1:nl
             lo = max(bg.layer_bottom_m[l], zb[r, c], orography[c])
@@ -303,7 +439,7 @@ function _cmip_aerosol_optics(a::CMIPAerosol, time, zc, zb, orography, t_lay, p_
                 τsp = sp_tau[b, c, r]
                 E += τsp; S += τsp * sp_ssa[b, c, r]; Asum += τsp * sp_ssa[b, c, r] * sp_g[b, c, r]
                 trop = _from_moments(E, S, Asum)
-                strat = (0.0, 1.0, 0.0)   # component C: no stratospheric file yet
+                strat = _from_moments(Msw[1, b, r], Msw[2, b, r], Msw[3, b, r])   # component C (zero without its file)
                 o = r < tp[c] ? trop : r > tp[c] ? strat : _tropopause_mean(trop, strat)
                 tau_sw[b, r, c], ssa_sw[b, r, c], g_sw[b, r, c] = o
             end
@@ -316,7 +452,7 @@ function _cmip_aerosol_optics(a::CMIPAerosol, time, zc, zb, orography, t_lay, p_
                 S = sum(Sc[l] * over[l, r] for l in 1:nl)
                 Asum = sum(Ac[l] * over[l, r] for l in 1:nl)
                 trop = _from_moments(E, S, Asum)
-                strat = (0.0, 1.0, 0.0)
+                strat = _from_moments(Mlw[1, b, r], Mlw[2, b, r], Mlw[3, b, r])
                 o = r < tp[c] ? trop : r > tp[c] ? strat : _tropopause_mean(trop, strat)
                 tau_lw[b, r, c], ssa_lw[b, r, c], g_lw[b, r, c] = o
             end
@@ -378,12 +514,14 @@ end
 """The scheme for `config`, or `nothing` unless forcing.aerosol_scheme = :cmip_prescribed."""
 _cmip_aerosol(config, spectral_grid) = config.forcing.aerosol_scheme == :cmip_prescribed ?
     CMIPAerosol(config.forcing.aerosol_cmip_background_path, config.forcing.aerosol_cmip_plumes_path, spectral_grid;
-                fixed_year = config.forcing.aerosol_cmip_year) : nothing
+                fixed_year = config.forcing.aerosol_cmip_year,
+                stratospheric_path = config.forcing.aerosol_cmip_stratospheric_path) : nothing
 
 """Restart identity of the scheme: source hashes and year mode."""
 _cmip_aerosol_identity(::Nothing) = nothing
 _cmip_aerosol_identity(a::CMIPAerosol) =
-    (background_sha256 = a.background.sha256, plumes_sha256 = a.plumes.sha256, fixed_year = a.fixed_year)
+    (background_sha256 = a.background.sha256, plumes_sha256 = a.plumes.sha256, fixed_year = a.fixed_year,
+     stratospheric_sha256 = isnothing(a.stratospheric) ? "" : a.stratospheric.sha256)
 
 """Reject a checkpoint whose CMIP aerosol identity differs from the reconstructed radiation."""
 function _validate_cmip_aerosol_restart(radiation, state)
@@ -400,7 +538,10 @@ function _cmip_aerosol_provenance(radiation, config, rrtmgp_active)
     config.forcing.aerosol_scheme == :cmip_prescribed || return (;)
     a = rrtmgp_active ? radiation.cmip_aerosol : nothing
     isnothing(a) && return (cmip_aerosol = "requested_but_not_active",)
-    return (cmip_aerosol = CMIP_AEROSOL_LABEL_TROPOSPHERIC,
+    st = a.stratospheric
+    return (cmip_aerosol = isnothing(st) ? CMIP_AEROSOL_LABEL_TROPOSPHERIC : CMIP_AEROSOL_LABEL_FULL,
+            cmip_aerosol_stratospheric_path = isnothing(st) ? "" : st.path,
+            cmip_aerosol_stratospheric_sha256 = isnothing(st) ? "" : st.sha256,
             cmip_aerosol_background_path = a.background.path, cmip_aerosol_background_sha256 = a.background.sha256,
             cmip_aerosol_plumes_path = a.plumes.path, cmip_aerosol_plumes_sha256 = a.plumes.sha256,
             cmip_aerosol_year_mode = a.fixed_year > 0 ? "fixed_year_$(a.fixed_year)" : "model_date",

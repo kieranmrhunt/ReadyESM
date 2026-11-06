@@ -166,7 +166,7 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         # Restart identity: a checkpoint with the scheme does not restore into radiation without it, and back.
         state = R._rrtmgp_radiation_state(radiation)
         @test state.cmip_aerosol == (background_sha256 = a.background.sha256, plumes_sha256 = a.plumes.sha256,
-                                     fixed_year = 0)
+                                     fixed_year = 0, stratospheric_sha256 = "")
         plain = off.model.longwave_radiation
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(plain, state)
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(radiation, R._rrtmgp_radiation_state(plain))

@@ -31,6 +31,7 @@ include("well_mixed_gas_schedule.jl")
 include("prescribed_ozone.jl")
 include("rrtmgp_band_optics_hook.jl")
 include("prescribed_aerosol_cmip.jl")
+include("prescribed_aerosol_strat.jl")
 
 diagnostic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "diagnostics.jl"), String)
 dynamic_source = read(joinpath(ReadyESM.PROJECT_ROOT, "src", "dynamic_ocean.jl"), String)
