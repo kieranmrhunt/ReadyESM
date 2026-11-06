@@ -307,9 +307,10 @@ SpeedyWeather.variables(convection::TiedtkeBechtoldHostConvection) = (
      for (name, units, desc) in _TIEDTKE_BECHTOLD_DIAGNOSTICS)...,
 )
 
+# This runs inside the GPU column kernel, so the message must be one string literal: building it with `*` calls a
+# runtime string routine that the GPU compiler refuses (InvalidIRError in GPU gate 65577058).
 @noinline _tiedtke_bechtold_cloud_top_error() = throw(ArgumentError(
-    "Tiedtke-Bechtold cloud top refused: deep convection must return a full level 1..n and no convection must " *
-    "return n+1 (D43, T14)",
+    "Tiedtke-Bechtold cloud top refused: deep convection must return a full level 1..n and no convection must return n+1 (D43, T14)",
 ))
 
 """
