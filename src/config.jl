@@ -14,6 +14,13 @@ Base.@kwdef struct ForcingConfig
     ozone_path::String = ""
     ozone_fixed_year::Int = 0
     aerosol_optical_depth_550nm::Float64 = 0.0
+    # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2): :none (default) or :cmip_prescribed,
+    # the MACv2 pre-industrial background file plus the MACv2-SP-1-0 parameter file; a year > 0 holds that MACv2-SP
+    # year, 0 follows the model date.
+    aerosol_scheme::Symbol = :none
+    aerosol_cmip_background_path::String = ""
+    aerosol_cmip_plumes_path::String = ""
+    aerosol_cmip_year::Int = 0
     aerosol_species::String = "sulfate"
     radiation::Symbol = :speedy_simplified
     radiation_every_n_steps::Int = 1
@@ -275,6 +282,10 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         aerosol_optical_depth_550nm = Float64(
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
+        aerosol_scheme = Symbol(_mapping_value(forcing_raw, "aerosol_scheme", "none")),
+        aerosol_cmip_background_path = String(_mapping_value(forcing_raw, "aerosol_cmip_background_path", "")),
+        aerosol_cmip_plumes_path = String(_mapping_value(forcing_raw, "aerosol_cmip_plumes_path", "")),
+        aerosol_cmip_year = Int(_mapping_value(forcing_raw, "aerosol_cmip_year", 0)),
         aerosol_species = String(_mapping_value(forcing_raw, "aerosol_species", "sulfate")),
         radiation = Symbol(_mapping_value(forcing_raw, "radiation", "speedy_simplified")),
         radiation_every_n_steps = Int(
@@ -1279,6 +1290,7 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     end
     _validate_well_mixed_gas_options(config, rrtmgp_active, check_input_files)
     _validate_prescribed_ozone_options(config, rrtmgp_active, check_input_files)
+    _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
     if !rrtmgp_active && config.forcing.aerosol_optical_depth_550nm > 0
         throw(ArgumentError(
             "prescribed aerosol AOD requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky",
@@ -1367,6 +1379,29 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         ),
     )
     return config
+end
+
+"""Check the prescribed CMIP aerosol options; with input checks, both files are read and checked."""
+function _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
+    f = config.forcing
+    f.aerosol_scheme in (:none, :cmip_prescribed) ||
+        throw(ArgumentError("aerosol_scheme must be none or cmip_prescribed"))
+    if f.aerosol_scheme == :none
+        isempty(f.aerosol_cmip_background_path) && isempty(f.aerosol_cmip_plumes_path) && f.aerosol_cmip_year == 0 ||
+            throw(ArgumentError("aerosol_cmip_* settings require aerosol_scheme = cmip_prescribed"))
+        return nothing
+    end
+    rrtmgp_active || throw(ArgumentError("aerosol_scheme = cmip_prescribed requires RRTMGP radiation"))
+    f.aerosol_optical_depth_550nm == 0 ||
+        throw(ArgumentError("aerosol_scheme = cmip_prescribed replaces aerosol_optical_depth_550nm; leave it at zero"))
+    !isempty(f.aerosol_cmip_background_path) && !isempty(f.aerosol_cmip_plumes_path) ||
+        throw(ArgumentError("aerosol_scheme = cmip_prescribed needs both aerosol_cmip_background_path and _plumes_path"))
+    f.aerosol_cmip_year == 0 || 1850 <= f.aerosol_cmip_year <= 2100 ||
+        throw(ArgumentError("aerosol_cmip_year must be 0 or within the MACv2-SP years 1850-2100"))
+    check_input_files || return nothing
+    MACv2Background(f.aerosol_cmip_background_path)
+    MACv2SPParameters(f.aerosol_cmip_plumes_path)
+    return nothing
 end
 
 """Check the prescribed-ozone options; with input checks, the file and the run's time span or fixed year."""

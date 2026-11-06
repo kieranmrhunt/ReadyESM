@@ -1,0 +1,337 @@
+#=
+Prescribed CMIP aerosol optics (PA2, design v3 0e5660da), opt-in with forcing.aerosol_scheme = :cmip_prescribed.
+
+The aerosol is given to RRTMGP as optics per band (vendored RRTMGP band-optics hook, vendor/RRTMGP/READYESM_PATCH.md),
+not as MERRA masses; the MERRA mass stays zero, checked at every write (`_set_band_optics!`). Components:
+  A  MACv2 pre-industrial background (Kinne 2019; prepared file readiesm_macv2_background_v1): SW fine (1850) and
+     coarse modes, LW total, monthly climatology on 1 degree, with 20-layer AOD fractions in height above sea level.
+  B  MACv2-SP-1-0 anthropogenic plumes for the model year (macv2_simple_plumes.jl), SW only, zero above 3000 nm.
+  C  stratospheric optics (CMIP7 UOEXETER-CMIP-2-2-1, prepared separately); until its file exists the stratospheric
+     contribution is zero and the provenance says "tropospheric only".
+Each radiation solve: optics of A (time-interpolated between monthly midpoints, bilinear from the 1 degree grid to each
+column, distributed over model layers by height overlap of the MACv2 layers, clipped at the model surface) plus B
+(evaluated on the model layer heights) form the tropospheric optics; C forms the stratospheric optics; the
+instantaneous local tropopause (WMO lapse-rate rule on model layers) assigns them: tropospheric below the tropopause
+layer, stratospheric above, and in the layer holding the tropopause the ETH CMIP6 procedure, the arithmetic mean of
+extinction, ssa and g of both sides, or 50 % of the extinction keeping the other quantities where one side is absent.
+Optics within a component combine by optical-depth weighting (ssa) and scattering weighting (g).
+=#
+
+const CMIP_AEROSOL_BACKGROUND_SCHEMA = "readiesm_macv2_background_v1"
+const CMIP_AEROSOL_LABEL_TROPOSPHERIC =
+    "prescribed aerosol: MACv2 pre-industrial background + MACv2-SP-1-0 (CMIP6); tropospheric only (no stratospheric file)"
+const CMIP_AEROSOL_TROPOPAUSE_RULE =
+    "WMO lapse rate on model layers (first layer above 500 hPa with lapse rate <= 2 K/km held over 2 km); ETH CMIP6 " *
+    "strat-trop rule: tropospheric optics below, stratospheric above, arithmetic mean in the tropopause layer"
+
+"""The prepared MACv2 background (host arrays in Julia order: (lon, lat, month, band) and (lon, lat, layer, month))."""
+struct MACv2Background
+    path::String
+    sha256::String
+    lon::Vector{Float64}
+    lat::Vector{Float64}
+    sw_wavelength_nm::Vector{Int}
+    lw_wavelength_nm::Vector{Int}
+    tau_fine_sw::Array{Float32, 4}
+    ssa_fine_sw::Array{Float32, 4}
+    g_fine_sw::Array{Float32, 4}
+    tau_coarse_sw::Array{Float32, 4}
+    ssa_coarse_sw::Array{Float32, 4}
+    g_coarse_sw::Array{Float32, 4}
+    tau_lw::Array{Float32, 4}
+    ssa_lw::Array{Float32, 4}
+    g_lw::Array{Float32, 4}
+    frac_fine::Array{Float32, 4}
+    frac_coarse::Array{Float32, 4}
+    layer_bottom_m::Vector{Float64}
+    layer_top_m::Vector{Float64}
+end
+
+function MACv2Background(path::AbstractString)
+    isfile(path) || throw(ArgumentError("MACv2 background file not found: $path"))
+    b = NCDatasets.NCDataset(path) do ds
+        get(ds.attrib, "schema", "") == CMIP_AEROSOL_BACKGROUND_SCHEMA ||
+            throw(ArgumentError("$path does not have schema $CMIP_AEROSOL_BACKGROUND_SCHEMA"))
+        r(n) = Array(ds[n].var[:, :, :, :])
+        for n in ("tau_fine_sw", "ssa_fine_sw", "g_fine_sw", "tau_coarse_sw", "ssa_coarse_sw", "g_coarse_sw",
+                  "tau_lw", "ssa_lw", "g_lw", "layer_fraction_fine", "layer_fraction_coarse")
+            any(k -> haskey(ds[n].attrib, k), ("_FillValue", "missing_value")) &&
+                throw(ArgumentError("$n in $path declares a fill value"))
+        end
+        (lon = Float64.(Array(ds["lon"].var[:])), lat = Float64.(Array(ds["lat"].var[:])),
+         sw = Int.(Array(ds["sw_wavelength_nm"].var[:])), lw = Int.(Array(ds["lw_wavelength_nm"].var[:])),
+         tfs = r("tau_fine_sw"), sfs = r("ssa_fine_sw"), gfs = r("g_fine_sw"), tcs = r("tau_coarse_sw"),
+         scs = r("ssa_coarse_sw"), gcs = r("g_coarse_sw"), tl = r("tau_lw"), sl = r("ssa_lw"), gl = r("g_lw"),
+         ff = r("layer_fraction_fine"), fc = r("layer_fraction_coarse"),
+         zb = Float64.(Array(ds["layer_bottom_m"].var[:])), zt = Float64.(Array(ds["layer_top_m"].var[:])))
+    end
+    all(diff(b.lat) .> 0) && all(diff(b.lon) .> 0) || throw(ArgumentError("$path coordinates are not increasing"))
+    for (n, x) in (("tau", (b.tfs, b.tcs, b.tl)), ("ssa", (b.sfs, b.scs, b.sl)), ("g", (b.gfs, b.gcs, b.gl)))
+        for a in x
+            all(isfinite, a) || throw(ArgumentError("$path $n has nonfinite values"))
+            ok = n == "tau" ? all(>=(0), a) : n == "ssa" ? all(v -> 0 <= v <= 1, a) : all(v -> 0 <= v < 1, a)
+            ok || throw(ArgumentError("$path $n is outside its physical range"))
+        end
+    end
+    for f in (b.ff, b.fc)
+        all(v -> 0 <= v <= 1, f) && maximum(abs.(sum(f; dims = 3) .- 1)) <= 1.0e-4 ||
+            throw(ArgumentError("$path layer fractions do not sum to 1"))
+    end
+    return MACv2Background(String(path), bytes2hex(open(SHA.sha256, path)), b.lon, b.lat, b.sw, b.lw, b.tfs, b.sfs,
+                           b.gfs, b.tcs, b.scs, b.gcs, b.tl, b.sl, b.gl, b.ff, b.fc, b.zb, b.zt)
+end
+
+"""Prescribed CMIP aerosol for one model grid: sources, per-column interpolation weights and the write counter."""
+mutable struct CMIPAerosol
+    background::MACv2Background
+    plumes::MACv2SPParameters
+    fixed_year::Int
+    lon::Vector{Float64}                 # model column longitude (degrees east, as SpeedyWeather)
+    lat::Vector{Float64}
+    hweights::Vector{NTuple{6, Float64}} # (i0, i1, j0, j1, wx, wy) on the background grid, per column
+    writes::Int                          # validated writes through `_set_band_optics!`
+    tropopause_layer::Vector{Int}        # at the last write, RRTMGP layer index (bottom to top) per column
+end
+
+function CMIPAerosol(background_path, plumes_path, spectral_grid::SpectralGrid; fixed_year::Integer = 0)
+    fixed_year >= 0 || throw(ArgumentError("aerosol_cmip_year must be zero or a positive year"))
+    bg = MACv2Background(background_path)
+    sp = MACv2SPParameters(plumes_path)
+    lond, latd = RG.get_londlatds(spectral_grid.grid)
+    lon, lat = Float64.(lond), Float64.(latd)
+    hw = [_bilinear_weights(bg.lon, bg.lat, lon[c], lat[c]) for c in eachindex(lon)]
+    return CMIPAerosol(bg, sp, Int(fixed_year), lon, lat, hw, 0, zeros(Int, length(lon)))
+end
+
+"""Bilinear weights on a periodic longitude axis and a clamped latitude axis."""
+function _bilinear_weights(glon, glat, lon, lat)
+    x = mod(lon - glon[1], 360.0) + glon[1]
+    n = length(glon)
+    i0 = clamp(searchsortedlast(glon, x), 1, n)
+    i1 = i0 == n ? 1 : i0 + 1
+    span = i0 == n ? glon[1] + 360 - glon[n] : glon[i1] - glon[i0]
+    wx = x >= glon[i0] ? (x - glon[i0]) / span : (x + 360 - glon[i0]) / span
+    y = clamp(lat, glat[1], glat[end])
+    j0 = clamp(searchsortedlast(glat, y), 1, length(glat) - 1)
+    wy = (y - glat[j0]) / (glat[j0 + 1] - glat[j0])
+    return (Float64(i0), Float64(i1), Float64(j0), Float64(j0 + 1), wx, wy)
+end
+
+@inline function _bilin(a, w, m, band)
+    i0, i1, j0, j1 = Int(w[1]), Int(w[2]), Int(w[3]), Int(w[4])
+    wx, wy = w[5], w[6]
+    return (1 - wy) * ((1 - wx) * a[i0, j0, m, band] + wx * a[i1, j0, m, band]) +
+           wy * ((1 - wx) * a[i0, j1, m, band] + wx * a[i1, j1, m, band])
+end
+
+"""Monthly-midpoint weights (cyclic) for decimal-year fraction `f`: months (m0, m1) and weight of m1."""
+function _month_weights(f)
+    x = 12 * f - 0.5                 # month midpoints at (m - 0.5) / 12
+    m0 = floor(Int, x)
+    w = x - m0
+    return mod(m0, 12) + 1, mod(m0 + 1, 12) + 1, w
+end
+
+"""
+Instantaneous local tropopause per column (WMO lapse-rate rule on model layers): the lowest layer above 500 hPa whose
+lapse rate to the next layer is <= 2 K/km and stays <= 2 K/km on average over the next 2 km. Returns the RRTMGP
+layer index (bottom to top) of the layer holding the tropopause, or the top layer if none qualifies.
+"""
+function _tropopause_layers(t_lay, p_lay, z)
+    nlay, ncol = size(t_lay)
+    out = fill(nlay, ncol)
+    for c in 1:ncol, r in 1:(nlay - 1)
+        p_lay[r, c] < 5.0e4 || continue
+        Γ(r1, r2) = -(t_lay[r2, c] - t_lay[r1, c]) / max((z[r2, c] - z[r1, c]) / 1000, 1.0e-6)
+        Γ(r, r + 1) <= 2 || continue
+        top = findlast(rr -> z[rr, c] <= z[r, c] + 2000, r:nlay)
+        rtop = r + top - 1
+        (rtop == r || Γ(r, rtop) <= 2) || continue
+        out[c] = r
+        break
+    end
+    return out
+end
+
+"""Combine optics (tau, ssa, g) tuples by optical-depth and scattering weighting."""
+@inline function _combine_optics(parts)
+    τ = sum(p[1] for p in parts)
+    τ > 0 || return (0.0, 1.0, 0.0)
+    sca = sum(p[1] * p[2] for p in parts)
+    asy = sum(p[1] * p[2] * p[3] for p in parts)
+    return (τ, sca / τ, sca > 0 ? asy / sca : 0.0)
+end
+
+"""ETH CMIP6 tropopause-layer rule: arithmetic means, or 50 % of the extinction where one side is absent."""
+@inline function _tropopause_mean(trop, strat)
+    trop[1] > 0 && strat[1] > 0 &&
+        return ((trop[1] + strat[1]) / 2, (trop[2] + strat[2]) / 2, (trop[3] + strat[3]) / 2)
+    trop[1] > 0 && return (trop[1] / 2, trop[2], trop[3])
+    strat[1] > 0 && return (strat[1] / 2, strat[2], strat[3])
+    return (0.0, 1.0, 0.0)
+end
+
+"""
+Model layer bounds in height above sea level, RRTMGP order (bottom to top), from the full-level geopotential
+(SpeedyWeather order, top to bottom) and the orography: interfaces midway between full levels, the bottom at the
+surface and the top extrapolated by half a layer.
+"""
+function _layer_heights(geopotential, orography, gravity, nlay)
+    npoints, nlev = size(geopotential)
+    zc = zeros(nlay, npoints); zb = zeros(nlay + 1, npoints)
+    for c in 1:npoints
+        for r in 1:nlev
+            zc[r, c] = geopotential[c, nlev - r + 1] / gravity
+        end
+        for r in (nlev + 1):nlay
+            zc[r, c] = zc[nlev, c] + (r - nlev) * (zc[nlev, c] - zc[nlev - 1, c])
+        end
+        zb[1, c] = orography[c]
+        for r in 1:(nlay - 1)
+            zb[r + 1, c] = (zc[r, c] + zc[r + 1, c]) / 2
+        end
+        zb[nlay + 1, c] = zc[nlay, c] + (zc[nlay, c] - zb[nlay, c])
+    end
+    return zc, zb
+end
+
+"""
+Prescribed optics on host arrays `(band, layer, column)` for the current state: the tropospheric part (A + B), the
+stratospheric part (C, zero without its file) and the tropopause rule.
+"""
+function _cmip_aerosol_optics(a::CMIPAerosol, time, zc, zb, orography, t_lay, p_lay, nbnd_sw, nbnd_lw)
+    bg = a.background
+    nlay, ncol = size(zc)
+    length(bg.sw_wavelength_nm) == nbnd_sw && length(bg.lw_wavelength_nm) == nbnd_lw ||
+        throw(ArgumentError("MACv2 background bands differ from the RRTMGP bands"))
+    x = _decimal_year(time)
+    frac = x - floor(x)
+    year_fr = a.fixed_year > 0 ? a.fixed_year + frac : x
+    m0, m1, wm = _month_weights(frac)
+    tau_sw = zeros(nbnd_sw, nlay, ncol); ssa_sw = ones(nbnd_sw, nlay, ncol); g_sw = zeros(nbnd_sw, nlay, ncol)
+    tau_lw = zeros(nbnd_lw, nlay, ncol); ssa_lw = ones(nbnd_lw, nlay, ncol); g_lw = zeros(nbnd_lw, nlay, ncol)
+    dz = zb[2:end, :] .- zb[1:(end - 1), :]
+    sp_tau, sp_ssa, sp_g = macv2sp_band_optics(a.plumes, bg.sw_wavelength_nm, orography, a.lon, a.lat, year_fr,
+                                               permutedims(zc), permutedims(dz))
+    nl = length(bg.layer_bottom_m)
+    tp = _tropopause_layers(t_lay, p_lay, zc)
+    a.tropopause_layer .= tp
+    over = zeros(nl, nlay)
+    for c in 1:ncol
+        w = a.hweights[c]
+        # MACv2 layer overlap with each model layer, clipped at the model surface (uniform within a MACv2 layer).
+        for r in 1:nlay, l in 1:nl
+            lo = max(bg.layer_bottom_m[l], zb[r, c], orography[c])
+            hi = min(bg.layer_top_m[l], zb[r + 1, c])
+            over[l, r] = max(hi - lo, 0.0) / (bg.layer_top_m[l] - bg.layer_bottom_m[l])
+        end
+        ff = [(1 - wm) * _bilin(bg.frac_fine, w, l, m0) + wm * _bilin(bg.frac_fine, w, l, m1) for l in 1:nl]
+        fc = [(1 - wm) * _bilin(bg.frac_coarse, w, l, m0) + wm * _bilin(bg.frac_coarse, w, l, m1) for l in 1:nl]
+        sf = [sum(ff[l] * over[l, r] for l in 1:nl) for r in 1:nlay]
+        sc = [sum(fc[l] * over[l, r] for l in 1:nl) for r in 1:nlay]
+        tm(arr, b) = (1 - wm) * _bilin(arr, w, m0, b) + wm * _bilin(arr, w, m1, b)
+        for b in 1:nbnd_sw
+            fine = (tm(bg.tau_fine_sw, b), tm(bg.ssa_fine_sw, b), tm(bg.g_fine_sw, b))
+            coarse = (tm(bg.tau_coarse_sw, b), tm(bg.ssa_coarse_sw, b), tm(bg.g_coarse_sw, b))
+            for r in 1:nlay
+                trop = _combine_optics(((fine[1] * sf[r], fine[2], fine[3]), (coarse[1] * sc[r], coarse[2], coarse[3]),
+                                        (sp_tau[b, c, r], sp_ssa[b, c, r], sp_g[b, c, r])))
+                strat = (0.0, 1.0, 0.0)   # component C: no stratospheric file yet
+                o = r < tp[c] ? trop : r > tp[c] ? strat : _tropopause_mean(trop, strat)
+                tau_sw[b, r, c], ssa_sw[b, r, c], g_sw[b, r, c] = o
+            end
+        end
+        for b in 1:nbnd_lw
+            lw = (tm(bg.tau_lw, b), tm(bg.ssa_lw, b), tm(bg.g_lw, b))
+            for r in 1:nlay
+                trop = (lw[1] * sc[r], lw[2], lw[3])   # LW: the MACv2 IR total on the coarse profile (design v3)
+                strat = (0.0, 1.0, 0.0)
+                o = r < tp[c] ? trop : r > tp[c] ? strat : _tropopause_mean(trop, strat)
+                tau_lw[b, r, c], ssa_lw[b, r, c], g_lw[b, r, c] = o
+            end
+        end
+    end
+    return (; tau_sw, ssa_sw, g_sw, tau_lw, ssa_lw, g_lw)
+end
+
+"""
+The only PA2 write path for band optics (Paul, 14:xx): checks the host optics (shape, finite, tau >= 0, 0 <= ssa <= 1,
+0 <= g < 1) and the zero-MERRA invariant on the solver's own architecture, then copies them into the solver and counts
+the write. Throws before anything is copied if a check fails.
+"""
+function _set_band_optics!(a::CMIPAerosol, solver, optics)
+    bo = solver.as.aerosol_state.band_optics
+    isnothing(bo) && throw(ArgumentError("the RRTMGP solver has no band-optics arrays"))
+    keys(optics) == keys(bo) || throw(ArgumentError("band optics fields $(keys(optics)) differ from $(keys(bo))"))
+    for name in keys(bo)
+        x = getproperty(optics, name)
+        size(x) == size(getproperty(bo, name)) ||
+            throw(ArgumentError("band optics $name has size $(size(x)), expected $(size(getproperty(bo, name)))"))
+        all(isfinite, x) || throw(ArgumentError("band optics $name has a nonfinite value"))
+        s = String(name)
+        ok = startswith(s, "tau") ? all(>=(0), x) : startswith(s, "ssa") ? all(v -> 0 <= v <= 1, x) :
+             all(v -> 0 <= v < 1, x)
+        ok || throw(ArgumentError("band optics $name is outside its physical range"))
+    end
+    all(iszero, solver.as.aerosol_state.aero_mass) || throw(ArgumentError(
+        "MERRA aerosol mass must be zero when prescribed band optics own the aerosol (no double counting)"))
+    for name in keys(bo)
+        dst = getproperty(bo, name)
+        copyto!(dst, eltype(dst).(getproperty(optics, name)))
+    end
+    a.writes += 1
+    return nothing
+end
+
+"""Compute and write the prescribed optics before a flux solve. A no-op without the CMIP aerosol scheme."""
+_apply_cmip_aerosol!(::Nothing, solver, vars, model) = nothing
+
+function _apply_cmip_aerosol!(a::CMIPAerosol, solver, vars, model)
+    nlay = solver.grid_params.nlay
+    geopotential = Array(vars.grid.geopotential.data)
+    orography = Float64.(vec(Array(model.orography.orography.data)))
+    zc, zb = _layer_heights(Float64.(geopotential), orography, model.planet.gravity, nlay)
+    t_lay = Float64.(Array(RRTMGP.layer_temperature(solver)))
+    p_lay = Float64.(Array(RRTMGP.layer_pressure(solver)))
+    size(t_lay, 1) == nlay || (t_lay = vcat(t_lay, repeat(t_lay[end:end, :], nlay - size(t_lay, 1))))
+    size(p_lay, 1) == nlay || (p_lay = vcat(p_lay, repeat(p_lay[end:end, :], nlay - size(p_lay, 1))))
+    optics = _cmip_aerosol_optics(a, vars.prognostic.clock.time, zc, zb, orography, t_lay, p_lay,
+                                  solver.lookups.nbnd_sw, solver.lookups.nbnd_lw)
+    _set_band_optics!(a, solver, optics)
+    return nothing
+end
+
+"""The scheme for `config`, or `nothing` unless forcing.aerosol_scheme = :cmip_prescribed."""
+_cmip_aerosol(config, spectral_grid) = config.forcing.aerosol_scheme == :cmip_prescribed ?
+    CMIPAerosol(config.forcing.aerosol_cmip_background_path, config.forcing.aerosol_cmip_plumes_path, spectral_grid;
+                fixed_year = config.forcing.aerosol_cmip_year) : nothing
+
+"""Restart identity of the scheme: source hashes and year mode."""
+_cmip_aerosol_identity(::Nothing) = nothing
+_cmip_aerosol_identity(a::CMIPAerosol) =
+    (background_sha256 = a.background.sha256, plumes_sha256 = a.plumes.sha256, fixed_year = a.fixed_year)
+
+"""Reject a checkpoint whose CMIP aerosol identity differs from the reconstructed radiation."""
+function _validate_cmip_aerosol_restart(radiation, state)
+    saved = hasproperty(state, :cmip_aerosol) ? state.cmip_aerosol : nothing
+    current = _cmip_aerosol_identity(radiation.cmip_aerosol)
+    saved == current || throw(ArgumentError(
+        "checkpoint and reconstructed radiation use different CMIP aerosol (checkpoint $(something(saved, "none")), " *
+        "configuration $(something(current, "none")))"))
+    return nothing
+end
+
+"""Diagnostics provenance of the CMIP aerosol scheme, written only when it is requested."""
+function _cmip_aerosol_provenance(radiation, config, rrtmgp_active)
+    config.forcing.aerosol_scheme == :cmip_prescribed || return (;)
+    a = rrtmgp_active ? radiation.cmip_aerosol : nothing
+    isnothing(a) && return (cmip_aerosol = "requested_but_not_active",)
+    return (cmip_aerosol = CMIP_AEROSOL_LABEL_TROPOSPHERIC,
+            cmip_aerosol_background_path = a.background.path, cmip_aerosol_background_sha256 = a.background.sha256,
+            cmip_aerosol_plumes_path = a.plumes.path, cmip_aerosol_plumes_sha256 = a.plumes.sha256,
+            cmip_aerosol_year_mode = a.fixed_year > 0 ? "fixed_year_$(a.fixed_year)" : "model_date",
+            cmip_aerosol_band_rule = "band-representative wavelengths (MACv2 convention), band map 4af3094c",
+            cmip_aerosol_tropopause_rule = CMIP_AEROSOL_TROPOPAUSE_RULE,
+            cmip_aerosol_merra_mass = "zero, checked at every write",
+            cmip_aerosol_validated_writes = a.writes)
+end

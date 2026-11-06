@@ -156,12 +156,13 @@ end
 """Machine-readable provenance for the radiative forcing actually in use."""
 function _forcing_provenance(radiation, config::ExperimentConfig)
     rrtmgp_active = radiation isa RRTMGPRadiation
-    aerosol_active = rrtmgp_active && radiation.target_aod_550nm > 0
+    aerosol_active = rrtmgp_active && (radiation.target_aod_550nm > 0 || !isnothing(radiation.cmip_aerosol))
     return (;
         _base_forcing_provenance(radiation, config, rrtmgp_active, aerosol_active)...,
         _trace_gas_provenance(radiation, config, rrtmgp_active)...,
         _well_mixed_gas_provenance(radiation, config, rrtmgp_active)...,
         _prescribed_ozone_provenance(radiation, config, rrtmgp_active)...,
+        _cmip_aerosol_provenance(radiation, config, rrtmgp_active)...,
     )
 end
 
@@ -199,12 +200,12 @@ function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_ac
             Float64(radiation.target_aod_550nm) : NaN,
         aerosol_species = config.forcing.aerosol_species,
         aerosol_forcing_active = aerosol_active,
-        aerosol_forcing_mode = aerosol_active ?
+        aerosol_forcing_mode = !aerosol_active ? "disabled" : isnothing(radiation.cmip_aerosol) ?
             "prescribed_column_aod_550nm_recalibrated_each_radiation_solve" :
-            "disabled",
-        aerosol_vertical_profile = aerosol_active ?
+            "prescribed_cmip_band_optics_each_radiation_solve",
+        aerosol_vertical_profile = !aerosol_active ? "none" : isnothing(radiation.cmip_aerosol) ?
             "fixed_log_pressure_gaussian_center_150hPa_width_0.8" :
-            "none",
+            "macv2_layer_fractions_and_macv2sp_beta_profiles",
         forcing_time_dependence = _forcing_time_dependence(config),
         interactive_carbon_cycle = config.carbon.mode == :emissions_driven,
         interactive_aerosol_chemistry = false,

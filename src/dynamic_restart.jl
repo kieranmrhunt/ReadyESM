@@ -458,6 +458,9 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
     isnothing(radiation.ozone) || (state = merge(state, (
         prescribed_ozone = _prescribed_ozone_identity(radiation.ozone),
     )))
+    isnothing(radiation.cmip_aerosol) || (state = merge(state, (
+        cmip_aerosol = _cmip_aerosol_identity(radiation.cmip_aerosol),
+    )))
     return state
 end
 

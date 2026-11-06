@@ -140,6 +140,8 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     solar_distance_correction::Bool
     # Optional prescribed zonal-mean ozone (prescribed_ozone.jl). `nothing` keeps the analytic production profile.
     ozone::Union{Nothing, PrescribedOzone}
+    # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2). `nothing` keeps the released path.
+    cmip_aerosol::Union{Nothing, CMIPAerosol}
 end
 
 const DIAGNOSTIC_CLOUD_HUMIDITY_SEARCH_LEGACY_SCHEME =
@@ -1166,13 +1168,13 @@ function _validate_band_optics(solver)
             throw(ArgumentError("band optics $name has size $(size(x)), expected $((shapes[name], nlay, ncol))"))
         KernelAbstractions.get_backend(x) == backend ||
             throw(ArgumentError("band optics $name is not on the solver's architecture"))
-        h = Array(x)
+        h = x   # architecture-native reductions: no host copy in a GPU timestep
         all(isfinite, h) || throw(ArgumentError("band optics $name has a nonfinite value"))
         ok = startswith(String(name), "tau") ? all(>=(0), h) :
              startswith(String(name), "ssa") ? all(v -> 0 <= v <= 1, h) : all(v -> 0 <= v < 1, h)
         ok || throw(ArgumentError("band optics $name is outside its physical range"))
     end
-    all(iszero, Array(aerosol.aero_mass)) || throw(ArgumentError(
+    all(iszero, aerosol.aero_mass) || throw(ArgumentError(
         "MERRA aerosol mass must be zero when prescribed band optics own the aerosol (no double counting)"))
     return nothing
 end
@@ -1196,6 +1198,7 @@ changed. A checkpoint written before these options existed has no record and imp
 """
 function _validate_trace_gas_restart(radiation, state)
     _validate_prescribed_ozone_restart(radiation, state)
+    _validate_cmip_aerosol_restart(radiation, state)
     # With a schedule the gases follow the restored clock; the schedule identity check replaces the value check.
     _validate_well_mixed_gas_restart(radiation, state)
     isnothing(radiation.gas_schedule) || return nothing
@@ -1230,8 +1233,11 @@ function RRTMGPRadiation(
     well_mixed_gas_schedule::Union{Nothing, WellMixedGasSchedule} = nothing,
     well_mixed_gas_start::Union{Nothing, DateTime} = nothing,
     prescribed_ozone::Union{Nothing, PrescribedOzone} = nothing,
+    cmip_aerosol::Union{Nothing, CMIPAerosol} = nothing,
 )
     NF = spectral_grid.NF
+    isnothing(cmip_aerosol) || aerosol_optical_depth_550nm == 0 || throw(ArgumentError(
+        "the CMIP aerosol scheme replaces aerosol_optical_depth_550nm; leave it at zero"))
     if !isnothing(well_mixed_gas_schedule)
         isnothing(ch4_ppb) && isnothing(n2o_ppb) || throw(ArgumentError(
             "a well-mixed gas schedule replaces ch4_ppb and n2o_ppb; leave them unset"))
@@ -1290,6 +1296,10 @@ function RRTMGPRadiation(
             NF(aerosol_optical_depth_550nm);
             all_sky,
         )
+    elseif !isnothing(cmip_aerosol)
+        length(cmip_aerosol.lon) == ncol || throw(DimensionMismatch("CMIP aerosol was built for a different grid"))
+        # Zero MERRA mass and zero band optics; every solve writes the prescribed optics through `_set_band_optics!`.
+        solver = _enable_sulfate_aerosol(solver, zero(NF); all_sky, band_optics = true)
     end
     # Enabling diagnostic clouds constructs a fresh all-sky solver whose flux
     # presentation and combined net-flux buffers are intentionally allocated
@@ -1331,6 +1341,7 @@ function RRTMGPRadiation(
         prognostic_cloud_condensate,
         solar_distance_correction,
         prescribed_ozone,
+        cmip_aerosol,
     )
 end
 
@@ -2153,6 +2164,7 @@ function _solve_rrtmgp!(radiation::RRTMGPRadiation, vars, model)
     # Pack the opt-in seasonal direct/diffuse bands after that refresh so they
     # are the values used by this flux solve.
     _prepare_seasonal_albedo!(radiation, vars, model)
+    _apply_cmip_aerosol!(radiation.cmip_aerosol, radiation.solver, vars, model)
     _update_fluxes!(radiation)
     _recalibrate_aod!(radiation)
     radiation.heating_rate .= RRTMGP.heating_rate(radiation.solver)

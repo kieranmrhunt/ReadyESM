@@ -304,6 +304,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         well_mixed_gas_schedule = _well_mixed_gas_schedule(config),
         well_mixed_gas_start = config.start_date,
         prescribed_ozone = _prescribed_ozone(config, spectral_grid),
+        cmip_aerosol = _cmip_aerosol(config, spectral_grid),
         aerosol_optical_depth_550nm = config.forcing.aerosol_optical_depth_550nm,
         surface_emissivity = COUPLED_SURFACE_EMISSIVITY,
         solve_every_n_steps = config.forcing.radiation_every_n_steps,
