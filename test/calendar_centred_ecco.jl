@@ -9,6 +9,16 @@ using ReadyESM, Test
         "verify_ecco_launch_bundle.jl",
     ))
 
+    @test "EVEL_1993_01_centered_velocity_v1.jld2" in CALENDAR_CENTRED_ECCO_CACHE_FILES
+    @test "NVEL_1993_01_centered_velocity_v1.jld2" in CALENDAR_CENTRED_ECCO_CACHE_FILES
+    @test !("EVEL_1993_01_inpainted.jld2" in CALENDAR_CENTRED_ECCO_FILES)
+    @test !("NVEL_1993_01_inpainted.jld2" in CALENDAR_CENTRED_ECCO_FILES)
+    @test Set(keys(_calendar_centred_ecco_manifest(joinpath(
+        ReadyESM.PROJECT_ROOT,
+        "config",
+        "ecco_calendar_centred_1993_01.sha256",
+    )))) == CALENDAR_CENTRED_ECCO_FILES
+
     @test config.ocean_initial_conditions == :ecco_monthly_full_state
     @test (config.ecco_year, config.ecco_month) == (1993, 1)
     @test config.ecco_initial_conditions_directory == joinpath(
@@ -109,6 +119,14 @@ using ReadyESM, Test
             bundle,
             manifest,
         )
+    end
+
+    mktempdir() do directory
+        bundle = joinpath(directory, "bundle")
+        manifest = joinpath(directory, "manifest.sha256")
+        write_test_bundle(bundle, manifest)
+        write(joinpath(bundle, "EVEL_1993_01_inpainted.jld2"), "legacy cache\n")
+        @test_throws ErrorException verify_calendar_centred_ecco_bundle(bundle, manifest)
     end
 
     mktempdir() do directory

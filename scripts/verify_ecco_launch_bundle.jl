@@ -11,8 +11,8 @@ const CALENDAR_CENTRED_ECCO_BASE_FILES = Set((
     "THETA_1993_01.nc",
 ))
 const CALENDAR_CENTRED_ECCO_CACHE_FILES = Set((
-    "EVEL_1993_01_inpainted.jld2",
-    "NVEL_1993_01_inpainted.jld2",
+    "EVEL_1993_01_centered_velocity_v1.jld2",
+    "NVEL_1993_01_centered_velocity_v1.jld2",
     "SALT_1993_01_inpainted.jld2",
     "SSH_1993_01_inpainted.jld2",
     "THETA_1993_01_inpainted.jld2",
