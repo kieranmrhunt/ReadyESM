@@ -14,6 +14,15 @@ Base.@kwdef struct ForcingConfig
     ozone_path::String = ""
     ozone_fixed_year::Int = 0
     aerosol_optical_depth_550nm::Float64 = 0.0
+    # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2): :none (default) or :cmip_prescribed,
+    # the MACv2 pre-industrial background file plus the MACv2-SP-1-0 parameter file; a year > 0 holds that MACv2-SP
+    # year, 0 follows the model date. The optional stratospheric file (prepared UOEXETER-CMIP-2-2-1 band moments)
+    # follows the model date and needs year 0; empty means tropospheric aerosol only.
+    aerosol_scheme::Symbol = :none
+    aerosol_cmip_background_path::String = ""
+    aerosol_cmip_plumes_path::String = ""
+    aerosol_cmip_year::Int = 0
+    aerosol_cmip_stratospheric_path::String = ""
     aerosol_species::String = "sulfate"
     radiation::Symbol = :speedy_simplified
     radiation_every_n_steps::Int = 1
@@ -295,6 +304,11 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         aerosol_optical_depth_550nm = Float64(
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
+        aerosol_scheme = Symbol(_mapping_value(forcing_raw, "aerosol_scheme", "none")),
+        aerosol_cmip_background_path = String(_mapping_value(forcing_raw, "aerosol_cmip_background_path", "")),
+        aerosol_cmip_plumes_path = String(_mapping_value(forcing_raw, "aerosol_cmip_plumes_path", "")),
+        aerosol_cmip_year = Int(_mapping_value(forcing_raw, "aerosol_cmip_year", 0)),
+        aerosol_cmip_stratospheric_path = String(_mapping_value(forcing_raw, "aerosol_cmip_stratospheric_path", "")),
         aerosol_species = String(_mapping_value(forcing_raw, "aerosol_species", "sulfate")),
         radiation = Symbol(_mapping_value(forcing_raw, "radiation", "speedy_simplified")),
         radiation_every_n_steps = Int(
@@ -1390,6 +1404,7 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     end
     _validate_well_mixed_gas_options(config, rrtmgp_active, check_input_files)
     _validate_prescribed_ozone_options(config, rrtmgp_active, check_input_files)
+    _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
     if !rrtmgp_active && config.forcing.aerosol_optical_depth_550nm > 0
         throw(ArgumentError(
             "prescribed aerosol AOD requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky",
@@ -1505,6 +1520,54 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         ),
     )
     return config
+end
+
+"""Check the prescribed CMIP aerosol options; with input checks, every given file is read and checked."""
+function _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
+    f = config.forcing
+    f.aerosol_scheme in (:none, :cmip_prescribed) ||
+        throw(ArgumentError("aerosol_scheme must be none or cmip_prescribed"))
+    if f.aerosol_scheme == :none
+        isempty(f.aerosol_cmip_background_path) && isempty(f.aerosol_cmip_plumes_path) && f.aerosol_cmip_year == 0 &&
+            isempty(f.aerosol_cmip_stratospheric_path) ||
+            throw(ArgumentError("aerosol_cmip_* settings require aerosol_scheme = cmip_prescribed"))
+        return nothing
+    end
+    rrtmgp_active || throw(ArgumentError("aerosol_scheme = cmip_prescribed requires RRTMGP radiation"))
+    f.aerosol_optical_depth_550nm == 0 ||
+        throw(ArgumentError("aerosol_scheme = cmip_prescribed replaces aerosol_optical_depth_550nm; leave it at zero"))
+    !isempty(f.aerosol_cmip_background_path) && !isempty(f.aerosol_cmip_plumes_path) ||
+        throw(ArgumentError("aerosol_scheme = cmip_prescribed needs both aerosol_cmip_background_path and _plumes_path"))
+    # MACv2-SP-1-0 (the CMIP6 historical file) has year weights for 1850-2016 only; the reader also checks the file.
+    f.aerosol_cmip_year == 0 || 1850 <= f.aerosol_cmip_year <= 2016 ||
+        throw(ArgumentError("aerosol_cmip_year must be 0 or within the MACv2-SP-1-0 years 1850-2016"))
+    if f.aerosol_cmip_year == 0
+        # Model-date mode: the whole run must lie inside the MACv2-SP years (Paul 14:5x).
+        stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
+        1850 <= Dates.year(config.start_date) && Dates.year(stop) <= 2016 || throw(ArgumentError(
+            "aerosol_scheme = cmip_prescribed with the model date needs the run $(config.start_date) to $stop " *
+            "inside the MACv2-SP-1-0 years 1850-2016; set aerosol_cmip_year to hold a year"))
+    end
+    isempty(f.aerosol_cmip_stratospheric_path) || f.aerosol_cmip_year == 0 || throw(ArgumentError(
+        "aerosol_cmip_stratospheric_path follows the model date; it cannot be combined with aerosol_cmip_year"))
+    if check_input_files && !isempty(f.aerosol_cmip_stratospheric_path)
+        # The whole run must lie between the file's first and last monthly midpoints.
+        st = StratosphericAerosol(f.aerosol_cmip_stratospheric_path)
+        stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
+        st.month_mid[1] <= config.start_date && stop <= st.month_mid[end] || throw(ArgumentError(
+            "the run $(config.start_date) to $stop is outside the stratospheric aerosol months " *
+            "($(st.month_mid[1]) to $(st.month_mid[end]))"))
+    end
+    if check_input_files
+        last = MACv2SPParameters(f.aerosol_cmip_plumes_path).last_year
+        year = f.aerosol_cmip_year > 0 ? f.aerosol_cmip_year :
+            Dates.year(config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000)))
+        year <= last || throw(ArgumentError("the MACv2-SP file has year weights only to $last, not $year"))
+    end
+    check_input_files || return nothing
+    MACv2Background(f.aerosol_cmip_background_path)
+    MACv2SPParameters(f.aerosol_cmip_plumes_path)
+    return nothing
 end
 
 """Check the prescribed-ozone options; with input checks, the file and the run's time span or fixed year."""

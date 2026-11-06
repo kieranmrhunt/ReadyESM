@@ -140,6 +140,8 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     solar_distance_correction::Bool
     # Optional prescribed zonal-mean ozone (prescribed_ozone.jl). `nothing` keeps the analytic production profile.
     ozone::Union{Nothing, PrescribedOzone}
+    # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2). `nothing` keeps the released path.
+    cmip_aerosol::Union{Nothing, CMIPAerosol}
 end
 
 const DIAGNOSTIC_CLOUD_HUMIDITY_SEARCH_LEGACY_SCHEME =
@@ -1070,7 +1072,11 @@ function _enable_diagnostic_clouds(base_solver)
     )
 end
 
-function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
+# `band_optics = true` also gives the aerosol state zero prescribed per-band optics arrays (vendored RRTMGP band-optics
+# hook, vendor/RRTMGP/READYESM_PATCH.md) for a prescribed-optics scheme to fill; false keeps the unpatched state.
+function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false, band_optics::Bool = false)
+    band_optics && target_aod != 0 && throw(ArgumentError(
+        "prescribed band optics own the aerosol: the MERRA sulfate target must be zero (no double counting)"))
     grid_params = base_solver.grid_params
     NF = eltype(grid_params)
     DA = ClimaComms.array_type(grid_params)
@@ -1088,6 +1094,7 @@ function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
         DA{Bool}(falses(nlay, ncol)),
         DA{NF}(zeros(NF, n_aerosize, nlay, ncol)),
         DA{NF}(zeros(NF, n_aerosols, nlay, ncol)),
+        band_optics ? _zero_band_optics(DA, NF, lookups.nbnd_sw, lookups.nbnd_lw, nlay, ncol) : nothing,
     )
     old_state = base_solver.as
     state = RRTMGP.AtmosphericStates.AtmosphericState(
@@ -1131,6 +1138,47 @@ function _enable_sulfate_aerosol(base_solver, target_aod; all_sky = false)
     return solver
 end
 
+"""Zero prescribed band optics (tau, ssa, g for every SW and LW band, layer and column) on the solver's architecture."""
+_zero_band_optics(DA, NF, nbnd_sw, nbnd_lw, nlay, ncol) = (
+    tau_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)), ssa_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)),
+    g_sw = DA{NF}(zeros(NF, nbnd_sw, nlay, ncol)), tau_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)),
+    ssa_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)), g_lw = DA{NF}(zeros(NF, nbnd_lw, nlay, ncol)),
+)
+
+"""
+Admission check for prescribed band optics, run before a radiation solve that uses them (Codex 14:18, Paul 14:xx).
+Every array must have the (band, layer, column) shape of the solver on the solver's architecture; every value must be
+finite, with tau >= 0, 0 <= ssa <= 1 and 0 <= g < 1 (g < 1 keeps the SW delta scaling nonsingular); and the MERRA
+lookup must carry no aerosol mass, so the prescribed optics are the only aerosol (the hook adds to the lookup, so a
+nonzero mass would count aerosol twice). Throws an ArgumentError naming the first failing field. A no-op without
+band optics.
+"""
+function _validate_band_optics(solver)
+    aerosol = solver.as.aerosol_state
+    bo = aerosol.band_optics
+    isnothing(bo) && return nothing
+    nlay, ncol = solver.grid_params.nlay, solver.grid_params.ncol
+    backend = KernelAbstractions.get_backend(aerosol.aero_mass)
+    shapes = (tau_sw = solver.lookups.nbnd_sw, ssa_sw = solver.lookups.nbnd_sw, g_sw = solver.lookups.nbnd_sw,
+              tau_lw = solver.lookups.nbnd_lw, ssa_lw = solver.lookups.nbnd_lw, g_lw = solver.lookups.nbnd_lw)
+    keys(bo) == keys(shapes) || throw(ArgumentError("band optics fields $(keys(bo)) differ from $(keys(shapes))"))
+    for name in keys(shapes)
+        x = getproperty(bo, name)
+        size(x) == (shapes[name], nlay, ncol) ||
+            throw(ArgumentError("band optics $name has size $(size(x)), expected $((shapes[name], nlay, ncol))"))
+        KernelAbstractions.get_backend(x) == backend ||
+            throw(ArgumentError("band optics $name is not on the solver's architecture"))
+        h = x   # architecture-native reductions: no host copy in a GPU timestep
+        all(isfinite, h) || throw(ArgumentError("band optics $name has a nonfinite value"))
+        ok = startswith(String(name), "tau") ? all(>=(0), h) :
+             startswith(String(name), "ssa") ? all(v -> 0 <= v <= 1, h) : all(v -> 0 <= v < 1, h)
+        ok || throw(ArgumentError("band optics $name is outside its physical range"))
+    end
+    all(iszero, aerosol.aero_mass) || throw(ArgumentError(
+        "MERRA aerosol mass must be zero when prescribed band optics own the aerosol (no double counting)"))
+    return nothing
+end
+
 """Mole fraction for an optional ppb trace-gas value, or `nothing` to keep the RRTMGP default."""
 function _optional_trace_gas_vmr(name, ppb, ::Type{NF}) where {NF}
     isnothing(ppb) && return nothing
@@ -1150,6 +1198,7 @@ changed. A checkpoint written before these options existed has no record and imp
 """
 function _validate_trace_gas_restart(radiation, state)
     _validate_prescribed_ozone_restart(radiation, state)
+    _validate_cmip_aerosol_restart(radiation, state)
     # With a schedule the gases follow the restored clock; the schedule identity check replaces the value check.
     _validate_well_mixed_gas_restart(radiation, state)
     isnothing(radiation.gas_schedule) || return nothing
@@ -1184,8 +1233,11 @@ function RRTMGPRadiation(
     well_mixed_gas_schedule::Union{Nothing, WellMixedGasSchedule} = nothing,
     well_mixed_gas_start::Union{Nothing, DateTime} = nothing,
     prescribed_ozone::Union{Nothing, PrescribedOzone} = nothing,
+    cmip_aerosol::Union{Nothing, CMIPAerosol} = nothing,
 )
     NF = spectral_grid.NF
+    isnothing(cmip_aerosol) || aerosol_optical_depth_550nm == 0 || throw(ArgumentError(
+        "the CMIP aerosol scheme replaces aerosol_optical_depth_550nm; leave it at zero"))
     if !isnothing(well_mixed_gas_schedule)
         isnothing(ch4_ppb) && isnothing(n2o_ppb) || throw(ArgumentError(
             "a well-mixed gas schedule replaces ch4_ppb and n2o_ppb; leave them unset"))
@@ -1244,6 +1296,10 @@ function RRTMGPRadiation(
             NF(aerosol_optical_depth_550nm);
             all_sky,
         )
+    elseif !isnothing(cmip_aerosol)
+        length(cmip_aerosol.lon) == ncol || throw(DimensionMismatch("CMIP aerosol was built for a different grid"))
+        # Zero MERRA mass and zero band optics; every solve writes the prescribed optics through `_set_band_optics!`.
+        solver = _enable_sulfate_aerosol(solver, zero(NF); all_sky, band_optics = true)
     end
     # Enabling diagnostic clouds constructs a fresh all-sky solver whose flux
     # presentation and combined net-flux buffers are intentionally allocated
@@ -1285,6 +1341,7 @@ function RRTMGPRadiation(
         prognostic_cloud_condensate,
         solar_distance_correction,
         prescribed_ozone,
+        cmip_aerosol,
     )
 end
 
@@ -2107,6 +2164,7 @@ function _solve_rrtmgp!(radiation::RRTMGPRadiation, vars, model)
     # Pack the opt-in seasonal direct/diffuse bands after that refresh so they
     # are the values used by this flux solve.
     _prepare_seasonal_albedo!(radiation, vars, model)
+    _apply_cmip_aerosol!(radiation.cmip_aerosol, radiation.solver, vars, model)
     _update_fluxes!(radiation)
     _recalibrate_aod!(radiation)
     radiation.heating_rate .= RRTMGP.heating_rate(radiation.solver)

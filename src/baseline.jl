@@ -307,6 +307,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         well_mixed_gas_schedule = _well_mixed_gas_schedule(config),
         well_mixed_gas_start = config.start_date,
         prescribed_ozone = _prescribed_ozone(config, spectral_grid),
+        cmip_aerosol = _cmip_aerosol(config, spectral_grid),
         aerosol_optical_depth_550nm = config.forcing.aerosol_optical_depth_550nm,
         surface_emissivity = COUPLED_SURFACE_EMISSIVITY,
         solve_every_n_steps = config.forcing.radiation_every_n_steps,
@@ -538,7 +539,10 @@ function build_rrtmgp(config::ExperimentConfig)
     config.ocean_model == :slab || throw(
         ArgumentError("build_rrtmgp requires ocean_model=slab; use build_dynamic_esm otherwise"),
     )
-    return _initial_spectral_truncation!(initialize!(_rrtmgp_atmosphere_model(config)), config)
+    # The clock starts at the configured date, as in build_dynamic_esm; without `time` SpeedyWeather starts every
+    # slab run on 2000-01-01 whatever start_date says, and date-bound forcing then sees the wrong year.
+    return _initial_spectral_truncation!(initialize!(_rrtmgp_atmosphere_model(config); time = config.start_date),
+                                         config)
 end
 
 function run_rrtmgp!(config::ExperimentConfig; steps::Union{Nothing, Int} = nothing)
