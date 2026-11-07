@@ -280,18 +280,20 @@ tropopause, or the top layer if none qualifies.
 function _tropopause_layers(t_lay, p_lay, z)
     nlay, ncol = size(t_lay)
     out = fill(nlay, ncol)
-    for c in 1:ncol, r in 1:(nlay - 1)
-        p_lay[r, c] < 5.0e4 || continue
-        Γ(r2) = -(t_lay[r2, c] - t_lay[r, c]) / max((z[r2, c] - z[r, c]) / 1000, 1.0e-6)
-        ok = Γ(r + 1) <= 2
-        rr = r + 2
-        while ok && rr <= nlay && z[rr, c] <= z[r, c] + 2000
-            ok = Γ(rr) <= 2
-            rr += 1
+    for c in 1:ncol
+        for r in 1:(nlay - 1)
+            p_lay[r, c] < 5.0e4 || continue
+            Γ(r2) = -(t_lay[r2, c] - t_lay[r, c]) / max((z[r2, c] - z[r, c]) / 1000, 1.0e-6)
+            ok = Γ(r + 1) <= 2
+            rr = r + 2
+            while ok && rr <= nlay && z[rr, c] <= z[r, c] + 2000
+                ok = Γ(rr) <= 2
+                rr += 1
+            end
+            ok || continue
+            out[c] = r
+            break # Leave this column only; the next column still needs its own tropopause.
         end
-        ok || continue
-        out[c] = r
-        break
     end
     return out
 end
