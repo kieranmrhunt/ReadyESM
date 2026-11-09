@@ -117,7 +117,8 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         held = R.ExperimentConfig(; merge(fields(with_forcing(on; aerosol_cmip_year = 1993)), (; start_date = DateTime(1800, 1, 1)))...)
         @test R.validate(held; check_input_files = false) === held
         production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-        @test production.forcing.aerosol_scheme == :none
+        @test production.forcing.aerosol_scheme == :cmip_prescribed
+        @test R.ExperimentConfig().forcing.aerosol_scheme == :none
     end
 
     @testset "model: off path has no scheme; on path writes validated optics" begin

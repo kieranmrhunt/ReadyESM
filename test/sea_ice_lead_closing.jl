@@ -30,17 +30,18 @@ end
     default = R.ExperimentConfig()
     @test default.sea_ice_lead_closing_thickness_m == 0.0
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-    @test production.sea_ice_lead_closing_thickness_m == 0.0
-    on = with(production; sea_ice_lead_closing_thickness_m = 0.5)
+    @test production.sea_ice_lead_closing_thickness_m == 0.5
+    off = with(production; sea_ice_lead_closing_thickness_m = 0.0)
+    on = production
     @test R.validate(on; check_input_files = false) === on
     for bad in (-0.5, 0.01, 2.5, NaN, Inf)
         @test_throws ArgumentError R.validate(with(production; sea_ice_lead_closing_thickness_m = bad);
             check_input_files = false)
     end
-    @test R._dynamic_config_identity_hash(on) != R._dynamic_config_identity_hash(production)
-    @test isnothing(R._sea_ice_concentration_evolution(production, Float32))
+    @test R._dynamic_config_identity_hash(on) != R._dynamic_config_identity_hash(off)
+    @test isnothing(R._sea_ice_concentration_evolution(off, Float32))
     @test R._sea_ice_concentration_evolution(on, Float32) === CSI.LeadClosingEvolution(0.5f0)
-    @test R._sea_ice_lead_closing_provenance(production) == (;)
+    @test R._sea_ice_lead_closing_provenance(off) == (;)
     @test R._sea_ice_lead_closing_provenance(on).sea_ice_lead_closing_thickness_m == 0.5
 
     prop = CSI.ProportionalEvolution()
@@ -74,7 +75,8 @@ end
 @testset "Sea-ice lead closing: coupled analytic run carries the rule" begin
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
     base = with(analytic_coupled_test_config(production; output_dir = mktempdir());
-        atmosphere_timestep_at_t31_minutes = 3.75, duration_days = 4 * 900 / 86_400, start_date = DateTime(1993, 1, 1))
+        atmosphere_timestep_at_t31_minutes = 3.75, duration_days = 4 * 900 / 86_400,
+        start_date = DateTime(1993, 1, 1), sea_ice_lead_closing_thickness_m = 0.0)
     off = R.build_dynamic_esm(base)
     @test off.model.sea_ice.model.ice_thermodynamics.concentration_evolution isa CSI.ProportionalEvolution
     on = with(base; sea_ice_lead_closing_thickness_m = 0.5, output_dir = mktempdir())

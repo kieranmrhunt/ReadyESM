@@ -4,10 +4,18 @@ function legacy_pbl_test_config()
     @test released.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1
     @test released.atmosphere_pbl_diffusivity_scale == 1.0
     @test released.atmosphere_pbl_mix_momentum
-    @test !released.atmosphere_pbl_mix_heat && !released.atmosphere_pbl_mix_humidity
+    @test released.atmosphere_pbl_mix_heat && released.atmosphere_pbl_mix_humidity
     # These scalar and refusal tests exercise the old zero-mixing starting point.
     # Their fixture must remain independent of changes to the released defaults.
+    forcing_fields = (; (n => getfield(released.forcing, n)
+        for n in fieldnames(typeof(released.forcing)))...)
+    forcing = R.ForcingConfig(; merge(forcing_fields, (;
+        aerosol_scheme=:none, aerosol_cmip_background_path="",
+        aerosol_cmip_plumes_path="", aerosol_cmip_stratospheric_path="",
+        solar_constant_w_m2=R.DEFAULT_SOLAR_CONSTANT_W_M2,
+        solar_constant_source="", solar_constant_entry=""))...)
     return with(released; atmosphere_vertical_diffusion=:speedyweather_0_21_1_zero_operator_control,
+        forcing,
         atmosphere_pbl_diffusivity_scale=1.0, atmosphere_pbl_mix_momentum=false,
         atmosphere_pbl_mix_heat=true, atmosphere_pbl_mix_humidity=true,
         atmosphere_dissipative_heating=:off,

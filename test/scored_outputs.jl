@@ -11,10 +11,12 @@ include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
 
 @testset "scored outputs: configuration" begin
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-    @test production.scored_outputs == false
+    @test production.scored_outputs == true
     @test R.ExperimentConfig().scored_outputs == false
     simplified = R.ForcingConfig(; merge(fields(production.forcing),
-        (; radiation = :speedy_simplified, solar_distance_correction = false, cloud_scheme = :none))...)
+        (; radiation = :speedy_simplified, solar_distance_correction = false, cloud_scheme = :none,
+           aerosol_scheme = :none, aerosol_cmip_background_path = "",
+           aerosol_cmip_plumes_path = "", aerosol_cmip_stratospheric_path = ""))...)
     err = try
         R.validate(with(production; scored_outputs = true, forcing = simplified); check_input_files = false)
         nothing
@@ -22,7 +24,8 @@ include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
         e
     end
     @test err isa ArgumentError && occursin("scored_outputs requires RRTMGP", err.msg)
-    @test (R.validate(with(production; forcing = simplified); check_input_files = false); true)
+    @test (R.validate(with(production; scored_outputs = false, forcing = simplified);
+        check_input_files = false); true)
 end
 
 @testset "scored outputs: accumulators" begin

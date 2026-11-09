@@ -187,14 +187,15 @@ const HOST_FIELDS_3D = (:convective_humidity_tendency, :convective_temperature_t
 @testset "Tiedtke-Bechtold stage 1a host integration" begin
 
 production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-# Production uses mixed-phase saturation and a 7200 s Betts-Miller time scale, which TB refuses (see below).
-tb_production = with(production; atmosphere_convection = TB, atmosphere_saturation_law = :liquid,
-                     atmosphere_convection_timescale_seconds = 14400)
+# The released tree selects stage 1b; keep an explicit Betts-Miller fixture for compatibility checks.
+bm_production = with(production; atmosphere_convection = :betts_miller_sigma_rh_v1,
+    atmosphere_saturation_law = :mixed_phase, atmosphere_convection_timescale_seconds = 7200)
+tb_production = with(production; atmosphere_convection = TB)
 
 @testset "Configuration: name, refusals, prognostic-cloud selector, factory" begin
     @test R.validate(tb_production; check_input_files = false) === tb_production
     @test R.ExperimentConfig().atmosphere_convection == :betts_miller_constant_rh     # TB is opt-in
-    @test production.atmosphere_convection == :betts_miller_sigma_rh_v1
+    @test production.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1b
     # The name parses from YAML.
     mktempdir() do dir
         lines = readlines(joinpath(R.PROJECT_ROOT, "config", "production.yml"))
@@ -223,7 +224,7 @@ tb_production = with(production; atmosphere_convection = TB, atmosphere_saturati
     for scheme in R._PROGNOSTIC_CLOUD_SCHEMES
         @test R._uses_prognostic_cloud_condensate(scheme)
         cloudy = (; cloud_scheme = scheme, cloud_condensate_retention_fraction = 0.5)
-        bm = with_forcing(production; cloudy...)
+        bm = with_forcing(bm_production; cloudy...)
         @test R.validate(bm; check_input_files = false) === bm     # the same cloud settings are valid with BM
         @test_throws ArgumentError R.validate(with_forcing(tb_production; cloudy...); check_input_files = false)
         @test_throws r"prognostic cloud condensate" R.validate(with_forcing(tb_production; cloudy...);
@@ -256,9 +257,9 @@ tb_production = with(production; atmosphere_convection = TB, atmosphere_saturati
     @test convection.convection isa R.TiedtkeBechtoldConvection{Float32}
     @test !occursin("BettsMiller", string(typeof(convection)))
     @test convection.convection.parameters === R.tiedtke_bechtold_parameters(Float32; truncation = 7)
-    sigma_bm = R._atmosphere_convection(production, grid)
+    sigma_bm = R._atmosphere_convection(bm_production, grid)
     @test sigma_bm isa R.NetColumnBettsMillerConvection{<:R.SigmaProfileBettsMillerConvection}
-    constant_bm = R._atmosphere_convection(with(production; atmosphere_convection = :betts_miller_constant_rh), grid)
+    constant_bm = R._atmosphere_convection(with(bm_production; atmosphere_convection = :betts_miller_constant_rh), grid)
     @test constant_bm isa R.NetColumnBettsMillerConvection{<:S.BettsMillerConvection}
     bm_names = Dict(v.name => v.desc for v in S.variables(constant_bm))
     @test bm_names[:convective_humidity_tendency] == "Incremental Betts-Miller specific-humidity tendency"
@@ -268,7 +269,7 @@ tb_production = with(production; atmosphere_convection = TB, atmosphere_saturati
     @test R._dynamic_config_identity_hash(tb_production) !=
           R._dynamic_config_identity_hash(with(tb_production; atmosphere_convection = :betts_miller_constant_rh))
     # Provenance: none for Betts-Miller, TB-named values for TB, no Betts-Miller label.
-    @test R._tiedtke_bechtold_metadata(production) == (;)
+    @test R._tiedtke_bechtold_metadata(bm_production) == (;)
     meta = R._tiedtke_bechtold_metadata(tb_production)
     @test meta.atmosphere_convection_contract_manifest_sha256 == MANIFEST
     @test meta.atmosphere_convection_water_contract == "instantaneous_rain_no_rup_v1"

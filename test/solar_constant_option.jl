@@ -39,19 +39,21 @@ end
     @test default.forcing.solar_constant_source == ""
     @test R._solar_constant_source(default) == "SpeedyWeather Earth default"
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-    @test production.forcing.solar_constant_w_m2 == 1365.0
-    on = with_forcing(production; solar_constant_w_m2 = CMIP6, solar_constant_source = LABEL,
-        solar_constant_entry = "picontrol")
+    @test production.forcing.solar_constant_w_m2 == CMIP6
+    @test production.forcing.solar_constant_source == LABEL
+    control = with_forcing(production; solar_constant_w_m2 = 1365.0,
+        solar_constant_source = "", solar_constant_entry = "")
+    on = production
     @test R.validate(on; check_input_files = false) === on
     @test R._solar_constant_source(on) == LABEL
-    @test_throws ArgumentError R.validate(with_forcing(production; solar_constant_w_m2 = CMIP6); check_input_files = false)
+    @test_throws ArgumentError R.validate(with_forcing(control; solar_constant_w_m2 = CMIP6); check_input_files = false)
     for bad in (0.0, -1.0, NaN, Inf)
         @test_throws ArgumentError R.validate(with_forcing(on; solar_constant_w_m2 = bad); check_input_files = false)
     end
     # The default value carries no source label of its own (Barry, port read note 2).
-    @test_throws ArgumentError R.validate(with_forcing(production; solar_constant_source = "stated default");
+    @test_throws ArgumentError R.validate(with_forcing(control; solar_constant_source = "stated default");
         check_input_files = false)
-    @test R.validate(with_forcing(production; solar_constant_source = "  "); check_input_files = false) isa
+    @test R.validate(with_forcing(control; solar_constant_source = "  "); check_input_files = false) isa
           R.ExperimentConfig
     # A non-default value must name a pinned entry, agree with its value and carry its label (design v2 amendment 2).
     invalid(; kwargs...) = @test_throws ArgumentError R.validate(with_forcing(on; kwargs...); check_input_files = false)
@@ -60,10 +62,10 @@ end
     invalid(solar_constant_w_m2 = 1361.079)                             # the 1993 value under the piControl entry
     invalid(solar_constant_w_m2 = CMIP6 + 2e-3)                         # outside the table's three-decimal precision
     invalid(solar_constant_source = "CMIP6 piControl")                  # not the entry's label
-    @test_throws ArgumentError R.validate(with_forcing(production; solar_constant_entry = "picontrol");
+    @test_throws ArgumentError R.validate(with_forcing(control; solar_constant_entry = "picontrol");
         check_input_files = false)                                      # an entry with the default value
     historical = R.SOLAR_CONSTANT_ENTRIES["historical_1993"]
-    hist = with_forcing(production; solar_constant_w_m2 = 1361.079, solar_constant_source = historical.label,
+    hist = with_forcing(control; solar_constant_w_m2 = 1361.079, solar_constant_source = historical.label,
         solar_constant_entry = "historical_1993")
     @test R.validate(hist; check_input_files = false) === hist
     @test R._solar_constant_provenance(hist).solar_constant_year == "1993"
@@ -85,23 +87,23 @@ end
     @test provenance.solar_constant_entry == "picontrol" && provenance.solar_constant_year == "" &&
           provenance.solar_constant_table_sha256 == R.SOLAR_CONSTANT_TABLE_SHA256 &&
           provenance.solar_constant_archive_sha256 == R.SOLAR_CONSTANT_ENTRIES["picontrol"].archive_sha256
-    @test R._solar_constant_entry_provenance(production) == (;)
+    @test R._solar_constant_entry_provenance(control) == (;)
     # The output check accepts matching provenance, and refuses a default with an entry or a changed SHA-256.
     meta(config) = (; solar_constant_w_m2 = config.forcing.solar_constant_w_m2,
         solar_constant_source = R._solar_constant_source(config), R._solar_constant_entry_provenance(config)...)
-    @test R._validate_solar_constant_provenance(meta(production)) === nothing
+    @test R._validate_solar_constant_provenance(meta(control)) === nothing
     @test R._validate_solar_constant_provenance(meta(on)) === nothing
     @test R._validate_solar_constant_provenance(meta(hist)) === nothing
     @test_throws ErrorException R._validate_solar_constant_provenance(
-        merge(meta(production), (; solar_constant_entry = "picontrol")))
+        merge(meta(control), (; solar_constant_entry = "picontrol")))
     @test_throws ErrorException R._validate_solar_constant_provenance(
-        merge(meta(production), (; solar_constant_source = "stated default")))
+        merge(meta(control), (; solar_constant_source = "stated default")))
     @test_throws ErrorException R._validate_solar_constant_provenance(
         merge(meta(on), (; solar_constant_archive_sha256 = "0"^64)))
     @test_throws ErrorException R._validate_solar_constant_provenance(
         (; solar_constant_w_m2 = CMIP6, solar_constant_source = LABEL))
     # Restart identity: the setting is part of the configuration hash, so a restart across a change is refused.
-    @test R._dynamic_config_identity_hash(on) != R._dynamic_config_identity_hash(production)
+    @test R._dynamic_config_identity_hash(on) != R._dynamic_config_identity_hash(control)
 
     mktempdir() do directory
         raw = R.YAML.load_file(joinpath(R.PROJECT_ROOT, "config", "production.yml"))
@@ -118,7 +120,7 @@ end
     for NF in (Float32, Float64)
         grid = S.SpectralGrid(; NF, trunc = 7, nlayers = 8)
         reference = S.Earth(grid)
-        planet = R._readyesm_planet(production, grid)
+        planet = R._readyesm_planet(control, grid)
         @test all(isequal(getfield(planet, n), getfield(reference, n)) for n in fieldnames(typeof(reference)))
         @test R._readyesm_planet(on, grid).solar_constant === NF(CMIP6)
     end

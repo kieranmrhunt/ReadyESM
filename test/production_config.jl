@@ -4,19 +4,22 @@ using ReadyESM, Test, Dates, SHA
     config = load_config(joinpath(ReadyESM.PROJECT_ROOT, "config", "production.yml");
         check_input_files = false)
     @test config.device == :gpu
+    @test config.duration_days == 730
+    @test config.analysis_start_day == 365
     @test (config.truncation, config.nlayers) == (31, 27)
     @test config.ocean_grid == :tripolar_1degree
     @test (config.ocean_nlongitude, config.ocean_nlatitude, config.ocean_nlayers) == (360, 180, 60)
     @test config.ocean_dynamics
     @test config.sea_ice_dynamics
+    @test config.sea_ice_lead_closing_thickness_m == 0.5
     @test config.land_model == :terrarium
     @test config.terrarium_precision == :float64
     @test config.terrarium_soil_layers == 16
     @test config.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1
     @test config.atmosphere_pbl_diffusivity_scale == 1.0
     @test config.atmosphere_pbl_mix_momentum
-    @test !config.atmosphere_pbl_mix_heat
-    @test !config.atmosphere_pbl_mix_humidity
+    @test config.atmosphere_pbl_mix_heat
+    @test config.atmosphere_pbl_mix_humidity
     @test config.atmosphere_dissipative_heating == :kinetic_energy_v1
     @test ExperimentConfig().atmosphere_dissipative_heating == :off
     @test config.atmosphere_vertical_advection == :centered_full_temperature
@@ -34,13 +37,15 @@ using ReadyESM, Test, Dates, SHA
     @test Second(plain_diffusion.time_scale) == Second(14_400)
     @test Second(plain_diffusion.time_scale_div) == Second(14_400)
     @test config.atmosphere_large_scale_precipitation == :net_column_conservative
-    @test config.atmosphere_saturation_law == :mixed_phase
-    @test config.atmosphere_convection == :betts_miller_sigma_rh_v1
+    @test config.atmosphere_large_scale_melt_cooling
+    @test !config.atmosphere_moist_mass_coupling
+    @test config.atmosphere_saturation_law == :liquid
+    @test config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1b
     @test config.atmosphere_convection_upper_relative_humidity == 0.5
     @test config.atmosphere_convection_lower_relative_humidity == 0.7
     @test config.atmosphere_convection_transition_top_sigma == 0.3
     @test config.atmosphere_convection_transition_bottom_sigma == 0.7
-    @test config.atmosphere_convection_timescale_seconds == 7200
+    @test config.atmosphere_convection_timescale_seconds == 14400
     @test config.atmosphere_initial_spectral_truncation
     @test !ExperimentConfig().atmosphere_initial_spectral_truncation
     @test config.forcing.radiation == :rrtmgp_all_sky
@@ -50,6 +55,10 @@ using ReadyESM, Test, Dates, SHA
     @test config.forcing.cloud_liquid_water_path_gm2 == 75
     @test config.forcing.cloud_ice_water_path_gm2 == 25
     @test config.forcing.aerosol_optical_depth_550nm == 0
+    @test config.forcing.aerosol_scheme == :cmip_prescribed
+    @test config.forcing.solar_constant_entry == "picontrol"
+    @test config.forcing.solar_constant_w_m2 == 1360.7470703125
+    @test config.scored_outputs
     @test config.terrarium_surface_albedo == :era5_spectral
     @test config.terrarium_albedo_crossing_band == :equal_halves
     @test config.terrarium_albedo_cycle_sha256 ==
@@ -62,6 +71,8 @@ using ReadyESM, Test, Dates, SHA
     for (path, expected) in (
         (config.terrarium_albedo_cycle_path, config.terrarium_albedo_cycle_sha256),
         (config.terrarium_vegetation_cycle_path, config.terrarium_vegetation_cycle_sha256),
+        (config.forcing.aerosol_cmip_stratospheric_path,
+            "30e4e7383d6511c85c9aecdf84505bdb9f56d1aba717055aa0097c160daf607a"),
     )
         @test isfile(path)
         @test bytes2hex(open(sha256, path)) == expected

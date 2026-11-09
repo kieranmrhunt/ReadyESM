@@ -178,7 +178,9 @@ end
         @test R.validate(late; check_input_files = false) === late
         @test_throws ArgumentError R._validate_cmip_aerosol_options(late, true, true)
         production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-        @test production.forcing.aerosol_cmip_stratospheric_path == ""
+        @test endswith(production.forcing.aerosol_cmip_stratospheric_path,
+            "uoexeter_strat_bands_199212_199501_v7.nc")
+        @test R.ExperimentConfig().forcing.aerosol_cmip_stratospheric_path == ""
     end
 
     @testset "real prepared file: Pinatubo-era column AOD and a model run" begin
