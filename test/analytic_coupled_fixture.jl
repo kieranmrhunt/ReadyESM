@@ -24,6 +24,6 @@ function analytic_coupled_test_config(released; output_dir=tempdir())
         terrarium_albedo_cycle_sha256="", terrarium_vegetation_cycle=:off,
         terrarium_vegetation_cycle_path="", terrarium_vegetation_cycle_sha256="",
         era5_pressure_levels_path="", era5_single_levels_path="", era5_land_state_path="",
-        duration_days=4/24, analysis_start_day=0.0, output_dir,
+        duration_days=4/24, analysis_start_day=0.0, scored_outputs=false, output_dir,
         atmosphere_vertical_advection=:centered_full_temperature)
 end
