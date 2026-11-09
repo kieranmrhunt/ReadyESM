@@ -36,6 +36,11 @@ function _precompile_config_with(config::ExperimentConfig; kwargs...)
     return ExperimentConfig(; merge(base_fields, (; kwargs...))...)
 end
 
+function _precompile_forcing_with(forcing::ForcingConfig; kwargs...)
+    base_fields = (; (name => getfield(forcing, name) for name in fieldnames(ForcingConfig))...)
+    return ForcingConfig(; merge(base_fields, (; kwargs...))...)
+end
+
 PrecompileTools.@setup_workload begin
     mode = _precompile_workload_mode()
     production_config_path = joinpath(PROJECT_ROOT, "config", "production.yml")
@@ -49,6 +54,15 @@ PrecompileTools.@setup_workload begin
 
                     analytic_prod = _precompile_config_with(
                         released;
+                        # Package import must not require optional production aerosol files.
+                        forcing = _precompile_forcing_with(
+                            released.forcing;
+                            aerosol_scheme = :none,
+                            aerosol_cmip_background_path = "",
+                            aerosol_cmip_plumes_path = "",
+                            aerosol_cmip_stratospheric_path = "",
+                            aerosol_cmip_year = 0,
+                        ),
                         device = :cpu,
                         truncation = 7,
                         nlayers = 8,
@@ -72,6 +86,7 @@ PrecompileTools.@setup_workload begin
                         era5_single_levels_path = "",
                         era5_land_state_path = "",
                         duration_days = 1 / 24,
+                        scored_outputs = false,
                         analysis_start_day = 0.0,
                         output_dir = joinpath(tmp_root, "prod"),
                         atmosphere_vertical_advection = :centered_full_temperature,
