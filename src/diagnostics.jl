@@ -233,6 +233,11 @@ function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_ac
             rrtmgp_active &&
                 config.forcing.cloud_scheme in _ALL_SKY_CLOUD_SCHEMES ?
             Float64(radiation.cloud_humidity_search_min_sigma) : NaN,
+        cloud_relative_humidity_min = config.forcing.cloud_relative_humidity_min,
+        applied_cloud_relative_humidity_min =
+            rrtmgp_active &&
+                config.forcing.cloud_scheme in _ALL_SKY_CLOUD_SCHEMES ?
+            Float64(radiation.clouds.relative_humidity_threshold_min) : NaN,
         cloud_humidity_search_scheme =
             config.forcing.cloud_scheme in _ALL_SKY_CLOUD_SCHEMES ?
             _diagnostic_cloud_humidity_search_scheme(

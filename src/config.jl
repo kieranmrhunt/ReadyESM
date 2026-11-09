@@ -36,6 +36,10 @@ Base.@kwdef struct ForcingConfig
     solar_constant_entry::String = ""
     cloud_scheme::Symbol = :none
     cloud_humidity_search_min_sigma::Float64 = 0.0
+    # Relative humidity at which the diagnostic cloud law starts to form humidity cloud
+    # (SpeedyWeather DiagnosticClouds relative_humidity_threshold_min). 0.3 is the SPEEDY value
+    # and keeps the released behaviour. It is active only with an all-sky cloud scheme.
+    cloud_relative_humidity_min::Float64 = 0.3
     cloud_liquid_water_path_gm2::Float64 = 60.0
     cloud_ice_water_path_gm2::Float64 = 25.0
     cloud_condensate_retention_fraction::Float64 = 0.0
@@ -325,6 +329,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         solar_constant_entry = String(_mapping_value(forcing_raw, "solar_constant_entry", "")),
         cloud_humidity_search_min_sigma = Float64(
             _mapping_value(forcing_raw, "cloud_humidity_search_min_sigma", 0.0),
+        ),
+        cloud_relative_humidity_min = Float64(
+            _mapping_value(forcing_raw, "cloud_relative_humidity_min", 0.3),
         ),
         cloud_liquid_water_path_gm2 = Float64(
             _mapping_value(forcing_raw, "cloud_liquid_water_path_gm2", 60.0),
@@ -1435,6 +1442,14 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         throw(ArgumentError(
             "cloud_humidity_search_min_sigma is active only with " *
             "an all-sky cloud scheme",
+        ))
+    end
+    0 <= config.forcing.cloud_relative_humidity_min < 1 ||
+        throw(ArgumentError("cloud_relative_humidity_min must be within [0, 1)"))
+    if config.forcing.cloud_scheme == :none &&
+       config.forcing.cloud_relative_humidity_min != 0.3
+        throw(ArgumentError(
+            "cloud_relative_humidity_min is active only with an all-sky cloud scheme",
         ))
     end
     config.forcing.cloud_liquid_water_path_gm2 >= 0 ||

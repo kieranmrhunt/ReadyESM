@@ -1226,6 +1226,7 @@ function RRTMGPRadiation(
     solve_every_n_steps = 1,
     cloud_scheme = :none,
     cloud_humidity_search_min_sigma = 0,
+    cloud_relative_humidity_min = 0.3,
     cloud_liquid_water_path_gm2 = 60,
     cloud_ice_water_path_gm2 = 25,
     prognostic_cloud_condensate = nothing,
@@ -1276,6 +1277,8 @@ function RRTMGPRadiation(
         throw(ArgumentError(
             "cloud_scheme must be none, diagnostic, or prognostic_condensate",
         ))
+    0 <= cloud_relative_humidity_min < 1 || throw(ArgumentError(
+        "cloud_relative_humidity_min must be within [0, 1)"))
     0 <= cloud_humidity_search_min_sigma <= 1 || throw(ArgumentError(
         "cloud_humidity_search_min_sigma must be within [0, 1]",
     ))
@@ -1318,7 +1321,9 @@ function RRTMGPRadiation(
     heating_rate = copy(RRTMGP.heating_rate(solver))
     applied_heating_rate = copy(heating_rate)
     cloud_diagnostic = all_sky ?
-        SpeedyWeather.DiagnosticClouds(spectral_grid) : SpeedyWeather.NoClouds(spectral_grid)
+        SpeedyWeather.DiagnosticClouds(
+            spectral_grid; relative_humidity_threshold_min = NF(cloud_relative_humidity_min),
+        ) : SpeedyWeather.NoClouds(spectral_grid)
     return RRTMGPRadiation(
         solver,
         heating_rate,

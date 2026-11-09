@@ -22,6 +22,7 @@ include("carbon_diagnostics.jl")
 include("carbon_inventory_geometry.jl")
 
 include("convection_timescale.jl")
+include("cloud_relative_humidity_min.jl")
 include("solar_constant_option.jl")
 include("finite_multiplume_convection.jl")
 include("convective_momentum_transport.jl")

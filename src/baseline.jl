@@ -315,6 +315,7 @@ function _rrtmgp_atmosphere_model(config::ExperimentConfig; coupled_ocean = fals
         cloud_scheme = config.forcing.cloud_scheme,
         cloud_humidity_search_min_sigma =
             config.forcing.cloud_humidity_search_min_sigma,
+        cloud_relative_humidity_min = config.forcing.cloud_relative_humidity_min,
         cloud_liquid_water_path_gm2 = config.forcing.cloud_liquid_water_path_gm2,
         cloud_ice_water_path_gm2 = config.forcing.cloud_ice_water_path_gm2,
         prognostic_cloud_condensate,
