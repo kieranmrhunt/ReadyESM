@@ -59,10 +59,14 @@ function _copy_terrarium_restart_array!(
         "$(axes(destination))",
     ))
     # OffsetArrays' generic copyto! iterates logical indices. With a CuArray
-    # parent that becomes forbidden scalar GPU indexing. The offsets are
-    # already validated above, so transfer the identical contiguous parents
-    # through CUDA's supported host-to-device copy path.
-    copyto!(parent(destination), parent(source))
+    # parent that becomes forbidden scalar GPU indexing. A restored host
+    # checkpoint may itself have a SubArray parent; copying that view directly
+    # into a CuArray also selects generic scalar iteration. Materialize only
+    # non-Array source parents before the host-to-device transfer. The offsets
+    # were validated above and the dense copy preserves every stored bit.
+    source_parent = parent(source)
+    host_source = source_parent isa Array ? source_parent : Array(source_parent)
+    copyto!(parent(destination), host_source)
     return destination
 end
 
