@@ -1444,8 +1444,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
             "an all-sky cloud scheme",
         ))
     end
-    0 <= config.forcing.cloud_relative_humidity_min < 1 ||
-        throw(ArgumentError("cloud_relative_humidity_min must be within [0, 1)"))
+    0 <= config.forcing.cloud_relative_humidity_min < 1 &&
+        Float32(config.forcing.cloud_relative_humidity_min) < 1 ||
+        throw(ArgumentError("cloud_relative_humidity_min must remain within [0, 1) in Float32"))
     if config.forcing.cloud_scheme == :none &&
        config.forcing.cloud_relative_humidity_min != 0.3
         throw(ArgumentError(

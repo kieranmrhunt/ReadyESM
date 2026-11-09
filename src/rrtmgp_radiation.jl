@@ -1237,6 +1237,9 @@ function RRTMGPRadiation(
     cmip_aerosol::Union{Nothing, CMIPAerosol} = nothing,
 )
     NF = spectral_grid.NF
+    0 <= cloud_relative_humidity_min < 1 &&
+        0 <= NF(cloud_relative_humidity_min) < 1 || throw(ArgumentError(
+            "cloud_relative_humidity_min must remain within [0, 1) in the spectral-grid precision"))
     isnothing(cmip_aerosol) || aerosol_optical_depth_550nm == 0 || throw(ArgumentError(
         "the CMIP aerosol scheme replaces aerosol_optical_depth_550nm; leave it at zero"))
     if !isnothing(well_mixed_gas_schedule)
@@ -1277,8 +1280,6 @@ function RRTMGPRadiation(
         throw(ArgumentError(
             "cloud_scheme must be none, diagnostic, or prognostic_condensate",
         ))
-    0 <= cloud_relative_humidity_min < 1 || throw(ArgumentError(
-        "cloud_relative_humidity_min must be within [0, 1)"))
     0 <= cloud_humidity_search_min_sigma <= 1 || throw(ArgumentError(
         "cloud_humidity_search_min_sigma must be within [0, 1]",
     ))

@@ -24,7 +24,8 @@
     # Validation: inside [0, 1), and only with an all-sky cloud scheme.
     diag = with_forcing(production; cloud_relative_humidity_min = 0.7)
     @test R.validate(diag; check_input_files = false) === diag
-    for bad in (-0.1, 1.0, 1.5)
+    @test Float32(1.0 - 1e-9) == 1.0f0
+    for bad in (-0.1, 1.0, 1.5, 1.0 - 1e-9)
         @test_throws ArgumentError R.validate(with_forcing(production; cloud_relative_humidity_min = bad);
             check_input_files = false)
     end
@@ -40,6 +41,8 @@
     @test released.clouds.relative_humidity_threshold_min ==
           R.SpeedyWeather.DiagnosticClouds(grid).relative_humidity_threshold_min
     @test_throws ArgumentError R.RRTMGPRadiation(grid; cloud_scheme = :diagnostic, cloud_relative_humidity_min = 1.0)
+    @test_throws ArgumentError R.RRTMGPRadiation(grid; cloud_scheme = :diagnostic,
+        cloud_relative_humidity_min = 1.0 - 1e-9)
 
     # Provenance records the requested and the applied threshold.
     provenance = R._forcing_provenance(tuned, diag)
