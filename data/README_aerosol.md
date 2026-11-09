@@ -17,8 +17,10 @@ with an error. It does not extrapolate.
 
 Licence: MACv2 has no published data licence. Do not redistribute the raw or prepared MACv2 files. Cite Kinne (2019).
 
-Download these files from `ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/` into
-`data/macv2_2018_background_raw/`:
+Download these files from `ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/`.
+The path column below identifies each file on the server. Put all five `.nc`
+files directly in `data/macv2_2018_background_raw/` (without the `for_ICON/`
+subdirectories), as required by the preparer.
 
 | File (path under MACv2_2018/) | SHA-256 |
 |---|---|
@@ -28,16 +30,18 @@ Download these files from `ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/
 | for_ICON/altitude/aeropt_fin_alt_km20.nc | 4d01453fe3b2b0b57af17e88cf9b3d55b45c5a5ce31ee6a81653f2303cf987f8 |
 | for_ICON/altitude/aeropt_coa_alt_km20.nc | 787983ab57ff1f4f15a32de23e3bcc654fe5ef7a6aab959f8c6690c87f6811e2 |
 
-Then run:
+Check the complete raw-file hashes, then run:
 
 ```bash
+(cd data/macv2_2018_background_raw && sha256sum --strict -c ../../scripts/aerosol/macv2_raw.sha256)
+mkdir -p data/macv2_2018_background_prepared_v1
 python3 -I scripts/aerosol/prepare_macv2_background_v1.py data/macv2_2018_background_raw \
     scripts/aerosol/band_map_macv2_rrtmgp_v1.json \
     data/macv2_2018_background_prepared_v1/macv2_background_v1.nc
 ```
 
-Make the output directory first (`mkdir -p data/macv2_2018_background_prepared_v1`). The script checks the first 16
-hex characters of each raw file's SHA-256 before it uses the file. Check the full hashes above yourself. The band map
+The script checks the first 16 hex characters of each raw file's SHA-256 before
+it uses the file; the preceding `sha256sum` command verifies all 64. The band map
 `band_map_macv2_rrtmgp_v1.json` assigns each MACv2 spectral record to an RRTMGP band. It was made by
 `band_map_macv2_rrtmgp_v1.py` and is shipped as is.
 
