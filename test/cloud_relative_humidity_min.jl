@@ -49,5 +49,10 @@
     @test provenance.cloud_relative_humidity_min == 0.7
     @test provenance.applied_cloud_relative_humidity_min == Float64(0.7f0)
     @test R._forcing_provenance(released, production).applied_cloud_relative_humidity_min == Float64(0.3f0)
+    # A clear-sky radiation object (NoClouds) has no cloud law: the applied value is NaN, never an error,
+    # even when the config names an all-sky scheme (as in rrtmgp_trace_gases.jl).
+    clear_radiation = R.RRTMGPRadiation(grid)
+    @test clear_radiation.clouds isa R.SpeedyWeather.NoClouds
+    @test isnan(R._forcing_provenance(clear_radiation, production).applied_cloud_relative_humidity_min)
 end
 println("CLOUD_RELATIVE_HUMIDITY_MIN_UNIT_PASS")
