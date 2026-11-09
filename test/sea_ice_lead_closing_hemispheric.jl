@@ -40,14 +40,19 @@ end
         @test_throws ArgumentError R.validate(with(production; sea_ice_lead_closing_thickness_m = h,
             sea_ice_lead_closing_thickness_south_m = h); check_input_files = false)
     end
+    # Production now selects global lead closing at 0.5 m (LC1), so it equals global_on. The released rule is 0.0.
+    released = with(production; sea_ice_lead_closing_thickness_m = 0.0)
+    @test production.sea_ice_lead_closing_thickness_m == 0.5
+    @test R._dynamic_config_identity_hash(production) == R._dynamic_config_identity_hash(global_on)
     # Unset, the identity is the pre-key identity, so existing checkpoints keep their identity. Set, it is bound.
-    for config in (production, global_on)
+    for config in (released, production, global_on)
         @test R._dynamic_config_identity_hash(config) == hash_without_key(config)
     end
-    hashes = R._dynamic_config_identity_hash.((production, global_on, north, south, split))
+    hashes = R._dynamic_config_identity_hash.((released, global_on, north, south, split))
     @test allunique(hashes)
 
-    @test isnothing(R._sea_ice_concentration_evolution(production, Float32))
+    @test isnothing(R._sea_ice_concentration_evolution(released, Float32))
+    @test R._sea_ice_concentration_evolution(production, Float32) === CSI.LeadClosingEvolution(0.5f0)
     @test R._sea_ice_concentration_evolution(global_on, Float32) === CSI.LeadClosingEvolution(0.5f0)
     @test R._sea_ice_concentration_evolution(north, Float32) === CSI.HemisphericLeadClosingEvolution(0.5f0, 0.0f0)
     @test R._sea_ice_concentration_evolution(south, Float64) === CSI.HemisphericLeadClosingEvolution(0.0, 0.5)
