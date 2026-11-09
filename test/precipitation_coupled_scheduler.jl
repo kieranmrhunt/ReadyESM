@@ -60,6 +60,7 @@ mass_flux(rate) = Float64(R._FRESHWATER_DENSITY_KG_M3) .* Float64.(rate)
             era5_land_state_path = "",
             duration_days = 2 / 24,
             analysis_start_day = 0.0,
+            scored_outputs = false,
             output_dir = joinpath(dir, "output"),
             atmosphere_vertical_advection = :centered_full_temperature,
         )
