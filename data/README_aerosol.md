@@ -41,7 +41,7 @@ python3 -I scripts/aerosol/prepare_macv2_background_v1.py data/macv2_2018_backgr
 ```
 
 The script checks the first 16 hex characters of each raw file's SHA-256 before
-it uses the file; the preceding `sha256sum` command verifies all 64. The band map
+it uses the file. The `sha256sum` command above checks all 64. The band map
 `band_map_macv2_rrtmgp_v1.json` assigns each MACv2 spectral record to an RRTMGP band. It was made by
 `band_map_macv2_rrtmgp_v1.py` and is shipped as is.
 
@@ -117,8 +117,8 @@ python3 -I scripts/aerosol/verify_prepared_v7.py UOEXETER_DIR SOLAR_FILE RRTMGP_
 ```
 
 The frozen file SHA-256 is
-`83b0a9d647f41a540331b8ab2c0f64c80fb46fd4aff1ec82457866909366af37`;
-the v6 receipt SHA-256 is
+`83b0a9d647f41a540331b8ab2c0f64c80fb46fd4aff1ec82457866909366af37`.
+The v6 receipt SHA-256 is
 `da6e7ffc7a70ebf24c7263cb073f4030efd8ae47032bf961b949c56d4b7715b1`.
 The v7 file is the production default for the 730-day horizon.
 
