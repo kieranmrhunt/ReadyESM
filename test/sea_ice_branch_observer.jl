@@ -337,13 +337,18 @@ const CELLS_SAVED = R.save_sea_ice_branch_observer(CELLS.simulation, joinpath(CE
     check_saved_files(s.path)
 end
 
-const LEAD_NONE = run_arm(analytic(4; sea_ice_lead_closing_thickness_m = 0.5))
-const LEAD_ON = run_arm(analytic(4; sea_ice_lead_closing_thickness_m = 0.5, sea_ice_branch_observer = true))
+# Production now selects lead closing at h0 = 0.5 m (LC1), so the base arms above already run it. The contrast arm
+# is therefore the released rule, h0 = 0.0 m. (The LEAD_* names are kept; they now mean "the other arm".)
+const LEAD_NONE = run_arm(analytic(4; sea_ice_lead_closing_thickness_m = 0.0))
+const LEAD_ON = run_arm(analytic(4; sea_ice_lead_closing_thickness_m = 0.0, sea_ice_branch_observer = true))
 const LEAD_SAVED = R.save_sea_ice_branch_observer(LEAD_ON.simulation, LEAD_ON.config)
 
-@testset "Sea-ice branch observer: the same observer on the h0 = 0.5 m arm" begin
+@testset "Sea-ice branch observer: the same observer on the released h0 = 0.0 m arm" begin
+    @test PRODUCTION.sea_ice_lead_closing_thickness_m == 0.5
+    @test ON.simulation.model.sea_ice.model.ice_thermodynamics.concentration_evolution isa
+          R.ClimaSeaIce.SeaIceThermodynamics.LeadClosingEvolution
     evolution = LEAD_ON.simulation.model.sea_ice.model.ice_thermodynamics.concentration_evolution
-    @test evolution isa R.ClimaSeaIce.SeaIceThermodynamics.LeadClosingEvolution
+    @test !(evolution isa R.ClimaSeaIce.SeaIceThermodynamics.LeadClosingEvolution)
     @test !LEAD_NONE.registered && LEAD_ON.registered
     @test LEAD_ON.final == LEAD_NONE.final
     @test LEAD_ON.recorder.hashes == LEAD_NONE.recorder.hashes
@@ -354,13 +359,13 @@ const LEAD_SAVED = R.save_sea_ice_branch_observer(LEAD_ON.simulation, LEAD_ON.co
                 "source_commit", "source_tree", "cadence")
         @test LEAD_SAVED.observer.provenance[key] == ON_SAVED.observer.provenance[key]
     end
-    @test LEAD_SAVED.observer.provenance["sea_ice_lead_closing_thickness_m"] == 0.5
-    @test ON_SAVED.observer.provenance["sea_ice_lead_closing_thickness_m"] == 0.0
+    @test LEAD_SAVED.observer.provenance["sea_ice_lead_closing_thickness_m"] == 0.0
+    @test ON_SAVED.observer.provenance["sea_ice_lead_closing_thickness_m"] == 0.5
     @test LEAD_SAVED.observer.provenance["config_identity_sha256"] !=
           ON_SAVED.observer.provenance["config_identity_sha256"]
     check_saved_files(LEAD_SAVED.path)
     changed = sort!([k for k in keys(NONE.final) if NONE.final[k] != LEAD_NONE.final[k]])
-    println("SEA_ICE_BRANCH_OBSERVER_LEAD_ARM_NOTE fields_changed_by_h0_0.5m_in_4_steps=", length(changed))
+    println("SEA_ICE_BRANCH_OBSERVER_LEAD_ARM_NOTE fields_changed_by_h0_0.0m_vs_production_in_4_steps=", length(changed))
 end
 
 # Parse the sealed off-path TOML without the TOML package (not a ReadyESM dependency).
