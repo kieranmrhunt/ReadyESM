@@ -7,7 +7,7 @@ dependencies listed in the [README](../README.md#run).
 
 The standard configuration starts on 1 January 1993. It uses ERA5 for the
 atmosphere and land, and ECCO V4r4 for the ocean and sea ice.
-The v0.1.19 production profile also reads the packaged monthly vegetation
+The production profile also reads the packaged monthly vegetation
 cycle under `data/era5_seasonal_land_cycle_1993/` and the realistic albedo
 candidate under `data/era5_realistic_albedo_1993/`. Their expected SHA-256
 values are pinned in `config/production.yml`. See the [albedo provenance](../data/era5_realistic_albedo_1993/README.md).
@@ -67,6 +67,19 @@ surface height caches. The run script accepts only the exact 8-file raw,
 and requires all 13 files with matching hashes before stepping. A cache whose
 bytes differ from the manifest stops the run. The old EVEL/NVEL inpainting
 caches are not valid for the centered velocity reader.
+
+### Prescribed aerosols
+
+The production configuration uses natural-background MACv2 aerosol,
+MACv2-SP anthropogenic plumes and UOEXETER stratospheric aerosol. Download
+and prepare the three model inputs using the exact source filenames, SHA-256
+hashes and commands in the [aerosol data guide](../data/README_aerosol.md).
+The source repository contains the preparation scripts under
+`scripts/aerosol/`; it does not distribute the raw or prepared input files.
+The 730-day production config uses the December 1992–January 1995
+UOEXETER v7 file. The [six-month configuration](../config/production_six_month.yml)
+uses the earlier December 1992–January 1994 v6 file matching the frozen
+v0.1.20 evaluation run; prepare that file separately if using this config.
 
 ## Run and output
 

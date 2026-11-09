@@ -305,10 +305,10 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
         aerosol_scheme = Symbol(_mapping_value(forcing_raw, "aerosol_scheme", "none")),
-        aerosol_cmip_background_path = String(_mapping_value(forcing_raw, "aerosol_cmip_background_path", "")),
-        aerosol_cmip_plumes_path = String(_mapping_value(forcing_raw, "aerosol_cmip_plumes_path", "")),
+        aerosol_cmip_background_path = _resolve_optional_path(_mapping_value(forcing_raw, "aerosol_cmip_background_path", "")),
+        aerosol_cmip_plumes_path = _resolve_optional_path(_mapping_value(forcing_raw, "aerosol_cmip_plumes_path", "")),
         aerosol_cmip_year = Int(_mapping_value(forcing_raw, "aerosol_cmip_year", 0)),
-        aerosol_cmip_stratospheric_path = String(_mapping_value(forcing_raw, "aerosol_cmip_stratospheric_path", "")),
+        aerosol_cmip_stratospheric_path = _resolve_optional_path(_mapping_value(forcing_raw, "aerosol_cmip_stratospheric_path", "")),
         aerosol_species = String(_mapping_value(forcing_raw, "aerosol_species", "sulfate")),
         radiation = Symbol(_mapping_value(forcing_raw, "radiation", "speedy_simplified")),
         radiation_every_n_steps = Int(

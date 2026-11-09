@@ -11,18 +11,20 @@ atmosphere_divergence_hyperdiffusion_hours: 4
 atmosphere_vertical_advection: centered_full_temperature
 atmosphere_vertical_diffusion: holtslag_boville_k_profile_v1
 atmosphere_pbl_diffusivity_scale: 1.0
-atmosphere_pbl_mix_heat: false
-atmosphere_pbl_mix_humidity: false
+atmosphere_pbl_mix_heat: true
+atmosphere_pbl_mix_humidity: true
 atmosphere_pbl_mix_momentum: true
 atmosphere_dissipative_heating: kinetic_energy_v1
 atmosphere_large_scale_precipitation: net_column_conservative
-atmosphere_saturation_law: mixed_phase
-atmosphere_convection: betts_miller_sigma_rh_v1
+atmosphere_large_scale_melt_cooling: true
+atmosphere_saturation_law: liquid
+atmosphere_moist_mass_coupling: false
+atmosphere_convection: tiedtke_bechtold_eqcape_stage1b
 atmosphere_convection_upper_relative_humidity: 0.5
 atmosphere_convection_lower_relative_humidity: 0.7
 atmosphere_convection_transition_top_sigma: 0.3
 atmosphere_convection_transition_bottom_sigma: 0.7
-atmosphere_convection_timescale_seconds: 7200
+atmosphere_convection_timescale_seconds: 14400
 atmosphere_speed_limit_ms: 60
 atmosphere_speed_limit_drag_per_m: 2.0e-6
 atmosphere_surface_speed_limit_ms: 40
@@ -37,6 +39,7 @@ ocean_model: oceananigans
 ocean_grid: tripolar_1degree
 ocean_dynamics: true
 sea_ice_dynamics: true
+sea_ice_lead_closing_thickness_m: 0.5
 ocean_nlongitude: 360
 ocean_nlatitude: 180
 ocean_nlayers: 60
@@ -62,6 +65,7 @@ terrarium_soil_layers: 16
 terrarium_max_layer_thickness_m: 5
 terrarium_timestep_seconds: 60
 output_dir: artifacts/production
+scored_outputs: true
 
 forcing:
   radiation: rrtmgp_all_sky
@@ -73,3 +77,10 @@ forcing:
   cloud_ice_water_path_gm2: 25.0
   aerosol_species: sulfate
   aerosol_optical_depth_550nm: 0.0
+  aerosol_scheme: cmip_prescribed
+  aerosol_cmip_background_path: data/macv2_2018_background_prepared_v1/macv2_background_v1.nc
+  aerosol_cmip_plumes_path: data/macv2sp_cmip6_v1_0_raw/MACv2.0-SP_v1.nc
+  aerosol_cmip_stratospheric_path: data/uoexeter_cmip_2_2_1_prepared_v7/uoexeter_strat_bands_199212_199501_v7.nc
+  solar_constant_w_m2: 1360.7470703125
+  solar_constant_source: "CMIP6 piControl (Matthes et al. 2017)"
+  solar_constant_entry: picontrol

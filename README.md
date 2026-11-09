@@ -108,8 +108,11 @@ julia --project=. -e 'using Pkg' -e 'Pkg.instantiate()'
 python -m pip install -r scripts/requirements.txt
 ```
 
-Follow the [input-data setup](docs/running.md#input-data) to prepare ERA5 and
-ECCO for 1 January 1993. Then copy the standard configuration:
+Follow the [input-data setup](docs/running.md#input-data) to prepare ERA5,
+ECCO and the prescribed aerosol inputs for 1 January 1993. The aerosol
+[download hashes and preparation commands](data/README_aerosol.md) are supplied
+separately because the source data are not in this repository. Then copy the
+standard configuration:
 
 ```bash
 cp config/production.yml config/my_run.yml
