@@ -16,7 +16,9 @@ with_forcing(config; kwargs...) =
     with(config; forcing = R.ForcingConfig(; merge(fields(config.forcing), (; kwargs...))...))
 include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
 
-const CMIP6 = 1360.747
+# The production piControl value is the exact Float32 encoding of the
+# source table's three-decimal 1360.747 W/m2 entry.
+const CMIP6 = 1360.7470703125
 const LABEL = "CMIP6 piControl (Matthes et al. 2017)"
 
 "Text of the call starting at `start` up to its matching closing parenthesis."
