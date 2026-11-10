@@ -13,8 +13,12 @@ include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
     @test production.scored_outputs == true
     @test R.ExperimentConfig().scored_outputs == false
+    inert_cloud = R.ForcingConfig()
     simplified = R.ForcingConfig(; merge(fields(production.forcing),
         (; radiation = :speedy_simplified, solar_distance_correction = false, cloud_scheme = :none,
+           cloud_relative_humidity_min = inert_cloud.cloud_relative_humidity_min,
+           cloud_liquid_water_path_gm2 = inert_cloud.cloud_liquid_water_path_gm2,
+           cloud_ice_water_path_gm2 = inert_cloud.cloud_ice_water_path_gm2,
            aerosol_scheme = :none, aerosol_cmip_background_path = "",
            aerosol_cmip_plumes_path = "", aerosol_cmip_stratospheric_path = ""))...)
     err = try
