@@ -4,7 +4,7 @@ function legacy_pbl_test_config()
     @test released.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1
     @test released.atmosphere_pbl_diffusivity_scale == 1.0
     @test released.atmosphere_pbl_mix_momentum
-    @test released.atmosphere_pbl_mix_heat && released.atmosphere_pbl_mix_humidity
+    @test !released.atmosphere_pbl_mix_heat && !released.atmosphere_pbl_mix_humidity
     # These scalar and refusal tests exercise the old zero-mixing starting point.
     # Their fixture must remain independent of changes to the released defaults.
     forcing_fields = (; (n => getfield(released.forcing, n)

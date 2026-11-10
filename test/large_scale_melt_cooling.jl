@@ -80,10 +80,15 @@ end
     mktempdir() do directory
         source = joinpath(R.PROJECT_ROOT, "config", "production.yml")
         path = joinpath(directory, "melt.yml")
-        @test R.load_config(source; check_input_files = false).atmosphere_large_scale_melt_cooling
+        @test !R.load_config(source; check_input_files = false).atmosphere_large_scale_melt_cooling
         original = read(source, String)
-        @test occursin("atmosphere_large_scale_melt_cooling: true", original)
-        write(path, replace(original, "atmosphere_large_scale_melt_cooling: true" =>
+        @test !occursin("atmosphere_large_scale_melt_cooling:", original)
+        @test occursin("atmosphere_large_scale_precipitation: net_column_conservative\n", original)
+        enabled = replace(original, "atmosphere_large_scale_precipitation: net_column_conservative\n" =>
+            "atmosphere_large_scale_precipitation: net_column_conservative\natmosphere_large_scale_melt_cooling: true\n")
+        write(path, enabled)
+        @test R.load_config(path; check_input_files = false).atmosphere_large_scale_melt_cooling
+        write(path, replace(enabled, "atmosphere_large_scale_melt_cooling: true" =>
             "atmosphere_large_scale_melt_cooling: false"))
         @test !R.load_config(path; check_input_files = false).atmosphere_large_scale_melt_cooling
     end

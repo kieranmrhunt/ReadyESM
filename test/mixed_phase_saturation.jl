@@ -29,12 +29,12 @@ function cold_column_tendency(atmosphere)
 end
 
 @testset "Mixed-phase saturation option" begin
-    # Preserve mixed-phase compatibility while production selects liquid saturation.
+    # Production uses mixed phase; liquid saturation remains available for opt-in TB.
     @test R.ExperimentConfig().atmosphere_saturation_law == :liquid
     @test R.ExperimentConfig().atmosphere_large_scale_precipitation == :upstream_observed
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml");
         check_input_files = false)
-    @test production.atmosphere_saturation_law == :liquid
+    @test production.atmosphere_saturation_law == :mixed_phase
     @test production.atmosphere_large_scale_precipitation == :net_column_conservative
     mixed = with(production; atmosphere_saturation_law = :mixed_phase,
         atmosphere_convection = :betts_miller_sigma_rh_v1,
@@ -48,7 +48,9 @@ end
     end
     @test_throws ArgumentError R.validate(with(production; atmosphere_saturation_law = :ice);
         check_input_files = false)
-    @test_throws ArgumentError R.validate(with(production; atmosphere_saturation_law = :mixed_phase);
+    @test_throws ArgumentError R.validate(with(production;
+        atmosphere_convection = :tiedtke_bechtold_eqcape_stage1b,
+        atmosphere_convection_timescale_seconds = 14400);
         check_input_files = false)
     @test R.validate(mixed;
         check_input_files = false) isa R.ExperimentConfig

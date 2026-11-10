@@ -18,8 +18,8 @@ using ReadyESM, Test, Dates, SHA
     @test config.atmosphere_vertical_diffusion == :holtslag_boville_k_profile_v1
     @test config.atmosphere_pbl_diffusivity_scale == 1.0
     @test config.atmosphere_pbl_mix_momentum
-    @test config.atmosphere_pbl_mix_heat
-    @test config.atmosphere_pbl_mix_humidity
+    @test !config.atmosphere_pbl_mix_heat
+    @test !config.atmosphere_pbl_mix_humidity
     @test config.atmosphere_dissipative_heating == :kinetic_energy_v1
     @test ExperimentConfig().atmosphere_dissipative_heating == :off
     @test config.atmosphere_vertical_advection == :centered_full_temperature
@@ -37,24 +37,24 @@ using ReadyESM, Test, Dates, SHA
     @test Second(plain_diffusion.time_scale) == Second(14_400)
     @test Second(plain_diffusion.time_scale_div) == Second(14_400)
     @test config.atmosphere_large_scale_precipitation == :net_column_conservative
-    @test config.atmosphere_large_scale_melt_cooling
+    @test !config.atmosphere_large_scale_melt_cooling
     @test !config.atmosphere_moist_mass_coupling
-    @test config.atmosphere_saturation_law == :liquid
-    @test config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1b
+    @test config.atmosphere_saturation_law == :mixed_phase
+    @test config.atmosphere_convection == :betts_miller_sigma_rh_v1
     @test config.atmosphere_convection_upper_relative_humidity == 0.5
     @test config.atmosphere_convection_lower_relative_humidity == 0.7
     @test config.atmosphere_convection_transition_top_sigma == 0.3
     @test config.atmosphere_convection_transition_bottom_sigma == 0.7
-    @test config.atmosphere_convection_timescale_seconds == 14400
+    @test config.atmosphere_convection_timescale_seconds == 7200
     @test config.atmosphere_initial_spectral_truncation
     @test !ExperimentConfig().atmosphere_initial_spectral_truncation
     @test config.forcing.radiation == :rrtmgp_all_sky
     @test config.forcing.solar_distance_correction
     @test !ExperimentConfig().forcing.solar_distance_correction
     @test config.forcing.co2_ppm == 420
-    @test config.forcing.cloud_liquid_water_path_gm2 == 60
-    @test config.forcing.cloud_ice_water_path_gm2 == 60
-    @test config.forcing.cloud_relative_humidity_min == 0.8
+    @test config.forcing.cloud_liquid_water_path_gm2 == 75
+    @test config.forcing.cloud_ice_water_path_gm2 == 25
+    @test config.forcing.cloud_relative_humidity_min == 0.3
     @test config.forcing.aerosol_optical_depth_550nm == 0
     @test config.forcing.aerosol_scheme == :cmip_prescribed
     @test config.forcing.solar_constant_entry == "picontrol"

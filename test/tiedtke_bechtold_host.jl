@@ -187,15 +187,16 @@ const HOST_FIELDS_3D = (:convective_humidity_tendency, :convective_temperature_t
 @testset "Tiedtke-Bechtold stage 1a host integration" begin
 
 production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-# The released tree selects stage 1b; keep an explicit Betts-Miller fixture for compatibility checks.
+# Production selects Betts-Miller; keep an explicit TB opt-in fixture.
 bm_production = with(production; atmosphere_convection = :betts_miller_sigma_rh_v1,
     atmosphere_saturation_law = :mixed_phase, atmosphere_convection_timescale_seconds = 7200)
-tb_production = with(production; atmosphere_convection = TB)
+tb_production = with(production; atmosphere_convection = TB,
+    atmosphere_saturation_law = :liquid, atmosphere_convection_timescale_seconds = 14400)
 
 @testset "Configuration: name, refusals, prognostic-cloud selector, factory" begin
     @test R.validate(tb_production; check_input_files = false) === tb_production
     @test R.ExperimentConfig().atmosphere_convection == :betts_miller_constant_rh     # TB is opt-in
-    @test production.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1b
+    @test production.atmosphere_convection == :betts_miller_sigma_rh_v1
     # The name parses from YAML.
     mktempdir() do dir
         lines = readlines(joinpath(R.PROJECT_ROOT, "config", "production.yml"))
