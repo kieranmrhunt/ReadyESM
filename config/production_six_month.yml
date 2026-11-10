@@ -11,20 +11,19 @@ atmosphere_divergence_hyperdiffusion_hours: 4
 atmosphere_vertical_advection: centered_full_temperature
 atmosphere_vertical_diffusion: holtslag_boville_k_profile_v1
 atmosphere_pbl_diffusivity_scale: 1.0
-atmosphere_pbl_mix_heat: true
-atmosphere_pbl_mix_humidity: true
+atmosphere_pbl_mix_heat: false
+atmosphere_pbl_mix_humidity: false
 atmosphere_pbl_mix_momentum: true
 atmosphere_dissipative_heating: kinetic_energy_v1
 atmosphere_large_scale_precipitation: net_column_conservative
-atmosphere_large_scale_melt_cooling: true
-atmosphere_saturation_law: liquid
+atmosphere_saturation_law: mixed_phase
 atmosphere_moist_mass_coupling: false
-atmosphere_convection: tiedtke_bechtold_eqcape_stage1b
+atmosphere_convection: betts_miller_sigma_rh_v1
 atmosphere_convection_upper_relative_humidity: 0.5
 atmosphere_convection_lower_relative_humidity: 0.7
 atmosphere_convection_transition_top_sigma: 0.3
 atmosphere_convection_transition_bottom_sigma: 0.7
-atmosphere_convection_timescale_seconds: 14400
+atmosphere_convection_timescale_seconds: 7200
 atmosphere_speed_limit_ms: 60
 atmosphere_speed_limit_drag_per_m: 2.0e-6
 atmosphere_surface_speed_limit_ms: 40
@@ -73,9 +72,8 @@ forcing:
   solar_distance_correction: true
   co2_ppm: 420.0
   cloud_scheme: diagnostic
-  cloud_liquid_water_path_gm2: 60.0
-  cloud_ice_water_path_gm2: 60.0
-  cloud_relative_humidity_min: 0.8
+  cloud_liquid_water_path_gm2: 75.0
+  cloud_ice_water_path_gm2: 25.0
   aerosol_species: sulfate
   aerosol_optical_depth_550nm: 0.0
   aerosol_scheme: cmip_prescribed
