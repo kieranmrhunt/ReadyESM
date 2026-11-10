@@ -76,10 +76,11 @@ and prepare the three model inputs using the exact source filenames, SHA-256
 hashes and commands in the [aerosol data guide](../data/README_aerosol.md).
 The source repository contains the preparation scripts under
 `scripts/aerosol/`. It does not distribute the raw or prepared input files.
-The 730-day production config uses the December 1992–January 1995
-UOEXETER v7 file. The [six-month configuration](../config/production_six_month.yml)
-uses the earlier December 1992–January 1994 v6 file matching the frozen
-v0.1.20 evaluation run. Prepare that file separately if you use this config.
+The 730-day production config and the [six-month configuration](../config/production_six_month.yml) both use the December 1992–January
+1995 UOEXETER v7 file. The six-month file starts on 1 January 1993 and
+runs for 181 days. Both files use the retuned cloud settings tested in
+v0.1.20: a humidity threshold of 0.8, with 60 g m⁻² each of cloud liquid
+water and ice. Prepare the v7 aerosol file before running either setup.
 
 ## Run and output
 

@@ -73,14 +73,15 @@ forcing:
   solar_distance_correction: true
   co2_ppm: 420.0
   cloud_scheme: diagnostic
-  cloud_liquid_water_path_gm2: 75.0
-  cloud_ice_water_path_gm2: 25.0
+  cloud_liquid_water_path_gm2: 60.0
+  cloud_ice_water_path_gm2: 60.0
+  cloud_relative_humidity_min: 0.8
   aerosol_species: sulfate
   aerosol_optical_depth_550nm: 0.0
   aerosol_scheme: cmip_prescribed
   aerosol_cmip_background_path: data/macv2_2018_background_prepared_v1/macv2_background_v1.nc
   aerosol_cmip_plumes_path: data/macv2sp_cmip6_v1_0_raw/MACv2.0-SP_v1.nc
-  aerosol_cmip_stratospheric_path: data/uoexeter_cmip_2_2_1_prepared_v6/uoexeter_strat_bands_199212_199401_v6.nc
+  aerosol_cmip_stratospheric_path: data/uoexeter_cmip_2_2_1_prepared_v7/uoexeter_strat_bands_199212_199501_v7.nc
   solar_constant_w_m2: 1360.7470703125
   solar_constant_source: "CMIP6 piControl (Matthes et al. 2017)"
   solar_constant_entry: picontrol

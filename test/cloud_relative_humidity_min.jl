@@ -7,16 +7,16 @@
     with_forcing(c; kw...) = R.ExperimentConfig(;
         merge(fields(c), (; forcing = R.ForcingConfig(; merge(fields(c.forcing), (; kw...))...)))...)
 
-    # The released production file still selects the SPEEDY value.
+    # The production file selects the retuned threshold.
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-    @test production.forcing.cloud_relative_humidity_min == 0.3
+    @test production.forcing.cloud_relative_humidity_min == 0.8
 
     # A YAML value reaches the config.
     mktempdir() do dir
         text = read(joinpath(R.PROJECT_ROOT, "config", "production.yml"), String)
         path = joinpath(dir, "rh.yml")
-        write(path, replace(text, "  cloud_scheme: diagnostic\n" =>
-            "  cloud_scheme: diagnostic\n  cloud_relative_humidity_min: 0.7\n"))
+        write(path, replace(text, "  cloud_relative_humidity_min: 0.8\n" =>
+            "  cloud_relative_humidity_min: 0.7\n"))
         loaded = R.load_config(path; check_input_files = false)
         @test loaded.forcing.cloud_relative_humidity_min == 0.7
     end

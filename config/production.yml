@@ -73,8 +73,9 @@ forcing:
   solar_distance_correction: true
   co2_ppm: 420.0
   cloud_scheme: diagnostic
-  cloud_liquid_water_path_gm2: 75.0
-  cloud_ice_water_path_gm2: 25.0
+  cloud_liquid_water_path_gm2: 60.0
+  cloud_ice_water_path_gm2: 60.0
+  cloud_relative_humidity_min: 0.8
   aerosol_species: sulfate
   aerosol_optical_depth_550nm: 0.0
   aerosol_scheme: cmip_prescribed

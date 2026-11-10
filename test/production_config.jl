@@ -52,8 +52,9 @@ using ReadyESM, Test, Dates, SHA
     @test config.forcing.solar_distance_correction
     @test !ExperimentConfig().forcing.solar_distance_correction
     @test config.forcing.co2_ppm == 420
-    @test config.forcing.cloud_liquid_water_path_gm2 == 75
-    @test config.forcing.cloud_ice_water_path_gm2 == 25
+    @test config.forcing.cloud_liquid_water_path_gm2 == 60
+    @test config.forcing.cloud_ice_water_path_gm2 == 60
+    @test config.forcing.cloud_relative_humidity_min == 0.8
     @test config.forcing.aerosol_optical_depth_550nm == 0
     @test config.forcing.aerosol_scheme == :cmip_prescribed
     @test config.forcing.solar_constant_entry == "picontrol"
