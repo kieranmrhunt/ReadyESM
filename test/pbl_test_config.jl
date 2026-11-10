@@ -27,7 +27,8 @@ end
 function analytic_pbl_test_config()
     return with(legacy_pbl_test_config(); atmosphere_initial_conditions=:analytic,
         terrarium_initial_conditions=:hydrostatic, terrarium_evapotranspiration=:bare_ground,
-        era5_pressure_levels_path="", era5_single_levels_path="", era5_land_state_path="")
+        era5_pressure_levels_path="", era5_single_levels_path="", era5_land_state_path="",
+        scored_outputs=false)
 end
 
 function pbl_fixture_yaml()
