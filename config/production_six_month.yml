@@ -1,0 +1,85 @@
+name: production
+device: gpu
+truncation: 31
+nlayers: 27
+duration_days: 181
+analysis_start_day: 0
+start_date: "1993-01-01T00:00:00"
+atmosphere_timestep_at_t31_minutes: 15
+atmosphere_hyperdiffusion_hours: 4
+atmosphere_divergence_hyperdiffusion_hours: 4
+atmosphere_vertical_advection: centered_full_temperature
+atmosphere_vertical_diffusion: holtslag_boville_k_profile_v1
+atmosphere_pbl_diffusivity_scale: 1.0
+atmosphere_pbl_mix_heat: false
+atmosphere_pbl_mix_humidity: false
+atmosphere_pbl_mix_momentum: true
+atmosphere_dissipative_heating: kinetic_energy_v1
+atmosphere_large_scale_precipitation: net_column_conservative
+atmosphere_saturation_law: mixed_phase
+atmosphere_moist_mass_coupling: false
+atmosphere_convection: betts_miller_sigma_rh_v1
+atmosphere_convection_upper_relative_humidity: 0.5
+atmosphere_convection_lower_relative_humidity: 0.7
+atmosphere_convection_transition_top_sigma: 0.3
+atmosphere_convection_transition_bottom_sigma: 0.7
+atmosphere_convection_timescale_seconds: 7200
+atmosphere_speed_limit_ms: 60
+atmosphere_speed_limit_drag_per_m: 2.0e-6
+atmosphere_surface_speed_limit_ms: 40
+atmosphere_surface_speed_limit_drag_per_m: 2.0e-5
+atmosphere_initial_conditions: era5_instantaneous
+atmosphere_initial_spectral_truncation: true
+era5_pressure_levels_path: data/era5_initial_state/era5_pressure_levels_stratosphere_19930101T0000Z.nc
+era5_single_levels_path: data/era5_initial_state/era5_single_levels_19930101T0000Z.nc
+era5_land_state_path: data/era5_initial_state/era5_land_state_19930101T0000Z.nc
+era5_month: 1
+ocean_model: oceananigans
+ocean_grid: tripolar_1degree
+ocean_dynamics: true
+sea_ice_dynamics: true
+sea_ice_lead_closing_thickness_m: 0.5
+ocean_nlongitude: 360
+ocean_nlatitude: 180
+ocean_nlayers: 60
+ocean_depth_m: 6000
+ocean_bathymetry_correction: none
+ocean_shortwave_scheme: depth_aware_coastal
+ocean_initial_conditions: ecco_monthly_full_state
+ecco_year: 1993
+ecco_month: 1
+ecco_initial_conditions_directory: data/ecco_calendar_centred_1993_01
+land_model: terrarium
+terrarium_precision: float64
+terrarium_initial_conditions: era5_instantaneous
+terrarium_evapotranspiration: era5_prescribed_vegetation
+terrarium_surface_albedo: era5_spectral
+terrarium_albedo_cycle_path: data/era5_realistic_albedo_1993/era5_monthly_land_cycle_1993_realistic_v2.nc
+terrarium_albedo_cycle_sha256: 2f8e9193e2fea340e81dacc0e486c1d7de7f3b3a1b1e44dfc16ae3eef76f5c0c
+terrarium_albedo_crossing_band: equal_halves
+terrarium_vegetation_cycle: cover_lai
+terrarium_vegetation_cycle_path: data/era5_seasonal_land_cycle_1993/era5_monthly_land_cycle_1993.nc
+terrarium_vegetation_cycle_sha256: b80d7e01a4390340794030f1f924e5583d813fb163a1f9d875ae749091c13f60
+terrarium_soil_layers: 16
+terrarium_max_layer_thickness_m: 5
+terrarium_timestep_seconds: 60
+output_dir: artifacts/production
+scored_outputs: true
+
+forcing:
+  radiation: rrtmgp_all_sky
+  radiation_every_n_steps: 4
+  solar_distance_correction: true
+  co2_ppm: 420.0
+  cloud_scheme: diagnostic
+  cloud_liquid_water_path_gm2: 75.0
+  cloud_ice_water_path_gm2: 25.0
+  aerosol_species: sulfate
+  aerosol_optical_depth_550nm: 0.0
+  aerosol_scheme: cmip_prescribed
+  aerosol_cmip_background_path: data/macv2_2018_background_prepared_v1/macv2_background_v1.nc
+  aerosol_cmip_plumes_path: data/macv2sp_cmip6_v1_0_raw/MACv2.0-SP_v1.nc
+  aerosol_cmip_stratospheric_path: data/uoexeter_cmip_2_2_1_prepared_v7/uoexeter_strat_bands_199212_199501_v7.nc
+  solar_constant_w_m2: 1360.7470703125
+  solar_constant_source: "CMIP6 piControl (Matthes et al. 2017)"
+  solar_constant_entry: picontrol

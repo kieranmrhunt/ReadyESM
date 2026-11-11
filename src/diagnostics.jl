@@ -156,14 +156,23 @@ end
 """Machine-readable provenance for the radiative forcing actually in use."""
 function _forcing_provenance(radiation, config::ExperimentConfig)
     rrtmgp_active = radiation isa RRTMGPRadiation
-    aerosol_active = rrtmgp_active && radiation.target_aod_550nm > 0
+    aerosol_active = rrtmgp_active && (radiation.target_aod_550nm > 0 || !isnothing(radiation.cmip_aerosol))
     return (;
         _base_forcing_provenance(radiation, config, rrtmgp_active, aerosol_active)...,
         _trace_gas_provenance(radiation, config, rrtmgp_active)...,
         _well_mixed_gas_provenance(radiation, config, rrtmgp_active)...,
         _prescribed_ozone_provenance(radiation, config, rrtmgp_active)...,
+        _solar_constant_entry_provenance(config)...,
+        _cmip_aerosol_provenance(radiation, config, rrtmgp_active)...,
     )
 end
+
+"""
+Provenance of a non-default solar constant: its pinned table entry, source file, SHA-256, year and reduction. Like the
+trace-gas entries, these are added only when the setting is used, so default output is unchanged.
+"""
+_solar_constant_entry_provenance(config::ExperimentConfig) =
+    isempty(config.forcing.solar_constant_entry) ? (;) : _solar_constant_provenance(config)
 
 """
 Provenance for the optional CH4 and N2O overrides. Each gas adds entries only
@@ -199,12 +208,12 @@ function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_ac
             Float64(radiation.target_aod_550nm) : NaN,
         aerosol_species = config.forcing.aerosol_species,
         aerosol_forcing_active = aerosol_active,
-        aerosol_forcing_mode = aerosol_active ?
+        aerosol_forcing_mode = !aerosol_active ? "disabled" : isnothing(radiation.cmip_aerosol) ?
             "prescribed_column_aod_550nm_recalibrated_each_radiation_solve" :
-            "disabled",
-        aerosol_vertical_profile = aerosol_active ?
+            "prescribed_cmip_band_optics_each_radiation_solve",
+        aerosol_vertical_profile = !aerosol_active ? "none" : isnothing(radiation.cmip_aerosol) ?
             "fixed_log_pressure_gaussian_center_150hPa_width_0.8" :
-            "none",
+            "macv2_layer_fractions_and_macv2sp_beta_profiles",
         forcing_time_dependence = _forcing_time_dependence(config),
         interactive_carbon_cycle = config.carbon.mode == :emissions_driven,
         interactive_aerosol_chemistry = false,
@@ -216,12 +225,18 @@ function _base_forcing_provenance(radiation, config::ExperimentConfig, rrtmgp_ac
         solar_distance_scheme = _solar_distance_scheme(
             rrtmgp_active && radiation.solar_distance_correction,
         ),
+        solar_constant_w_m2 = config.forcing.solar_constant_w_m2,
+        solar_constant_source = _solar_constant_source(config),
         cloud_humidity_search_min_sigma =
             config.forcing.cloud_humidity_search_min_sigma,
         applied_cloud_humidity_search_min_sigma =
             rrtmgp_active &&
                 config.forcing.cloud_scheme in _ALL_SKY_CLOUD_SCHEMES ?
             Float64(radiation.cloud_humidity_search_min_sigma) : NaN,
+        cloud_relative_humidity_min = config.forcing.cloud_relative_humidity_min,
+        applied_cloud_relative_humidity_min =
+            rrtmgp_active && radiation.clouds isa SpeedyWeather.DiagnosticClouds ?
+            Float64(radiation.clouds.relative_humidity_threshold_min) : NaN,
         cloud_humidity_search_scheme =
             config.forcing.cloud_scheme in _ALL_SKY_CLOUD_SCHEMES ?
             _diagnostic_cloud_humidity_search_scheme(

@@ -14,12 +14,32 @@ Base.@kwdef struct ForcingConfig
     ozone_path::String = ""
     ozone_fixed_year::Int = 0
     aerosol_optical_depth_550nm::Float64 = 0.0
+    # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2): :none (default) or :cmip_prescribed,
+    # the MACv2 pre-industrial background file plus the MACv2-SP-1-0 parameter file; a year > 0 holds that MACv2-SP
+    # year, 0 follows the model date. The optional stratospheric file (prepared UOEXETER-CMIP-2-2-1 band moments)
+    # follows the model date and needs year 0; empty means tropospheric aerosol only.
+    aerosol_scheme::Symbol = :none
+    aerosol_cmip_background_path::String = ""
+    aerosol_cmip_plumes_path::String = ""
+    aerosol_cmip_year::Int = 0
+    aerosol_cmip_stratospheric_path::String = ""
     aerosol_species::String = "sulfate"
     radiation::Symbol = :speedy_simplified
     radiation_every_n_steps::Int = 1
     solar_distance_correction::Bool = false
+    # Total solar irradiance (src/solar_forcing.jl, design tsi_option_claude/DESIGN.md v2). 1365 W/m2 with an empty source
+    # is the SpeedyWeather Earth default that every earlier release used. Any other value must name an entry of the pinned
+    # table SOLAR_CONSTANT_ENTRIES (data/cmip6_solar_tsi/tsi_values.toml), agree with its value and carry its label. The
+    # provenance records the value with the entry's source file, SHA-256, year and reduction.
+    solar_constant_w_m2::Float64 = 1365.0
+    solar_constant_source::String = ""
+    solar_constant_entry::String = ""
     cloud_scheme::Symbol = :none
     cloud_humidity_search_min_sigma::Float64 = 0.0
+    # Relative humidity at which the diagnostic cloud law starts to form humidity cloud
+    # (SpeedyWeather DiagnosticClouds relative_humidity_threshold_min). 0.3 is the SPEEDY value
+    # and keeps the released behaviour. It is active only with an all-sky cloud scheme.
+    cloud_relative_humidity_min::Float64 = 0.3
     cloud_liquid_water_path_gm2::Float64 = 60.0
     cloud_ice_water_path_gm2::Float64 = 25.0
     cloud_condensate_retention_fraction::Float64 = 0.0
@@ -68,6 +88,9 @@ Base.@kwdef struct ExperimentConfig
     # as heat).
     atmosphere_dissipative_heating::Symbol = :off
     atmosphere_large_scale_precipitation::Symbol = :upstream_observed
+    # Opt-in (large_scale_melt_cooling.jl): keep the cooling of large-scale snow that melts as it falls, which
+    # SpeedyWeather 0.21.1 computes and then discards. Requires net_column_conservative precipitation.
+    atmosphere_large_scale_melt_cooling::Bool = false
     # Saturation law for SpeedyWeather's moist physics and the diagnostic cloud
     # search: :liquid (SpeedyWeather 0.21.1) or :mixed_phase (liquid and ice).
     atmosphere_saturation_law::Symbol = :liquid
@@ -99,6 +122,13 @@ Base.@kwdef struct ExperimentConfig
     sea_ice_dynamics::Bool = false
     sea_ice_momentum_substeps::Int = 240
     sea_ice_pressure_formulation::Symbol = :replacement_pressure
+    # Opt-in lead-closing thickness h_0 (m) for the freezing term of the sea-ice concentration rule
+    # (src/sea_ice_lead_closing.jl). 0 keeps the release rule, which uses the 0.05 m consolidation thickness.
+    sea_ice_lead_closing_thickness_m::Float64 = 0.0
+    # Optional southern h_0 (m). `nothing` applies sea_ice_lead_closing_thickness_m everywhere. A number applies that
+    # key from the equator northward (cell-centre latitude >= 0) and this one south of it, with 0 keeping the release
+    # rule in that hemisphere.
+    sea_ice_lead_closing_thickness_south_m::Union{Nothing, Float64} = nothing
     sea_ice_immersed_boundary_drag_coefficient::Float64 = 0.0
     ocean_nlongitude::Int = 32
     ocean_nlatitude::Int = 16
@@ -156,6 +186,9 @@ Base.@kwdef struct ExperimentConfig
     output_dir::String = joinpath(PROJECT_ROOT, "artifacts", "baseline")
     # Opt-in: write the files the release scorer reads (monthly.nc, wind.nc, toa_monthly.nc, eddy_6hourly.nc).
     scored_outputs::Bool = false
+    # Opt-in read-only sea-ice branch observer v1 (src/sea_ice_branch_observer.jl). A run-control field: it records the
+    # final-stage sea-ice thermodynamic update without changing the model state, so it is not in the restart identity.
+    sea_ice_branch_observer::Bool = false
     forcing::ForcingConfig = ForcingConfig()
     carbon::CarbonConfig = CarbonConfig()
 end
@@ -275,6 +308,11 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         aerosol_optical_depth_550nm = Float64(
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
+        aerosol_scheme = Symbol(_mapping_value(forcing_raw, "aerosol_scheme", "none")),
+        aerosol_cmip_background_path = _resolve_optional_path(_mapping_value(forcing_raw, "aerosol_cmip_background_path", "")),
+        aerosol_cmip_plumes_path = _resolve_optional_path(_mapping_value(forcing_raw, "aerosol_cmip_plumes_path", "")),
+        aerosol_cmip_year = Int(_mapping_value(forcing_raw, "aerosol_cmip_year", 0)),
+        aerosol_cmip_stratospheric_path = _resolve_optional_path(_mapping_value(forcing_raw, "aerosol_cmip_stratospheric_path", "")),
         aerosol_species = String(_mapping_value(forcing_raw, "aerosol_species", "sulfate")),
         radiation = Symbol(_mapping_value(forcing_raw, "radiation", "speedy_simplified")),
         radiation_every_n_steps = Int(
@@ -284,8 +322,16 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         solar_distance_correction = Bool(
             _mapping_value(forcing_raw, "solar_distance_correction", false),
         ),
+        solar_constant_w_m2 = Float64(
+            _mapping_value(forcing_raw, "solar_constant_w_m2", DEFAULT_SOLAR_CONSTANT_W_M2),
+        ),
+        solar_constant_source = String(_mapping_value(forcing_raw, "solar_constant_source", "")),
+        solar_constant_entry = String(_mapping_value(forcing_raw, "solar_constant_entry", "")),
         cloud_humidity_search_min_sigma = Float64(
             _mapping_value(forcing_raw, "cloud_humidity_search_min_sigma", 0.0),
+        ),
+        cloud_relative_humidity_min = Float64(
+            _mapping_value(forcing_raw, "cloud_relative_humidity_min", 0.3),
         ),
         cloud_liquid_water_path_gm2 = Float64(
             _mapping_value(forcing_raw, "cloud_liquid_water_path_gm2", 60.0),
@@ -423,6 +469,9 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "upstream_observed",
             ),
         ),
+        atmosphere_large_scale_melt_cooling = Bool(
+            _mapping_value(raw, "atmosphere_large_scale_melt_cooling", false),
+        ),
         atmosphere_saturation_law = Symbol(
             _mapping_value(raw, "atmosphere_saturation_law", "liquid"),
         ),
@@ -515,6 +564,12 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
                 "sea_ice_pressure_formulation",
                 "replacement_pressure",
             ),
+        ),
+        sea_ice_lead_closing_thickness_m = Float64(
+            _mapping_value(raw, "sea_ice_lead_closing_thickness_m", 0.0),
+        ),
+        sea_ice_lead_closing_thickness_south_m = _optional_float(
+            _mapping_value(raw, "sea_ice_lead_closing_thickness_south_m", nothing),
         ),
         sea_ice_immersed_boundary_drag_coefficient = Float64(
             _mapping_value(
@@ -673,11 +728,77 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         terrarium_precision = Symbol(_mapping_value(raw, "terrarium_precision", "float32")),
         output_dir = output_dir,
         scored_outputs = Bool(_mapping_value(raw, "scored_outputs", false)),
+        sea_ice_branch_observer = Bool(_mapping_value(raw, "sea_ice_branch_observer", false)),
         forcing = forcing,
         carbon = carbon,
     )
     validate(config; check_input_files)
     return config
+end
+
+# Prognostic cloud selector. Release 4caab68 has one prognostic cloud scheme, prognostic_condensate. The atmosphere
+# builder (baseline.jl) uses this selector to wrap the convection in PrognosticCondensateConvection, and the
+# Tiedtke-Bechtold stage 1a validation below refuses every member, so a prognostic mode added here is refused with
+# Tiedtke-Bechtold too (TB DESIGN.md integration item 6). Same name and form as the root development tree.
+const _PROGNOSTIC_CLOUD_SCHEMES = (:prognostic_condensate,)
+_uses_prognostic_cloud_condensate(scheme::Symbol) = scheme in _PROGNOSTIC_CLOUD_SCHEMES
+
+# Settings of the Betts-Miller (relaxation time scale, reference relative humidity and its sigma transition) and
+# C08/C07 schemes. Tiedtke-Bechtold stage 1a reads none of them, so it requires their defaults.
+const _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS = (
+    :atmosphere_convection_timescale_seconds,
+    :atmosphere_convection_upper_relative_humidity,
+    :atmosphere_convection_lower_relative_humidity,
+    :atmosphere_convection_transition_top_sigma,
+    :atmosphere_convection_transition_bottom_sigma,
+    :atmosphere_c08_entrainment_scale,
+    :atmosphere_c08_precipitation_conversion_m_inv,
+    :atmosphere_c08_condensate_threshold_kg_kg,
+    :atmosphere_c07_momentum_strength,
+    :atmosphere_c07_maximum_subcycles,
+)
+
+"""Whether a convection symbol selects Tiedtke-Bechtold (stage 1a or stage 1B)."""
+_is_tiedtke_bechtold_convection(scheme::Symbol) =
+    scheme in (:tiedtke_bechtold_eqcape_stage1, :tiedtke_bechtold_eqcape_stage1b)
+
+"""
+Combinations refused with atmosphere_convection = tiedtke_bechtold_eqcape_stage1 (frozen contract
+tiedtke_bechtold_claude_v1/frozen_v4, b07062d2: DESIGN.md integration items 1 and 6, STAGE1_CHOICES_DRAFT.md r15 D01,
+D02):
+1. every prognostic cloud scheme, through the host selector `_uses_prognostic_cloud_condensate`:
+   PrognosticCondensateConvection consumes the Betts-Miller process diagnostics and convective rain, and stage 1a
+   has no Tiedtke-Bechtold condensate interface (item 6);
+2. a saturation law other than liquid: D01 is liquid only and D02 takes the host q_sat, the same function as the
+   host large-scale condensation, which holds only for the liquid host law;
+3. moist-mass coupling: its per-layer source adapter supports only the net-column Betts-Miller host (also refused by
+   the moist-mass check below);
+4. a non-default value of any Betts-Miller or C08/C07 setting (`_TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS`): the
+   scheme does not read them, so a changed value would look active while having no effect.
+"""
+function _validate_tiedtke_bechtold_stage1_options(config::ExperimentConfig)
+    selected = "atmosphere_convection=$(config.atmosphere_convection)"
+    _uses_prognostic_cloud_condensate(config.forcing.cloud_scheme) && throw(ArgumentError(
+        "$selected cannot be combined with " *
+        "cloud_scheme=$(config.forcing.cloud_scheme): prognostic cloud condensate consumes the Betts-Miller " *
+        "convective diagnostics, and stage 1a has no Tiedtke-Bechtold condensate interface",
+    ))
+    config.atmosphere_saturation_law == :liquid || throw(ArgumentError(
+        "$selected requires atmosphere_saturation_law=liquid " *
+        "(stage 1a is liquid only and uses the host liquid saturation humidity)",
+    ))
+    config.atmosphere_moist_mass_coupling && throw(ArgumentError(
+        "$selected cannot be combined with " *
+        "atmosphere_moist_mass_coupling, which supports only the net-column Betts-Miller host",
+    ))
+    defaults = ExperimentConfig()
+    for name in _TIEDTKE_BECHTOLD_INERT_CONVECTION_SETTINGS
+        getfield(config, name) == getfield(defaults, name) || throw(ArgumentError(
+            "$name is a Betts-Miller or C08/C07 setting that $selected " *
+            "does not read; keep its default $(getfield(defaults, name))",
+        ))
+    end
+    return nothing
 end
 
 function validate(config::ExperimentConfig; check_input_files::Bool = true)
@@ -743,6 +864,10 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         "atmosphere_large_scale_precipitation must be upstream_observed or " *
         "net_column_conservative",
     ))
+    !config.atmosphere_large_scale_melt_cooling ||
+        config.atmosphere_large_scale_precipitation == :net_column_conservative || throw(ArgumentError(
+            "atmosphere_large_scale_melt_cooling requires atmosphere_large_scale_precipitation=net_column_conservative",
+        ))
     config.atmosphere_saturation_law in (:liquid, :mixed_phase) || throw(ArgumentError(
         "atmosphere_saturation_law must be liquid or mixed_phase",
     ))
@@ -751,10 +876,17 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         :betts_miller_sigma_rh_v1,
         :finite_multiplume_c08_v1,
         :finite_multiplume_c07_v1,
+        :tiedtke_bechtold_eqcape_stage1,
+        :tiedtke_bechtold_eqcape_stage1b,
     ) || throw(ArgumentError(
         "atmosphere_convection must be betts_miller_constant_rh or " *
-        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1 or finite_multiplume_c07_v1",
+        "betts_miller_sigma_rh_v1 or finite_multiplume_c08_v1 or finite_multiplume_c07_v1 or " *
+        "tiedtke_bechtold_eqcape_stage1 or tiedtke_bechtold_eqcape_stage1b",
     ))
+    # Tiedtke-Bechtold stage 1a and stage 1B (tiedtke_bechtold_host.jl, tiedtke_bechtold_stage1b_host.jl): the same
+    # refusals, before the scheme-specific checks below.
+    _is_tiedtke_bechtold_convection(config.atmosphere_convection) &&
+        _validate_tiedtke_bechtold_stage1_options(config)
     if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         config.device == :cpu || throw(ArgumentError(
             "finite multi-plume convection requires device=cpu",
@@ -1279,6 +1411,7 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     end
     _validate_well_mixed_gas_options(config, rrtmgp_active, check_input_files)
     _validate_prescribed_ozone_options(config, rrtmgp_active, check_input_files)
+    _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
     if !rrtmgp_active && config.forcing.aerosol_optical_depth_550nm > 0
         throw(ArgumentError(
             "prescribed aerosol AOD requires radiation=rrtmgp_clear_sky or rrtmgp_all_sky",
@@ -1289,6 +1422,9 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     if config.forcing.solar_distance_correction && !rrtmgp_active
         throw(ArgumentError("solar_distance_correction requires RRTMGP radiation"))
     end
+    isfinite(config.forcing.solar_constant_w_m2) && config.forcing.solar_constant_w_m2 > 0 ||
+        throw(ArgumentError("forcing.solar_constant_w_m2 must be positive and finite"))
+    _validate_solar_constant_entry(config.forcing)
     if config.scored_outputs && !rrtmgp_active
         throw(ArgumentError("scored_outputs requires RRTMGP radiation for the top-of-atmosphere file"))
     end
@@ -1306,6 +1442,15 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         throw(ArgumentError(
             "cloud_humidity_search_min_sigma is active only with " *
             "an all-sky cloud scheme",
+        ))
+    end
+    0 <= config.forcing.cloud_relative_humidity_min < 1 &&
+        Float32(config.forcing.cloud_relative_humidity_min) < 1 ||
+        throw(ArgumentError("cloud_relative_humidity_min must remain within [0, 1) in Float32"))
+    if config.forcing.cloud_scheme == :none &&
+       config.forcing.cloud_relative_humidity_min != 0.3
+        throw(ArgumentError(
+            "cloud_relative_humidity_min is active only with an all-sky cloud scheme",
         ))
     end
     config.forcing.cloud_liquid_water_path_gm2 >= 0 ||
@@ -1354,6 +1499,30 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     config.sea_ice_momentum_substeps >= 1 || throw(ArgumentError(
         "sea_ice_momentum_substeps must be positive",
     ))
+    h0 = config.sea_ice_lead_closing_thickness_m
+    iszero(h0) || (isfinite(h0) && SEA_ICE_LEAD_CLOSING_RANGE_M[1] <= h0 <= SEA_ICE_LEAD_CLOSING_RANGE_M[2]) ||
+        throw(ArgumentError(
+            "sea_ice_lead_closing_thickness_m must be 0 or between $(SEA_ICE_LEAD_CLOSING_RANGE_M[1]) and " *
+            "$(SEA_ICE_LEAD_CLOSING_RANGE_M[2]) m",
+        ))
+    h0_south = config.sea_ice_lead_closing_thickness_south_m
+    if !isnothing(h0_south)
+        iszero(h0_south) || (isfinite(h0_south) &&
+            SEA_ICE_LEAD_CLOSING_RANGE_M[1] <= h0_south <= SEA_ICE_LEAD_CLOSING_RANGE_M[2]) ||
+            throw(ArgumentError(
+                "sea_ice_lead_closing_thickness_south_m must be 0 or between $(SEA_ICE_LEAD_CLOSING_RANGE_M[1]) " *
+                "and $(SEA_ICE_LEAD_CLOSING_RANGE_M[2]) m",
+            ))
+        h0 != h0_south || throw(ArgumentError(
+            "sea_ice_lead_closing_thickness_south_m equal to sea_ice_lead_closing_thickness_m is the global rule; " *
+            "leave it unset",
+        ))
+    end
+    !config.sea_ice_branch_observer || (config.ocean_model == :oceananigans && config.sea_ice_dynamics) ||
+        throw(ArgumentError(
+            "sea_ice_branch_observer requires ocean_model=oceananigans and sea_ice_dynamics=true, because it " *
+            "observes the conservative sea-ice Runge-Kutta stage",
+        ))
     config.sea_ice_pressure_formulation in (
         :replacement_pressure,
         :ice_strength,
@@ -1367,6 +1536,54 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
         ),
     )
     return config
+end
+
+"""Check the prescribed CMIP aerosol options; with input checks, every given file is read and checked."""
+function _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
+    f = config.forcing
+    f.aerosol_scheme in (:none, :cmip_prescribed) ||
+        throw(ArgumentError("aerosol_scheme must be none or cmip_prescribed"))
+    if f.aerosol_scheme == :none
+        isempty(f.aerosol_cmip_background_path) && isempty(f.aerosol_cmip_plumes_path) && f.aerosol_cmip_year == 0 &&
+            isempty(f.aerosol_cmip_stratospheric_path) ||
+            throw(ArgumentError("aerosol_cmip_* settings require aerosol_scheme = cmip_prescribed"))
+        return nothing
+    end
+    rrtmgp_active || throw(ArgumentError("aerosol_scheme = cmip_prescribed requires RRTMGP radiation"))
+    f.aerosol_optical_depth_550nm == 0 ||
+        throw(ArgumentError("aerosol_scheme = cmip_prescribed replaces aerosol_optical_depth_550nm; leave it at zero"))
+    !isempty(f.aerosol_cmip_background_path) && !isempty(f.aerosol_cmip_plumes_path) ||
+        throw(ArgumentError("aerosol_scheme = cmip_prescribed needs both aerosol_cmip_background_path and _plumes_path"))
+    # MACv2-SP-1-0 (the CMIP6 historical file) has year weights for 1850-2016 only; the reader also checks the file.
+    f.aerosol_cmip_year == 0 || 1850 <= f.aerosol_cmip_year <= 2016 ||
+        throw(ArgumentError("aerosol_cmip_year must be 0 or within the MACv2-SP-1-0 years 1850-2016"))
+    if f.aerosol_cmip_year == 0
+        # Model-date mode: the whole run must lie inside the MACv2-SP years (Paul 14:5x).
+        stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
+        1850 <= Dates.year(config.start_date) && Dates.year(stop) <= 2016 || throw(ArgumentError(
+            "aerosol_scheme = cmip_prescribed with the model date needs the run $(config.start_date) to $stop " *
+            "inside the MACv2-SP-1-0 years 1850-2016; set aerosol_cmip_year to hold a year"))
+    end
+    isempty(f.aerosol_cmip_stratospheric_path) || f.aerosol_cmip_year == 0 || throw(ArgumentError(
+        "aerosol_cmip_stratospheric_path follows the model date; it cannot be combined with aerosol_cmip_year"))
+    if check_input_files && !isempty(f.aerosol_cmip_stratospheric_path)
+        # The whole run must lie between the file's first and last monthly midpoints.
+        st = StratosphericAerosol(f.aerosol_cmip_stratospheric_path)
+        stop = config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000))
+        st.month_mid[1] <= config.start_date && stop <= st.month_mid[end] || throw(ArgumentError(
+            "the run $(config.start_date) to $stop is outside the stratospheric aerosol months " *
+            "($(st.month_mid[1]) to $(st.month_mid[end]))"))
+    end
+    if check_input_files
+        last = MACv2SPParameters(f.aerosol_cmip_plumes_path).last_year
+        year = f.aerosol_cmip_year > 0 ? f.aerosol_cmip_year :
+            Dates.year(config.start_date + Dates.Millisecond(round(Int64, config.duration_days * 86_400_000)))
+        year <= last || throw(ArgumentError("the MACv2-SP file has year weights only to $last, not $year"))
+    end
+    check_input_files || return nothing
+    MACv2Background(f.aerosol_cmip_background_path)
+    MACv2SPParameters(f.aerosol_cmip_plumes_path)
+    return nothing
 end
 
 """Check the prescribed-ozone options; with input checks, the file and the run's time span or fixed year."""

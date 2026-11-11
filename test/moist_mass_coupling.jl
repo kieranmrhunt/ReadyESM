@@ -66,6 +66,7 @@ end
                                           check_input_files=false)
     raw = R.YAML.load_file(production_path)
     raw["atmosphere_moist_mass_coupling"] = true
+    raw["atmosphere_convection"] = "betts_miller_sigma_rh_v1"
     raw["atmosphere_vertical_diffusion"] = "speedyweather_0_21_1_zero_operator_control"
     raw["atmosphere_pbl_diffusivity_scale"] = 1.0
     raw["atmosphere_pbl_mix_momentum"] = false

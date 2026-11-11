@@ -1,0 +1,927 @@
+{
+ "rrtmgp_data": "/home/users/kieran/.julia/artifacts/d601aa60f46f03d12db9841833c7b25bd4dcd785/rrtmgp-data-1.9",
+ "tables": {
+  "sw": {
+   "macv2_file": "aeropt_kinne_sw_b14_fin_pre.nc",
+   "records": 14,
+   "rrtmgp_file": "rrtmgp-gas-sw-g224.nc",
+   "rrtmgp_limits": [
+    [
+     820.0,
+     2680.0
+    ],
+    [
+     2680.0,
+     3250.0
+    ],
+    [
+     3250.0,
+     4000.0
+    ],
+    [
+     4000.0,
+     4650.0
+    ],
+    [
+     4650.0,
+     5150.0
+    ],
+    [
+     5150.0,
+     6150.0
+    ],
+    [
+     6150.0,
+     7700.0
+    ],
+    [
+     7700.0,
+     8050.0
+    ],
+    [
+     8050.0,
+     12850.0
+    ],
+    [
+     12850.0,
+     16000.0
+    ],
+    [
+     16000.0,
+     22650.0
+    ],
+    [
+     22650.0,
+     29000.0
+    ],
+    [
+     29000.0,
+     38000.0
+    ],
+    [
+     38000.0,
+     50000.0
+    ]
+   ],
+   "rows": [
+    {
+     "record": 1,
+     "wavelength_nm": 230,
+     "wavenumber_cm1": 43478.261,
+     "rrtmgp_band": [
+      14
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       38000.0,
+       50000.0
+      ]
+     ]
+    },
+    {
+     "record": 2,
+     "wavelength_nm": 300,
+     "wavenumber_cm1": 33333.333,
+     "rrtmgp_band": [
+      13
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       29000.0,
+       38000.0
+      ]
+     ]
+    },
+    {
+     "record": 3,
+     "wavelength_nm": 400,
+     "wavenumber_cm1": 25000.0,
+     "rrtmgp_band": [
+      12
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       22650.0,
+       29000.0
+      ]
+     ]
+    },
+    {
+     "record": 4,
+     "wavelength_nm": 550,
+     "wavenumber_cm1": 18181.818,
+     "rrtmgp_band": [
+      11
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       16000.0,
+       22650.0
+      ]
+     ]
+    },
+    {
+     "record": 5,
+     "wavelength_nm": 700,
+     "wavenumber_cm1": 14285.714,
+     "rrtmgp_band": [
+      10
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       12850.0,
+       16000.0
+      ]
+     ]
+    },
+    {
+     "record": 6,
+     "wavelength_nm": 1000,
+     "wavenumber_cm1": 10000.0,
+     "rrtmgp_band": [
+      9
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       8050.0,
+       12850.0
+      ]
+     ]
+    },
+    {
+     "record": 7,
+     "wavelength_nm": 1270,
+     "wavenumber_cm1": 7874.016,
+     "rrtmgp_band": [
+      8
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       7700.0,
+       8050.0
+      ]
+     ]
+    },
+    {
+     "record": 8,
+     "wavelength_nm": 1460,
+     "wavenumber_cm1": 6849.315,
+     "rrtmgp_band": [
+      7
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       6150.0,
+       7700.0
+      ]
+     ]
+    },
+    {
+     "record": 9,
+     "wavelength_nm": 1780,
+     "wavenumber_cm1": 5617.978,
+     "rrtmgp_band": [
+      6
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       5150.0,
+       6150.0
+      ]
+     ]
+    },
+    {
+     "record": 10,
+     "wavelength_nm": 2050,
+     "wavenumber_cm1": 4878.049,
+     "rrtmgp_band": [
+      5
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       4650.0,
+       5150.0
+      ]
+     ]
+    },
+    {
+     "record": 11,
+     "wavelength_nm": 2320,
+     "wavenumber_cm1": 4310.345,
+     "rrtmgp_band": [
+      4
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       4000.0,
+       4650.0
+      ]
+     ]
+    },
+    {
+     "record": 12,
+     "wavelength_nm": 2790,
+     "wavenumber_cm1": 3584.229,
+     "rrtmgp_band": [
+      3
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       3250.0,
+       4000.0
+      ]
+     ]
+    },
+    {
+     "record": 13,
+     "wavelength_nm": 3470,
+     "wavenumber_cm1": 2881.844,
+     "rrtmgp_band": [
+      2
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       2680.0,
+       3250.0
+      ]
+     ]
+    },
+    {
+     "record": 14,
+     "wavelength_nm": 8000,
+     "wavenumber_cm1": 1250.0,
+     "rrtmgp_band": [
+      1
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       820.0,
+       2680.0
+      ]
+     ]
+    }
+   ],
+   "one_to_one": true,
+   "rrtmg_limits_equal_rrtmgp": false,
+   "rrtmg_vs_rrtmgp_differences": [
+    [
+     [
+      820,
+      2600
+     ],
+     [
+      820.0,
+      2680.0
+     ]
+    ],
+    [
+     [
+      2600,
+      3250
+     ],
+     [
+      2680.0,
+      3250.0
+     ]
+    ]
+   ]
+  },
+  "sw_coarse": {
+   "macv2_file": "aeropt_kinne_sw_b14_coa.nc",
+   "records": 14,
+   "rrtmgp_file": "rrtmgp-gas-sw-g224.nc",
+   "rrtmgp_limits": [
+    [
+     820.0,
+     2680.0
+    ],
+    [
+     2680.0,
+     3250.0
+    ],
+    [
+     3250.0,
+     4000.0
+    ],
+    [
+     4000.0,
+     4650.0
+    ],
+    [
+     4650.0,
+     5150.0
+    ],
+    [
+     5150.0,
+     6150.0
+    ],
+    [
+     6150.0,
+     7700.0
+    ],
+    [
+     7700.0,
+     8050.0
+    ],
+    [
+     8050.0,
+     12850.0
+    ],
+    [
+     12850.0,
+     16000.0
+    ],
+    [
+     16000.0,
+     22650.0
+    ],
+    [
+     22650.0,
+     29000.0
+    ],
+    [
+     29000.0,
+     38000.0
+    ],
+    [
+     38000.0,
+     50000.0
+    ]
+   ],
+   "rows": [
+    {
+     "record": 1,
+     "wavelength_nm": 230,
+     "wavenumber_cm1": 43478.261,
+     "rrtmgp_band": [
+      14
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       38000.0,
+       50000.0
+      ]
+     ]
+    },
+    {
+     "record": 2,
+     "wavelength_nm": 300,
+     "wavenumber_cm1": 33333.333,
+     "rrtmgp_band": [
+      13
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       29000.0,
+       38000.0
+      ]
+     ]
+    },
+    {
+     "record": 3,
+     "wavelength_nm": 400,
+     "wavenumber_cm1": 25000.0,
+     "rrtmgp_band": [
+      12
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       22650.0,
+       29000.0
+      ]
+     ]
+    },
+    {
+     "record": 4,
+     "wavelength_nm": 550,
+     "wavenumber_cm1": 18181.818,
+     "rrtmgp_band": [
+      11
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       16000.0,
+       22650.0
+      ]
+     ]
+    },
+    {
+     "record": 5,
+     "wavelength_nm": 700,
+     "wavenumber_cm1": 14285.714,
+     "rrtmgp_band": [
+      10
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       12850.0,
+       16000.0
+      ]
+     ]
+    },
+    {
+     "record": 6,
+     "wavelength_nm": 1000,
+     "wavenumber_cm1": 10000.0,
+     "rrtmgp_band": [
+      9
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       8050.0,
+       12850.0
+      ]
+     ]
+    },
+    {
+     "record": 7,
+     "wavelength_nm": 1270,
+     "wavenumber_cm1": 7874.016,
+     "rrtmgp_band": [
+      8
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       7700.0,
+       8050.0
+      ]
+     ]
+    },
+    {
+     "record": 8,
+     "wavelength_nm": 1460,
+     "wavenumber_cm1": 6849.315,
+     "rrtmgp_band": [
+      7
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       6150.0,
+       7700.0
+      ]
+     ]
+    },
+    {
+     "record": 9,
+     "wavelength_nm": 1780,
+     "wavenumber_cm1": 5617.978,
+     "rrtmgp_band": [
+      6
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       5150.0,
+       6150.0
+      ]
+     ]
+    },
+    {
+     "record": 10,
+     "wavelength_nm": 2050,
+     "wavenumber_cm1": 4878.049,
+     "rrtmgp_band": [
+      5
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       4650.0,
+       5150.0
+      ]
+     ]
+    },
+    {
+     "record": 11,
+     "wavelength_nm": 2320,
+     "wavenumber_cm1": 4310.345,
+     "rrtmgp_band": [
+      4
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       4000.0,
+       4650.0
+      ]
+     ]
+    },
+    {
+     "record": 12,
+     "wavelength_nm": 2790,
+     "wavenumber_cm1": 3584.229,
+     "rrtmgp_band": [
+      3
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       3250.0,
+       4000.0
+      ]
+     ]
+    },
+    {
+     "record": 13,
+     "wavelength_nm": 3470,
+     "wavenumber_cm1": 2881.844,
+     "rrtmgp_band": [
+      2
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       2680.0,
+       3250.0
+      ]
+     ]
+    },
+    {
+     "record": 14,
+     "wavelength_nm": 8000,
+     "wavenumber_cm1": 1250.0,
+     "rrtmgp_band": [
+      1
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       820.0,
+       2680.0
+      ]
+     ]
+    }
+   ],
+   "one_to_one": true,
+   "rrtmg_limits_equal_rrtmgp": false,
+   "rrtmg_vs_rrtmgp_differences": [
+    [
+     [
+      820,
+      2600
+     ],
+     [
+      820.0,
+      2680.0
+     ]
+    ],
+    [
+     [
+      2600,
+      3250
+     ],
+     [
+      2680.0,
+      3250.0
+     ]
+    ]
+   ]
+  },
+  "lw": {
+   "macv2_file": "aeropt_kinne_lw_b16_coa.nc",
+   "records": 16,
+   "rrtmgp_file": "rrtmgp-gas-lw-g256.nc",
+   "rrtmgp_limits": [
+    [
+     10.0,
+     250.0
+    ],
+    [
+     250.0,
+     500.0
+    ],
+    [
+     500.0,
+     630.0
+    ],
+    [
+     630.0,
+     700.0
+    ],
+    [
+     700.0,
+     820.0
+    ],
+    [
+     820.0,
+     980.0
+    ],
+    [
+     980.0,
+     1080.0
+    ],
+    [
+     1080.0,
+     1180.0
+    ],
+    [
+     1180.0,
+     1390.0
+    ],
+    [
+     1390.0,
+     1480.0
+    ],
+    [
+     1480.0,
+     1800.0
+    ],
+    [
+     1800.0,
+     2080.0
+    ],
+    [
+     2080.0,
+     2250.0
+    ],
+    [
+     2250.0,
+     2390.0
+    ],
+    [
+     2390.0,
+     2680.0
+    ],
+    [
+     2680.0,
+     3250.0
+    ]
+   ],
+   "rows": [
+    {
+     "record": 1,
+     "wavelength_nm": 3600,
+     "wavenumber_cm1": 2777.778,
+     "rrtmgp_band": [
+      16
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       2680.0,
+       3250.0
+      ]
+     ]
+    },
+    {
+     "record": 2,
+     "wavelength_nm": 4000,
+     "wavenumber_cm1": 2500.0,
+     "rrtmgp_band": [
+      15
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       2390.0,
+       2680.0
+      ]
+     ]
+    },
+    {
+     "record": 3,
+     "wavelength_nm": 4200,
+     "wavenumber_cm1": 2380.952,
+     "rrtmgp_band": [
+      14
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       2250.0,
+       2390.0
+      ]
+     ]
+    },
+    {
+     "record": 4,
+     "wavelength_nm": 4600,
+     "wavenumber_cm1": 2173.913,
+     "rrtmgp_band": [
+      13
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       2080.0,
+       2250.0
+      ]
+     ]
+    },
+    {
+     "record": 5,
+     "wavelength_nm": 5200,
+     "wavenumber_cm1": 1923.077,
+     "rrtmgp_band": [
+      12
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       1800.0,
+       2080.0
+      ]
+     ]
+    },
+    {
+     "record": 6,
+     "wavelength_nm": 6150,
+     "wavenumber_cm1": 1626.016,
+     "rrtmgp_band": [
+      11
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       1480.0,
+       1800.0
+      ]
+     ]
+    },
+    {
+     "record": 7,
+     "wavelength_nm": 7000,
+     "wavenumber_cm1": 1428.571,
+     "rrtmgp_band": [
+      10
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       1390.0,
+       1480.0
+      ]
+     ]
+    },
+    {
+     "record": 8,
+     "wavelength_nm": 7850,
+     "wavenumber_cm1": 1273.885,
+     "rrtmgp_band": [
+      9
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       1180.0,
+       1390.0
+      ]
+     ]
+    },
+    {
+     "record": 9,
+     "wavelength_nm": 8850,
+     "wavenumber_cm1": 1129.944,
+     "rrtmgp_band": [
+      8
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       1080.0,
+       1180.0
+      ]
+     ]
+    },
+    {
+     "record": 10,
+     "wavelength_nm": 9750,
+     "wavenumber_cm1": 1025.641,
+     "rrtmgp_band": [
+      7
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       980.0,
+       1080.0
+      ]
+     ]
+    },
+    {
+     "record": 11,
+     "wavelength_nm": 11200,
+     "wavenumber_cm1": 892.857,
+     "rrtmgp_band": [
+      6
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       820.0,
+       980.0
+      ]
+     ]
+    },
+    {
+     "record": 12,
+     "wavelength_nm": 13200,
+     "wavenumber_cm1": 757.576,
+     "rrtmgp_band": [
+      5
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       700.0,
+       820.0
+      ]
+     ]
+    },
+    {
+     "record": 13,
+     "wavelength_nm": 15100,
+     "wavenumber_cm1": 662.252,
+     "rrtmgp_band": [
+      4
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       630.0,
+       700.0
+      ]
+     ]
+    },
+    {
+     "record": 14,
+     "wavelength_nm": 18000,
+     "wavenumber_cm1": 555.556,
+     "rrtmgp_band": [
+      3
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       500.0,
+       630.0
+      ]
+     ]
+    },
+    {
+     "record": 15,
+     "wavelength_nm": 30000,
+     "wavenumber_cm1": 333.333,
+     "rrtmgp_band": [
+      2
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       250.0,
+       500.0
+      ]
+     ]
+    },
+    {
+     "record": 16,
+     "wavelength_nm": 90000,
+     "wavenumber_cm1": 111.111,
+     "rrtmgp_band": [
+      1
+     ],
+     "rrtmgp_band_limits_cm1": [
+      [
+       10.0,
+       250.0
+      ]
+     ]
+    }
+   ],
+   "one_to_one": true,
+   "rrtmg_limits_equal_rrtmgp": false,
+   "rrtmg_vs_rrtmgp_differences": [
+    [
+     [
+      10,
+      350
+     ],
+     [
+      10.0,
+      250.0
+     ]
+    ],
+    [
+     [
+      350,
+      500
+     ],
+     [
+      250.0,
+      500.0
+     ]
+    ],
+    [
+     [
+      2250,
+      2380
+     ],
+     [
+      2250.0,
+      2390.0
+     ]
+    ],
+    [
+     [
+      2380,
+      2600
+     ],
+     [
+      2390.0,
+      2680.0
+     ]
+    ],
+    [
+     [
+      2600,
+      3250
+     ],
+     [
+      2680.0,
+      3250.0
+     ]
+    ]
+   ]
+  }
+ },
+ "pass": true
+}

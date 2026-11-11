@@ -285,6 +285,14 @@ function _atmosphere_convection(
     config::ExperimentConfig,
     spectral_grid::SpeedyWeather.SpectralGrid,
 )
+    # Tiedtke-Bechtold stage 1a (tiedtke_bechtold_host.jl, TB DESIGN.md integration items 1-3): its own scheme and
+    # host wrapper. It never passes through NetColumnBettsMillerConvection, whose net-humidity rain would replace the
+    # column's own rain flux. The Betts-Miller and C08/C07 branches below are unchanged.
+    config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1 &&
+        return TiedtkeBechtoldHostConvection(spectral_grid)
+    # Stage 1B (tiedtke_bechtold_stage1b_host.jl): the shallow branch with the HOST closure, its own wrapper.
+    config.atmosphere_convection == :tiedtke_bechtold_eqcape_stage1b &&
+        return TiedtkeBechtoldStage1BHostConvection(spectral_grid)
     if config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1)
         base = FiniteMultiPlumeConvection(spectral_grid;
             saturation_law = config.atmosphere_saturation_law,
@@ -403,7 +411,10 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
     )
     correction = net_convective_rain_rate - gross_convective_rain_rate
 
-    vars.parameterizations.rain_rate[ij] += correction
+    # Keep the stored total equal to the stored process component; adding a
+    # correction to the rounded gross total can leave a one-ULP discrepancy.
+    vars.parameterizations.rain_rate[ij] =
+        rain_rate_before + net_convective_rain_rate
     vars.parameterizations.rain_rate_convection[ij] =
         net_convective_rain_rate
     vars.parameterizations.convective_precipitation_mass_correction[ij] =
@@ -843,8 +854,12 @@ Base.@propagate_inbounds function SpeedyWeather.parameterization!(
 
     parameterizations.rain_rate_large_scale[ij] = corrected_rain_rate
     parameterizations.snow_rate_large_scale[ij] = corrected_snow_rate
-    parameterizations.rain_rate[ij] += rain_correction
-    parameterizations.snow_rate[ij] += snow_correction
+    # SpeedyWeather resets the total rain rate but leaves this component from
+    # the preceding step. Large-scale condensation runs before convection, so
+    # clear that stale value before recording the current step's total.
+    parameterizations.rain_rate_convection[ij] = zero(corrected_rain_rate)
+    parameterizations.rain_rate[ij] = corrected_rain_rate
+    parameterizations.snow_rate[ij] = corrected_snow_rate
     parameterizations.large_scale_precipitation_mass_correction[ij] =
         rain_correction + snow_correction
     parameterizations.rain_large_scale[ij] +=

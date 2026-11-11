@@ -54,7 +54,13 @@
     default_provenance = R._forcing_provenance(base, production)
     @test !any(k -> occursin("ch4", String(k)) || occursin("n2o", String(k)), keys(default_provenance))
     override_provenance = R._forcing_provenance(over, pd)
-    @test collect(keys(override_provenance))[1:length(default_provenance)] == collect(keys(default_provenance))
+    default_keys = collect(keys(default_provenance))
+    override_keys = collect(keys(override_provenance))
+    @test filter(in(Set(default_keys)), override_keys) == default_keys
+    @test Set(setdiff(override_keys, default_keys)) == Set((
+        :requested_ch4_ppb, :applied_ch4_ppb, :ch4_forcing_mode,
+        :requested_n2o_ppb, :applied_n2o_ppb, :n2o_forcing_mode,
+    ))
     @test override_provenance.requested_ch4_ppb == pd.forcing.ch4_ppb
     @test override_provenance.applied_ch4_ppb == Float64(over.ch4_vmr) * 1.0e9
     @test override_provenance.applied_n2o_ppb == Float64(over.n2o_vmr) * 1.0e9

@@ -92,6 +92,9 @@ end
     @inbounds ℵⁿ = ice_concentration[i, j, 1]
     @inbounds hᶜ = ice_consolidation_thickness[i, j, 1]
 
+    # ReadyESM patch: the concentration rule of this cell (the same object unless it is HemisphericLeadClosingEvolution).
+    evolution = local_concentration_evolution(ice_thermodynamics.concentration_evolution, i, j, grid, hᶜ)
+
     ∂t_V = thermodynamic_tendency(i, j, 1, grid,
                                   ice_thermodynamics,
                                   phase_transitions,
@@ -103,7 +106,7 @@ end
                                   bottom_external_heat_flux,
                                   clock, model_fields)
 
-    hⁿ⁺¹, ℵⁿ⁺¹ = ice_volume_update(ice_thermodynamics, ∂t_V, hⁿ, ℵⁿ, hᶜ, Δt)
+    hⁿ⁺¹, ℵⁿ⁺¹ = ice_volume_update((; concentration_evolution = evolution), ∂t_V, hⁿ, ℵⁿ, hᶜ, Δt)
 
     @inbounds begin
         ρi = sea_ice_density[i, j, 1]
@@ -152,6 +155,9 @@ end
     @inbounds ℵⁿ  = ice_concentration[i, j, 1]
     @inbounds hᶜ  = ice_consolidation_thickness[i, j, 1]
     @inbounds hsⁿ = snow_thickness[i, j, 1]
+
+    # ReadyESM patch: the concentration rule of this cell (the same object unless it is HemisphericLeadClosingEvolution).
+    evolution = local_concentration_evolution(ice_thermodynamics.concentration_evolution, i, j, grid, hᶜ)
 
     # Per-cell volumes before the step, captured before `hsⁿ` is rebased below
     Viⁿ = hiⁿ * ℵⁿ
@@ -239,7 +245,8 @@ end
     β = Qs / ρiℒ           # coefficient on ℵⁿ⁺¹
 
     Cᵐ = ifelse(hiⁿ > zero(hiⁿ), ℵⁿ / (2 * hiⁿ), zero(hiⁿ))
-    Cᶠ = ifelse(hᶜ  > zero(hᶜ),  (1 - ℵⁿ) / hᶜ,  zero(hᶜ))
+    hˡ = freezing_concentration_thickness(evolution, hᶜ)
+    Cᶠ = ifelse(hˡ  > zero(hˡ),  (1 - ℵⁿ) / hˡ,  zero(hˡ))
     Kᵐ = Δt * Cᵐ
     Kᶠ = Δt * Cᶠ
 
@@ -267,7 +274,7 @@ end
                                     Quiᵉᶠᶠ, Qbi,
                                     clock, model_fields)
 
-    hiⁿ⁺¹, ℵⁿ⁺¹ = ice_volume_update(ice_thermodynamics, ∂t_V, hiⁿ, ℵⁿ, hᶜ, Δt)
+    hiⁿ⁺¹, ℵⁿ⁺¹ = ice_volume_update((; concentration_evolution = evolution), ∂t_V, hiⁿ, ℵⁿ, hᶜ, Δt)
 
     # Conserve snow volume when concentration changes: new ice has no snow,
     # so hs adjusts to keep hs * ℵ constant (analogous to how ice tracks hi * ℵ).
@@ -369,3 +376,8 @@ end
 
     return ℵ⁺
 end
+
+# ReadyESM patch: the same rule with the freezing term at the lead-closing thickness h₀ (LeadClosingEvolution).
+@inline concentration_thermodynamic_step(evolution::LeadClosingEvolution, ∂t_V, ℵⁿ, hⁿ, hᶜ, Δt) =
+    concentration_thermodynamic_step(ProportionalEvolution(), ∂t_V, ℵⁿ, hⁿ,
+                                     freezing_concentration_thickness(evolution, hᶜ), Δt)

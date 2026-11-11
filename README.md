@@ -89,6 +89,12 @@ T63 and T127 used a wider land-data search for a few island cells during
 initialization, for timing only.
 [Timing details](docs/performance.md).
 
+ReadyESM also has a bounded package-precompile workload on the v0.2
+development line. It changes first-use and cache-creation costs, and has not
+changed the v0.1.19 production speed measurements above. See the
+[precompile mode and measurement guide](docs/precompile-performance-v020.md)
+before choosing a cache mode or reusing a compiled depot.
+
 ## Run
 
 Use Julia 1.12 and Python 3.11 or newer. The standard configuration uses an NVIDIA GPU
@@ -102,8 +108,11 @@ julia --project=. -e 'using Pkg' -e 'Pkg.instantiate()'
 python -m pip install -r scripts/requirements.txt
 ```
 
-Follow the [input-data setup](docs/running.md#input-data) to prepare ERA5 and
-ECCO for 1 January 1993. Then copy the standard configuration:
+Follow the [input-data setup](docs/running.md#input-data) to prepare ERA5,
+ECCO and the prescribed aerosol inputs for 1 January 1993. The aerosol
+[download hashes and preparation commands](data/README_aerosol.md) are supplied
+separately because the source data are not in this repository. Then copy the
+standard configuration:
 
 ```bash
 cp config/production.yml config/my_run.yml
@@ -167,6 +176,9 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `atmosphere_convection_transition_top_sigma`, `atmosphere_convection_transition_bottom_sigma` | `0.3`, `0.7` | Bounds of the linear transition in pressure fraction. |
 | `atmosphere_convection_timescale_seconds` | `7200` | Betts–Miller adjustment time. |
 | `sea_ice_dynamics` | `true` | Set to `false` to disable ice motion. |
+| `sea_ice_lead_closing_thickness_m` | `0` | Opt in to a separate thickness, in metres, for the ice that forms when open water freezes, between 0.05 and 2. The release uses the 0.05 m consolidation thickness, so new ice closes open water fast. A thicker value closes it more slowly. See the [design](artifacts/development_wave_20261103/sea_ice_lead_closing_claude/DESIGN.md). |
+| `sea_ice_lead_closing_thickness_south_m` | unset | Opt in to a separate value of that thickness south of the equator. When it is set, `sea_ice_lead_closing_thickness_m` applies from the equator northward and this value applies to the south. 0 keeps the release behaviour in that half of the globe. The two values must differ. See the [design](artifacts/development_wave_20261104/lead_closing_hemispheric_claude_v1/DESIGN.md). |
+| `sea_ice_branch_observer` | `false` | Opt in to a read-only record of each sea-ice thermodynamic step, for the January lead-closing screen. It does not change the model. `scripts/run_dynamic_esm.jl` writes the record to `sea_ice_branch_observer_v1/` in the output folder. See the [bundle](artifacts/development_wave_20261103/sea_ice_branch_observer_claude_v1/README.md). |
 | `atmosphere_moist_mass_coupling` | `false` | Let water-vapour sources change the air mass. Evaporation adds air and precipitation removes it, and the global mean surface pressure follows. Use it only with Betts–Miller convection, net-column large-scale precipitation and RRTMGP radiation. |
 | `terrarium_runoff_enthalpy` | `false` | Route the heat carried by land runoff to the ocean. See the [runoff guide](docs/bs08-runoff-enthalpy.md). |
 | `terrarium_unsat_conductivity` | `van_genuchten_released` | Keep the established soil-water conductivity law, or opt in to the standard van Genuchten–Mualem law with `van_genuchten_mualem`. |

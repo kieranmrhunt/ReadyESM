@@ -883,6 +883,7 @@ function _sea_ice_simulation_with_momentum_forcing(
     sea_ice_density,
     snow_density,
     boundary_conditions = NamedTuple(),
+    concentration_evolution = ClimaSeaIce.SeaIceThermodynamics.ProportionalEvolution(),
 )
     FT = eltype(grid)
     top_surface_temperature = Oceananigans.Field{
@@ -905,6 +906,7 @@ function _sea_ice_simulation_with_momentum_forcing(
         internal_heat_flux,
         top_heat_boundary_condition,
         bottom_heat_boundary_condition,
+        concentration_evolution,
     )
     snow_thermodynamics =
         NumericalEarth.SeaIces.default_snow_thermodynamics(grid)
@@ -1406,6 +1408,9 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
         sea_ice_density = FT(900),
         snow_density = FT(330),
     )
+    # Opt-in lead-closing thickness (src/sea_ice_lead_closing.jl). The release keeps NumericalEarth's constructor and
+    # ProportionalEvolution; with the option the equivalent ReadyESM constructor carries LeadClosingEvolution.
+    evolution = _sea_ice_concentration_evolution(config, FT)
     if config.sea_ice_dynamics
         pressure_formulation = _sea_ice_pressure_formulation(
             config.sea_ice_pressure_formulation,
@@ -1453,6 +1458,8 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
                 boundary_conditions = isnothing(coastal_boundary_conditions) ?
                     NamedTuple() : coastal_boundary_conditions,
                 common_kwargs...,
+                concentration_evolution = something(evolution,
+                    ClimaSeaIce.SeaIceThermodynamics.ProportionalEvolution()),
             )
         end
         if !isnothing(coastal_boundary_conditions)
@@ -1464,8 +1471,19 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
                 forcing = NamedTuple(),
                 boundary_conditions = coastal_boundary_conditions,
                 common_kwargs...,
+                concentration_evolution = something(evolution,
+                    ClimaSeaIce.SeaIceThermodynamics.ProportionalEvolution()),
             )
         end
+        isnothing(evolution) || return _sea_ice_simulation_with_momentum_forcing(
+            grid,
+            ocean;
+            advection,
+            dynamics,
+            forcing = NamedTuple(),
+            common_kwargs...,
+            concentration_evolution = evolution,
+        )
         return ClimaOcean.sea_ice_simulation(
             grid,
             ocean;
@@ -1474,6 +1492,15 @@ function _build_sea_ice(config::ExperimentConfig, ocean)
             common_kwargs...,
         )
     end
+    isnothing(evolution) || return _sea_ice_simulation_with_momentum_forcing(
+        grid,
+        ocean;
+        dynamics = nothing,
+        advection = nothing,
+        forcing = NamedTuple(),
+        common_kwargs...,
+        concentration_evolution = evolution,
+    )
     return ClimaOcean.sea_ice_simulation(
         grid,
         ocean;
@@ -1508,9 +1535,10 @@ Perform that one-off transformation on a CPU copy of the grid and transfer the
 completed native fields to the model architecture.  Launching the two generic
 tripolar transformation kernels directly on CUDA can leave the driver in
 first-use module/JIT work for hours when every production job starts with a
-fresh writable depot.  CPU staging preserves Oceananigans' reference
-mathematics while keeping initialization outside the production timestep's GPU
-specialization barrier.
+fresh writable depot. CPU staging retains Oceananigans' vector rotation and
+uses single-axis center-to-face interpolation, correcting the pinned native
+initializer's extra transverse average. Initialization stays outside the
+production timestep's GPU specialization barrier.
 """
 function _set_extrinsic_ocean_velocity_fields!(
     u_velocity,
@@ -1527,7 +1555,7 @@ function _set_extrinsic_ocean_velocity_fields!(
         u = Oceananigans.XFaceField(cpu_grid),
         v = Oceananigans.YFaceField(cpu_grid),
     )
-    Oceananigans.Models.HydrostaticFreeSurfaceModels.set_from_extrinsic_velocities!(
+    _set_centered_extrinsic_velocities!(
         cpu_velocities,
         cpu_grid,
         eastward,
@@ -1640,8 +1668,8 @@ function _set_ecco_ocean_ice_initial_conditions!(
     if full_state
         _set_extrinsic_ocean_velocities!(
             ocean.model,
-            metadata.u_velocity,
-            metadata.v_velocity,
+            ECCO4CenteredVelocity(metadata.u_velocity),
+            ECCO4CenteredVelocity(metadata.v_velocity),
         )
         _set_surface_metadatum!(
             ocean.model.free_surface.displacement,
@@ -2624,6 +2652,8 @@ function build_dynamic_esm(config::ExperimentConfig; steps::Union{Nothing, Int} 
     end
     # Scored output files exist only with the option on.
     config.scored_outputs && install_scored_outputs!(simulation, config)
+    # The read-only sea-ice branch observer exists only with the option on. It adds no callback or field.
+    config.sea_ice_branch_observer && install_sea_ice_branch_observer!(simulation, config)
     return simulation
 end
 
@@ -3581,25 +3611,36 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
             atmosphere_convective_precipitation_scheme =
                 config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ?
                 "finite multi-plume rain and snow fluxes" :
+                _is_tiedtke_bechtold_convection(config.atmosphere_convection) ?
+                "Tiedtke-Bechtold column surface rain mass flux over water density" :
                 "Betts-Miller net column humidity drying",
             _atmosphere_saturation_provenance(config)...,
             _finite_multiplume_metadata(config)...,
             _convective_momentum_metadata(config)...,
+            _tiedtke_bechtold_metadata(config)...,
             atmosphere_convection = String(config.atmosphere_convection),
             atmosphere_convection_reference_humidity_profile =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 "piecewise_linear_upper_to_lower_physical_sigma_v1" :
-                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ?
+                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1,
+                                                 :tiedtke_bechtold_eqcape_stage1,
+                                                 :tiedtke_bechtold_eqcape_stage1b) ?
                 "not_applicable" :
                 "constant_relative_humidity_0.7",
             atmosphere_convection_upper_relative_humidity =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_upper_relative_humidity :
-                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ? NaN : 0.7,
+                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1,
+                                                 :tiedtke_bechtold_eqcape_stage1,
+                                                 :tiedtke_bechtold_eqcape_stage1b) ?
+                NaN : 0.7,
             atmosphere_convection_lower_relative_humidity =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_lower_relative_humidity :
-                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1) ? NaN : 0.7,
+                config.atmosphere_convection in (:finite_multiplume_c08_v1, :finite_multiplume_c07_v1,
+                                                 :tiedtke_bechtold_eqcape_stage1,
+                                                 :tiedtke_bechtold_eqcape_stage1b) ?
+                NaN : 0.7,
             atmosphere_convection_transition_top_sigma =
                 config.atmosphere_convection == :betts_miller_sigma_rh_v1 ?
                 config.atmosphere_convection_transition_top_sigma : NaN,
@@ -3610,6 +3651,8 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 config.atmosphere_large_scale_precipitation ==
                     :upstream_observed ?
                 "SpeedyWeather implicit condensation observed without surface-rate correction" :
+                config.atmosphere_large_scale_melt_cooling ?
+                "implicit condensation net column humidity drying with snowmelt cooling" :
                 "implicit condensation net column humidity drying",
             atmosphere_layer_process_diagnostics =
                 "signed_incremental_parameterization_tendencies_v1",
@@ -3621,6 +3664,10 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 atmosphere_budget.process_diagnostic_start_timestep *
                 Float64(atmosphere.model.time_stepping.Δt_sec) / 86_400,
             atmosphere_precipitation_mass_correction_diagnostics =
+                _is_tiedtke_bechtold_convection(config.atmosphere_convection) ?
+                (config.atmosphere_large_scale_precipitation == :upstream_observed ?
+                 "convective_never_written_tiedtke_bechtold_and_zero_large_scale_control_v1" :
+                 "convective_never_written_tiedtke_bechtold_and_large_scale_net_column_minus_upstream_v1") :
                 config.atmosphere_large_scale_precipitation ==
                     :upstream_observed ?
                 "convective_net_column_correction_and_zero_large_scale_control_v1" :
@@ -3854,6 +3901,7 @@ function collect_dynamic_diagnostics(simulation, config::ExperimentConfig)
                 _sea_ice_momentum_substeps(sea_ice) : 0,
             sea_ice_pressure_formulation = config.sea_ice_dynamics ?
                 String(config.sea_ice_pressure_formulation) : "none",
+            _sea_ice_lead_closing_provenance(config)...,
             sea_ice_immersed_boundary_drag_coefficient =
                 config.sea_ice_dynamics ?
                 config.sea_ice_immersed_boundary_drag_coefficient : NaN,
@@ -4273,6 +4321,7 @@ function validate_dynamic_diagnostics(diagnostics)
         diagnostics.metadata.atmosphere_gravity_ms2 > 0 || error(
         "atmosphere gravitational acceleration is invalid",
     )
+    _validate_solar_constant_provenance(diagnostics.metadata)
     convective_surface_column_mass =
         diagnostics.atmosphere_convective_precipitation_surface_pressure ./
         diagnostics.metadata.atmosphere_gravity_ms2
@@ -4316,8 +4365,9 @@ function validate_dynamic_diagnostics(diagnostics)
     end
     large_scale_scheme =
         diagnostics.metadata.atmosphere_large_scale_precipitation_scheme
-    if large_scale_scheme ==
-       "implicit condensation net column humidity drying"
+    # The opt-in snowmelt cooling changes only temperature, so the net-column humidity check applies to it unchanged.
+    if large_scale_scheme in ("implicit condensation net column humidity drying",
+                              "implicit condensation net column humidity drying with snowmelt cooling")
         all(abs.(
             large_scale_precipitation_from_tendency .-
             diagnostics.atmosphere_large_scale_rainfall_flux .-

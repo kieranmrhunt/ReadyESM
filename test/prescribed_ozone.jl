@@ -219,8 +219,10 @@ slab_config(path; start = DateTime(2001, 3, 1), kwargs...) = R.ExperimentConfig(
                   for r in 1:nlay, ij in axes(o3, 2))
         now = simulation.variables.prognostic.clock.time
         dt = Millisecond(simulation.model.time_stepping.Δt_millisec)
-        # The slab builder's clock starts on 2000-01-01 whatever start_date says, which is before the first monthly
-        # midpoint: the first month is then held, so the expected field uses the clamped time.
+        # The slab builder's clock starts at start_date (2001-03-01 here; before PA2-C it started on 2000-01-01
+        # whatever start_date said). The expected field uses the clamped time, so it holds the first or last month
+        # if the clock is outside the file's monthly midpoints.
+        @test DateTime(2001, 3, 1) < now <= DateTime(2001, 3, 1) + 4 * dt
         x = [clamp(R._decimal_year(t), ozone.data.time[1], ozone.data.time[end]) for t in (now, now - dt)]
         # Inside the source pressure range [1 Pa, 1e5 Pa] the interpolation of the linear field is exact.
         ok = [maximum(abs(o3[r, ij] - linear_field(Float64(p_lay[r, ij]), Float64(column_latitude[ij]), xi)) /

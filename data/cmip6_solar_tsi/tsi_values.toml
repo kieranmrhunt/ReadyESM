@@ -1,0 +1,23 @@
+# CMIP6 total solar irradiance values for ReadyESM (Claude, 1 Nov 2026). Read from the CMIP6 SOLARIS-HEPPA v3.2
+# input4MIPs files in the JASMIN CEDA archive (Matthes et al. 2017, Geosci. Model Dev. 10, 2247-2302) with
+# netCDF4 under Python 3.11. The archive files are immutable, so they are pinned by path and SHA-256, not copied.
+
+[source_monthly]
+path = "/badc/cmip6/data/input4MIPs/CMIP6/CMIP/SOLARIS-HEPPA/SOLARIS-HEPPA-3-2/atmos/mon/solarforcing-ref-mon/gn/v20170103/solarforcing-ref-mon_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_185001-229912.nc"
+sha256 = "4b844a3324b74be16faf7272b64ed7853ea2c606c4db841a318366ad223ebcac"
+variable = "tsi"
+
+[source_picontrol]
+path = "/badc/cmip6/data/input4MIPs/CMIP6/CMIP/SOLARIS-HEPPA/SOLARIS-HEPPA-3-2/atmos/fx/solarforcing-picontrol-fx/gn/v20170103/solarforcing-picontrol-fx_input4MIPs_solar_CMIP_SOLARIS-HEPPA-3-2_gn_18500101-18730128.nc"
+sha256 = "2b53e8bf7aebde3deaf3a9174ae3f44a6ca3714ff369790019760ca55e21fd48"
+variable = "tsi"
+
+[picontrol]
+tsi_w_m2 = 1360.7470703125
+label = "CMIP6 piControl (Matthes et al. 2017)"
+
+[historical_1993]
+monthly_tsi_w_m2 = [1361.4044189453125, 1360.9073486328125, 1361.304931640625, 1361.2896728515625, 1361.206787109375, 1361.221435546875, 1361.1290283203125, 1361.0821533203125, 1360.95556640625, 1360.7431640625, 1360.760498046875, 1360.9281005859375]
+annual_mean_tsi_w_m2 = 1361.0793891802225
+reduction = "day-weighted mean of the twelve 1993 monthly values (365-day year)"
+label = "CMIP6 historical annual mean 1993 (SOLARIS-HEPPA v3.2), a constant historical-annual-mean sensitivity"

@@ -23,7 +23,10 @@ function _cairo_makie()
 end
 
 function _cairo_makie_call(name::Symbol, args...; kwargs...)
-    function_ = getproperty(_cairo_makie(), name)
+    # The first Base.require may define CairoMakie's exported bindings after
+    # this wrapper's compiled world. Resolve the binding in the latest world
+    # before invoking its constructor or plotting function there.
+    function_ = Base.invokelatest(getproperty, _cairo_makie(), name)
     return Base.invokelatest(function_, args...; kwargs...)
 end
 

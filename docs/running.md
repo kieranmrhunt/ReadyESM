@@ -7,7 +7,7 @@ dependencies listed in the [README](../README.md#run).
 
 The standard configuration starts on 1 January 1993. It uses ERA5 for the
 atmosphere and land, and ECCO V4r4 for the ocean and sea ice.
-The v0.1.19 production profile also reads the packaged monthly vegetation
+The production profile also reads the packaged monthly vegetation
 cycle under `data/era5_seasonal_land_cycle_1993/` and the realistic albedo
 candidate under `data/era5_realistic_albedo_1993/`. Their expected SHA-256
 values are pinned in `config/production.yml`. See the [albedo provenance](../data/era5_realistic_albedo_1993/README.md).
@@ -49,6 +49,8 @@ python -I scripts/download_ecco_january_mirror.py \
 python -I scripts/prepare_calendar_centred_ecco.py \
     data/ecco_v4r4_1992_12 data/ecco_january_mirror_1993_01 \
     data/ecco_calendar_centred_1993_01
+julia --project=. scripts/prepare_centered_ecco_velocity.jl \
+    data/ecco_calendar_centred_1993_01
 ```
 
 The January downloader uses the public
@@ -56,11 +58,29 @@ The January downloader uses the public
 The prepared ocean state is the midpoint of the December and January
 monthly means. Sea ice uses the January state.
 
-The run script checks input hashes before model construction. It also checks
-five generated ocean-fill caches before stepping. Those cache hashes were
-tested on an A100. If another architecture produces different cache bytes,
-the run stops at that check. See the
-[v0.1.10 validation record](validation-v0.1.10.md).
+The velocity preparation command creates the two centered EVEL/NVEL caches
+required before model construction. It checks their readback and exact hashes
+against [the qualified 13-file manifest](../config/ecco_calendar_centred_1993_01.sha256).
+The first model build creates the remaining temperature, salinity, and sea
+surface height caches. The run script accepts only the exact 8-file raw,
+10-file velocity-prepared, or 13-file complete input set before construction,
+and requires all 13 files with matching hashes before stepping. A cache whose
+bytes differ from the manifest stops the run. The old EVEL/NVEL inpainting
+caches are not valid for the centered velocity reader.
+
+### Prescribed aerosols
+
+The production configuration uses natural-background MACv2 aerosol,
+MACv2-SP anthropogenic plumes and UOEXETER stratospheric aerosol. Download
+and prepare the three model inputs using the exact source filenames, SHA-256
+hashes and commands in the [aerosol data guide](../data/README_aerosol.md).
+The source repository contains the preparation scripts under
+`scripts/aerosol/`. It does not distribute the raw or prepared input files.
+The 730-day production config and the [six-month configuration](../config/production_six_month.yml) both use the December 1992–January
+1995 UOEXETER v7 file. The six-month file starts on 1 January 1993 and
+runs for 181 days. Both files use the retuned cloud settings tested in
+v0.1.20: a humidity threshold of 0.8, with 60 g m⁻² each of cloud liquid
+water and ice. Prepare the v7 aerosol file before running either setup.
 
 ## Run and output
 

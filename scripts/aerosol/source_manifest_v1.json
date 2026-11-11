@@ -1,0 +1,142 @@
+{
+ "schema": "pa2_source_manifest_v1",
+ "author": "Claude Code, 6 Nov 2026",
+ "licence_determination": {
+  "MACv2": "No data licence published (Kinne 2019 article is CC BY 4.0; data on anonymous FTP; no licence file found). Project-side determination by Kieran Hunt, 6 Nov 2026: use for development and testing with citation; do not redistribute raw or derived MACv2 files in release or GMD archives; ship retrieval and preparation scripts with pinned hashes instead, until MPI-M confirms terms.",
+  "ESGF_input4MIPs": "per dataset licence attribute, recorded from the files on arrival"
+ },
+ "citations": {
+  "MACv2": "Kinne, S. (2019) Tellus B 71, doi:10.1080/16000889.2019.1623639",
+  "MACv2-SP": "Stevens, B. et al. (2017) GMD 10, 433-452, doi:10.5194/gmd-10-433-2017",
+  "IACETH-SAGE3lambda": "CMIP6 stratospheric aerosol (Luo, Peter, Thomason), input4MIPs IACETH-SAGE3lambda-3-0-0"
+ },
+ "interpretation_MACv2": "natural background = gt_p (pre-industrial fine, 1850) + gt_c (coarse, no annual changes), per MACv2_2018/550nm/README and for_ICON/README_MACv2 ('gt_n natural (p+c)')",
+ "files": [
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/spec_2005/aeropt_kinne_sw_b14_coa.nc",
+   "bytes": 141527104,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/spec_2005/aeropt_kinne_sw_b14_fin_pre.nc",
+   "bytes": 141527108,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/spec_2005/aeropt_kinne_lw_b16_coa.nc",
+   "bytes": 161744736,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/altitude/aeropt_fin_alt_km20.nc",
+   "bytes": 62470752,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/altitude/aeropt_coa_alt_km20.nc",
+   "bytes": 62470756,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/README_MACv2",
+   "bytes": null,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/spec_2005/README",
+   "bytes": null,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/for_ICON/altitude/README_alt",
+   "bytes": null,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2",
+   "dir": "data/macv2_2018_background_raw",
+   "url": "ftp://ftp-projects.mpimet.mpg.de/aerocom/climatology/MACv2_2018/550nm/README",
+   "bytes": null,
+   "upstream_checksum": "unpublished"
+  },
+  {
+   "set": "MACv2-SP-1-0",
+   "dir": "data/macv2sp_cmip6_v1_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/MPI-M/MPI-M-MACv2-SP-1-0/atmos/yr/multiple/none/v20170201/MACv2.0-SP_v1.nc",
+   "bytes": 20080,
+   "upstream_checksum": "sha256:b99f13727d42ed24ba71713064cbb40b3a0211ced0e725c56c794bce394bc5f8"
+  },
+  {
+   "set": "MACv2-SP-1-0",
+   "dir": "data/macv2sp_cmip6_v1_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/MPI-M/MPI-M-MACv2-SP-1-0/atmos/yr/multiple/none/v20170201/mo_simple_plumes_v1.f90",
+   "bytes": 19443,
+   "upstream_checksum": "sha256:1fc26c89ab47a6740727014cd37069d1b6432a97c1be7dbe641a9e9f04a1e5e6"
+  },
+  {
+   "set": "MACv2-SP-1-0",
+   "dir": "data/macv2sp_cmip6_v1_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/MPI-M/MPI-M-MACv2-SP-1-0/atmos/yr/multiple/none/v20170201/sp_driver_v1.f90",
+   "bytes": 13066,
+   "upstream_checksum": "sha256:e348f0af924de9c41a471ae33f0073385d4fd19e6341a39026d56be2f8520570"
+  },
+  {
+   "set": "MACv2-SP-1-0",
+   "dir": "data/macv2sp_cmip6_v1_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/MPI-M/MPI-M-MACv2-SP-1-0/atmos/yr/multiple/none/v20170201/sp_make_data_v1.ncl",
+   "bytes": 11530,
+   "upstream_checksum": "sha256:a1b922f2cbee260555bbe61075e6eff8a77475c2afd43bf518b6ecde962595ce"
+  },
+  {
+   "set": "MACv2-SP-1-0",
+   "dir": "data/macv2sp_cmip6_v1_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/MPI-M/MPI-M-MACv2-SP-1-0/atmos/yr/multiple/none/v20170201/orography_T63.nc",
+   "bytes": 78084,
+   "upstream_checksum": "sha256:7ff7938ea768b5fb63274430a56bbe9d90da7e6bef30c008ae113db3d598276d"
+  },
+  {
+   "set": "MACv2-SP-1-0",
+   "dir": "data/macv2sp_cmip6_v1_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/RFMIP/MPI-M/MPI-M-MACv2-SP-1-0/atmos/yr/multiple/none/v20170201/gmd-10-433-2017-supplement-title-page.pdf",
+   "bytes": 53747,
+   "upstream_checksum": "sha256:1610ee8da3f3c835ab121081125e8f974c6a44d7917962d4bd15de1cbae6bcf4"
+  },
+  {
+   "set": "IACETH-SAGE3lambda-3-0-0",
+   "dir": "data/iaceth_sage3lambda_3_0_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/CMIP/IACETH/IACETH-SAGE3lambda-3-0-0/atmos/mon/multiple/gn/v20171006/multiple_input4MIPs_aerosolProperties_CMIP_IACETH-SAGE3lambda-3-0-0_gn_185001_201412.nc",
+   "bytes": 139728680,
+   "upstream_checksum": "sha256:d141025bc5af6700262b8143131605ed091e68861286b17ebbfbe640003e73fa"
+  },
+  {
+   "set": "IACETH-SAGE3lambda-3-0-0",
+   "dir": "data/iaceth_sage3lambda_3_0_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/CMIP/IACETH/IACETH-SAGE3lambda-3-0-0/atmos/monC/multiple/gn/v20171006/multiple-monC_input4MIPs_aerosolProperties_CMIP_IACETH-SAGE3lambda-3-0-0_gn_185001_201412.nc",
+   "bytes": 729524,
+   "upstream_checksum": "sha256:1a1681eeddedca82fc1290f04a0211c533104500f097ebe7c49cba737ceec815"
+  },
+  {
+   "set": "IACETH-SAGE3lambda-3-0-0",
+   "dir": "data/iaceth_sage3lambda_3_0_0_raw",
+   "url": "https://esgf-node.ornl.gov/thredds/fileServer/user_pub_work/input4MIPs/CMIP6/CMIP/IACETH/IACETH-SAGE3lambda-3-0-0/atmos/yrC/multiple/gn/v20171006/multiple_input4MIPs_aerosolProperties_CMIP_IACETH-SAGE3lambda-3-0-0_gn_1850_2014.nc",
+   "bytes": 64164,
+   "upstream_checksum": "sha256:a4f92e8a25e7e2bc48347658985a096210136061ba1791e773c9e760ab5a7fc0"
+  }
+ ]
+}
