@@ -1,8 +1,11 @@
 # Experiment notes
 
-Updated 21 October 2026. Production is v0.1.10. Research candidates stay in
-separate source snapshots until their results support a model update.
-This page tracks the convection and blue-sky experiments.
+This is a development snapshot last updated on 21 October 2026. It describes
+the v0.1.10 production setup and tracks the convection and blue-sky
+experiments from that period. For the current production settings and release
+evidence, use [NOTES.md](../NOTES.md) and [HISTORY.md](../HISTORY.md).
+Research candidates stay in separate source snapshots until their results
+support a model update.
 Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
 It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
 The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
