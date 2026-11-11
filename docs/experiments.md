@@ -6,15 +6,14 @@ experiments from that period. For the current production settings and release
 evidence, use [NOTES.md](../NOTES.md) and [HISTORY.md](../HISTORY.md).
 Research candidates stay in separate source snapshots until their results
 support a model update.
-Main now includes the accepted [snow-accounting update](validation-snow-accounting.md).
-It also includes [optional CPU C08 and C07 convection](validation-finite-convection.md).
-The [optional-land fix](validation-optional-land.md) passes the full CPU suite.
-Main also includes the [ordered ocean grid update](validation-ocean-grid-ordering.md).
-BS10 is integrated as an [optional carbon model](validation-carbon.md).
-Main also includes [seasonal solar forcing](solar-forcing.md) and checked
-CH4/N2O restart settings. The full CPU and A100 tests pass. Seasonal solar
-forcing remains off by default while the coupled climate comparisons continue.
-Production keeps its current Betts–Miller scheme.
+By that date, main included the accepted [snow-accounting update](validation-snow-accounting.md),
+[optional CPU C08 and C07 convection](validation-finite-convection.md),
+the [optional-land fix](validation-optional-land.md), and the
+[ordered ocean grid update](validation-ocean-grid-ordering.md). It also carried
+[optional BS10 carbon](validation-carbon.md),
+[seasonal solar forcing](solar-forcing.md), and checked CH4/N2O restart
+settings. The reported full CPU and A100 tests had passed. Seasonal solar
+forcing was off by default, and production kept Betts–Miller convection.
 
 ## Convection portfolio
 
