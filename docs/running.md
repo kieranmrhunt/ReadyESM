@@ -77,12 +77,12 @@ hashes and commands in the [aerosol data guide](../data/README_aerosol.md).
 The source repository contains the preparation scripts under
 `scripts/aerosol/`. It does not distribute the raw or prepared input files.
 The 730-day production config and the [six-month configuration](../config/production_six_month.yml) both use the December 1992–January
-1995 UOEXETER v7 file. The six-month file starts on 1 January 1993 and
-runs for 181 days. It retains the v0.1.20 settings, so a v0.1.21 skill run
-needs a new six-month configuration derived from the final production settings.
-Prepare the v7 aerosol file before running either setup. The v0.1.21
-production profile uses the packaged 1993 CMIP6 gas values, monthly
-historical ozone and the sampled monthly upper-radiative cap. Its cloud
+1995 UOEXETER v7 file. The six-month file starts on 1 January 1993, runs
+for 181 days and uses the same physical settings as the production file.
+It starts scoring at day zero. Set its output directory to a fresh scratch
+path for each comparison. Prepare the v7 aerosol file before running either
+setup. Both profiles use the packaged 1993 CMIP6 gas values, monthly
+historical ozone and the sampled monthly upper-radiative cap. The cloud
 settings are recorded in `config/production.yml`.
 
 ## Run and output
