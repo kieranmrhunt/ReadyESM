@@ -83,17 +83,15 @@ FLAG_COLOURS={'P':'#285c8d','F':'#a83b55','~':'#b07b13','.':'#a4adb8','-':'#8a92
 
 def load_data(path):
     data=tomllib.loads(path.read_text())
-    if [r['version'] for r in data['release']]!=[f'v0.1.{i}' for i in range(20)]:
-        raise ValueError('Expected every version v0.1.0–v0.1.19 in order')
+    if [r['version'] for r in data['release']]!=[f'v0.1.{i}' for i in range(21)]:
+        raise ValueError('Expected every version v0.1.0–v0.1.20 in order')
     meta=data['meta']
-    if meta['candidate_version']!='v0.1.19' or meta['release_status'] not in ('candidate_preview','evidence_verified_for_v019'):
-        raise ValueError('Expected v0.1.19 preview or evidence-verified inventory')
-    if data['release'][-2]['status']!='qualified':
-        raise ValueError('Published v0.1.18 row must remain qualified for its stated checks')
-    if meta['release_status']=='candidate_preview' and data['release'][-1]['status']!='unreleased':
-        raise ValueError('A preview must leave v0.1.19 unreleased')
-    if meta['release_status']=='evidence_verified_for_v019' and data['release'][-1]['status']!='qualified':
-        raise ValueError('Evidence-verified inventory needs a qualified v0.1.19 row')
+    if meta['candidate_version']!='v0.1.20' or meta['release_status']!='evidence_verified_for_v020':
+        raise ValueError('Expected the evidence-verified v0.1.20 inventory')
+    if meta['programme_as_of']!='1 November 2026':
+        raise ValueError('The unchanged programme rows must retain their 1 November review date')
+    if data['release'][-2]['status']!='qualified' or data['release'][-1]['status']!='qualified':
+        raise ValueError('Published v0.1.19 and v0.1.20 rows must remain qualified for their stated checks')
     if [r['id'] for r in data['experiment']]!=[f'{p}{i:02d}' for p in ('BS','C') for i in range(1,11)]:
         raise ValueError('Expected all twenty named programme tracks')
     for row in data['release']:
@@ -192,7 +190,7 @@ def render(data,png,pdf):
     programme(fig.add_subplot(grid[2]),data['experiment'][10:],'C. Clouds and near-surface air')
     candidate=data['meta']['release_status']=='candidate_preview'
     fig.text(.035,.975,'ReadyESM development scorecard',fontsize=23,fontweight='bold',va='top')
-    fig.text(.035,.949,f"Evidence inventory: {data['meta']['as_of']}",fontsize=11,color='#526174')
+    fig.text(.035,.949,f"Release evidence: {data['meta']['as_of']}",fontsize=11,color='#526174')
     version=data['meta']['candidate_version']
     fig.text(.035,.932,f'{version} review preview — release evidence pending' if candidate else f'{version} — release record with disclosed test outcomes',fontsize=11,color='#986b14' if candidate else '#285c8d')
     handles=[Line2D([],[],marker='o',ls='',color='#285c8d',label='tested for published release'),
@@ -202,9 +200,9 @@ def render(data,png,pdf):
     fig.legend(handles=handles,loc='lower left',bbox_to_anchor=(.03,.087),ncol=4,frameon=False,fontsize=9)
     gates=[Line2D([],[],marker=m,ls='',mfc='white' if f=='.' else FLAG_COLOURS[f],mec=FLAG_COLOURS[f],label=l) for f,m,l in [('P','o','pass'),('F','s','fail'),('~','D','partial / limited'),('.','o','not established'),('-','_','not applicable')]]
     fig.legend(handles=gates,loc='lower left',bbox_to_anchor=(.03,.065),ncol=5,frameon=False,fontsize=9)
-    fig.text(.035,.052,'Each row shows the furthest test completed. Items marked in use include optional tools. Climate skill is measured separately.',fontsize=9,color='#526174')
+    fig.text(.035,.052,'Release rows include v0.1.20. Programme tracks retain the 1 November 2026 reviewed inventory. Items marked in use include optional tools.',fontsize=9,color='#526174')
     fig.text(.035,.038,'Off: works when switched off · Resume: continues from a saved state · Balance: energy and water accounted for · Limits: values stay physical · Repeat: matched runs agree · Climate: meets target',fontsize=8.6,color='#526174')
-    fig.text(.035,.024,'v0.1.12 tested an optional feature for 31 days but left it off in standard runs. v0.1.13 checked a short restart. v0.1.14 and v0.1.15 allowed documented exceptional values. Long drift remains open.',fontsize=8.8,color='#526174')
+    fig.text(.035,.024,'v0.1.12 tested an optional feature for 31 days but left it off in standard runs. v0.1.13 checked a short restart. v0.1.14 and v0.1.15 allowed documented exceptional values.',fontsize=8.8,color='#526174')
     fig.text(.035,.010,data['meta']['publication_note'],fontsize=8.6,color='#526174')
     png.parent.mkdir(parents=True,exist_ok=True);pdf.parent.mkdir(parents=True,exist_ok=True)
     fig.savefig(png,dpi=160,facecolor='white');fig.savefig(pdf,facecolor='white');plt.close(fig)

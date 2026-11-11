@@ -1,6 +1,12 @@
 {
   "comparison_scope": "One continuous January-June 1993 run per version from the same observed starting state. The comparison includes 55 CMIP6 models and 1650 model-years. It uses locations valid for every model.",
+  "development_card_method_note": "The v0.1.20 release row records one 181-day January-June 1993 run. The 20 programme tracks retain their 1 November 2026 reviewed status. No repeatability or long-term climate claim follows from this row.",
   "files": {
+    "development_scorecard.pdf": "cbc68ef8139f84456211226f25c5fc46b49ba5bb70be416a61bc2651fb95ecf1",
+    "development_scorecard.png": "2e46db6c979b0140f2ee0945098f19882e908d6f9d35ceed00a6fc6ab854658f",
+    "development_scorecard_data.toml": "c37aabe7ba3bfeed31fdbb7e4f1b263eb57da79a6fdb013370935f09435ea5a7",
+    "docs/development_scorecard_v019_provenance.json": "66de95f35681ba5178639e8b658306def4bbc3185a68ab5690944d38fc36faf2",
+    "docs/development_scorecard_v020_provenance.json": "c1c4ae042f2028632938769b6c9e866dd07643eea7bc7b259658388e17ede6e3",
     "docs/plot-v0.1.20-january-monthly.py": "50540fdbeac4fe5d077370d7a8f3d0125b9c06d5cab1282f61d22154fda5e290",
     "docs/plot-v0.1.20-scorecard.py": "71cbdeaf12c1baa9e9c45d66cf07f19575d5fe9feddcd02bbf5dd7363812c281",
     "docs/plot-v0.1.20-versions.py": "c07196156a0162ee9f594bfa23a08e6730fd07564c76f13c18083c4c86d28b0e",
@@ -12,6 +18,7 @@
     "docs/readyesm_scorecard_versions_v020.pdf": "3ab6ffbd033135c72df572168ece1aed29934c55fdad79ee266f0ed95de85018",
     "docs/scorecard-v0.1.19.png": "f09049ea50af6593577515bf93afefa4e1eef8ea30b35d43c0474f8a22b27f7c",
     "docs/scorecard-v0.1.20-partc.json": "39b69f54c0e5df015e4aec60460fcff80e18cf410bc5ff6bf0eb3932e52875cc",
+    "plot_development_scorecard.py": "5c78ef489936629930c304217ab6e096fe134e33b36442b7bf1b19c4f33f8378",
     "readyesm_scorecard_versions.png": "828270f2f5ed5dc396bd53ed1a883f2fa049becbb8ae1fc40c76d315e58a0aa7",
     "scorecard.pdf": "a111a5ea912bb58f76e98bfd172adcd7d177942993a7ee1e9b7089b5e06ed714",
     "scorecard.png": "2a83a28f20f7439bdd656c3e080984b15e2de41e42fb84c0925e29143a40bba9"

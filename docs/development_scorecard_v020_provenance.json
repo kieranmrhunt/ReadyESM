@@ -1,0 +1,23 @@
+{
+  "data_sha256": "c37aabe7ba3bfeed31fdbb7e4f1b263eb57da79a6fdb013370935f09435ea5a7",
+  "full_cpu_result_manifest_sha256": "18dd99e0e9fa41b528ed43d5f762329cc957cd2fb60520be6a161e62e93d9e13",
+  "full_cpu_suite_job": "66856523",
+  "joint_score_job": "66904500",
+  "joint_score_result_manifest_sha256": "802ec3617e06ee7b0e6b60aaee26c7aea33c0bcfbc76c49f0fcffa1bcb414c53",
+  "model_source_commit": "fba77cd3ffc42f0f9227f9cd2ca24840bb8ad396",
+  "pdf_sha256": "cbc68ef8139f84456211226f25c5fc46b49ba5bb70be416a61bc2651fb95ecf1",
+  "png_sha256": "2e46db6c979b0140f2ee0945098f19882e908d6f9d35ceed00a6fc6ab854658f",
+  "prior_release_rows_preserved": 20,
+  "production_run_job": "66841309",
+  "production_run_result_manifest_sha256": "5be8e9032614f7a2785bac0fd04785ad93750402b2ee2e90a757f22dc40cd118",
+  "programme_inventory_as_of": "1 November 2026",
+  "programme_rows_preserved": 20,
+  "release": "v0.1.20",
+  "release_evidence": "docs/validation-v0.1.20.md",
+  "release_row_as_of": "11 November 2026",
+  "release_tag_commit": "ff75da47be1854405e9c1c624316f7dbb889ae22",
+  "renderer_sha256": "5c78ef489936629930c304217ab6e096fe134e33b36442b7bf1b19c4f33f8378",
+  "schema": "readiesm_v020_development_scorecard_provenance_v1",
+  "scope": "One 181-day January-June 1993 run from an observed start. The card records a qualified release and open repeatability, long drift, scored restart and small-grid CPU/GPU checks; it does not establish equilibrium or long-term climate skill.",
+  "v019_provenance_archive_sha256": "66de95f35681ba5178639e8b658306def4bbc3185a68ab5690944d38fc36faf2"
+}

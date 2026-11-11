@@ -99,16 +99,17 @@ agreement with the observed month, not the skill of the model's own long-term
 climate. The [current six-month scorecard](scorecard.png),
 [development scorecard](development_scorecard.png) and
 [version history](readyesm_scorecard_versions.png) have different scopes.
-The current card above shows the v0.1.20 six-month comparison. The version
+The current card above shows the v0.1.20 six-month comparison. The development
+card adds the v0.1.20 release row from one continuous 181-day run; its programme
+panels retain the reviewed 1 November inventory. The version
 history shows that six-month result in a separate top panel. Its lower panels
 preserve the older January and July series, which use one start per season
 and a different 31-day method. The paired v0.1.19 evidence and its failed
 checks remain historical. The [version-history figure record](docs/readyesm_scorecard_versions_v020.json)
 gives the new figure hashes, and the [archived v0.1.19 figure](docs/readyesm_scorecard_versions_v019.png)
-preserves its original pixels. The [historical paired score values](scorecard_v4_data.json) and
-[development figure provenance](docs/development_scorecard_v019_provenance.json)
-record the frozen outcomes and GPU gate receipts behind the other two
-scorecards.
+preserves its original pixels. The [historical paired score values](scorecard_v4_data.json)
+preserve the older comparison. The [development figure provenance](docs/development_scorecard_v020_provenance.json)
+gives the new card's source hashes and remaining limits.
 
 ## Speed
 
