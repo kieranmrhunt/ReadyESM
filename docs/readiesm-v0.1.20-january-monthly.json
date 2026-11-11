@@ -1,0 +1,59 @@
+{
+  "duration_days": 31,
+  "figure_sha256": "467917446dd9c01ede49fd73589a55c2d398f8759fca3eec51e2f082b08fa746",
+  "input_sha256": {
+    "monthly.nc": "a5f6c0d349c9920a6436a797063441b46c5e4e4500d7f3a5edb276ddfa4bfee2",
+    "toa_monthly.nc": "2b9571c25c1813a1c8a26256247aa62989d7f6566ba35584dff7f4c2e0a151e9",
+    "wind.nc": "235c4fef313f60514283c4eebbcb39e95bbbc050af8a1287afb0f092b52e7642"
+  },
+  "observed_start_count": 1,
+  "panels": {
+    "850-hPa air temperature": {
+      "native_max": 23.533866450918367,
+      "native_min": -26.754838840481597,
+      "native_valid_points": 4058,
+      "units": "\u00b0C"
+    },
+    "850-hPa wind speed": {
+      "native_max": 19.310996947938605,
+      "native_min": 0.15729575635177914,
+      "native_valid_points": 4058,
+      "units": "m s\u207b\u00b9"
+    },
+    "Column water vapour": {
+      "native_max": 51.71177495748912,
+      "native_min": 0.2246568655527229,
+      "native_valid_points": 4608,
+      "units": "kg m\u207b\u00b2"
+    },
+    "Longwave cloud effect": {
+      "native_max": 58.470989657986536,
+      "native_min": -2.33708182714318,
+      "native_valid_points": 4608,
+      "units": "W m\u207b\u00b2; clear \u2212 all"
+    },
+    "Outgoing longwave radiation": {
+      "native_max": 319.24153059272356,
+      "native_min": 153.04898828075778,
+      "native_valid_points": 4608,
+      "units": "W m\u207b\u00b2"
+    },
+    "Precipitation": {
+      "native_max": 16.028068345662927,
+      "native_min": 2.0846203904839897e-07,
+      "native_valid_points": 4608,
+      "units": "mm day\u207b\u00b9"
+    }
+  },
+  "pressure_rule": "850 hPa shown only with complete valid hourly coverage; no below-ground extrapolation",
+  "receipt_sha256": "cfc5019c63a2367ce0e4ae3f6ab7d9e999e9912c85fb291df93096a5ef8c79a1",
+  "regrid": "nearest native atmosphere point on 0.5-degree equirectangular display",
+  "run_result_manifest_sha256": "5be8e9032614f7a2785bac0fd04785ad93750402b2ee2e90a757f22dc40cd118",
+  "schema": "v020_reverted_readme_monthly_figure_v1",
+  "source_commit": "fba77cd3ffc42f0f9227f9cd2ca24840bb8ad396",
+  "source_tree": "b735b45610c67e24e0d99cf9d31b4e2f894f4d2c",
+  "status_sha256": "16073e8a7ec035ba1ba579c08b5bb613bab0e2b5654e22e4d13be5fe1aa0e054",
+  "verdict_sha256": "84d5c8331e9eb242368928185fcaf53c0b837ee1761b0272884e00bdaecdf925",
+  "window_end": "1993-02-01T00:00:00",
+  "window_start": "1993-01-01T00:00:00"
+}

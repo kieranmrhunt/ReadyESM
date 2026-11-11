@@ -1,0 +1,284 @@
+{
+  "850_hpa_rule": "retained only where defined, with no below-ground extrapolation",
+  "area_fraction_of_era5_mask": {
+    "cwv": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "olr": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "osr": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "precip": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "t200": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "t500": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "t850": {
+      "nh_mid": 0.8991687267944907,
+      "nh_polar": 0.9223614033478088,
+      "sh_mid": 0.9965519487094625,
+      "sh_polar": 0.7695878778445666,
+      "subtropics": 0.9416110766367966,
+      "tropics": 0.967385545200051
+    },
+    "u200": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "u850": {
+      "nh_mid": 0.8991687267944907,
+      "nh_polar": 0.9223614033478088,
+      "sh_mid": 0.9965519487094625,
+      "sh_polar": 0.7695878778445666,
+      "subtropics": 0.9416110766367966,
+      "tropics": 0.967385545200051
+    }
+  },
+  "cohort_model_count": 55,
+  "cohort_model_year_count": 1650,
+  "common_masks_sha256": "2612526ca5e8fa782cec7a71d986851262210c7859890425caadeef45a6c66a9",
+  "comparison_scope": "One continuous January-June 1993 run per version from the same observed starting state. The comparison includes 55 CMIP6 models and 1650 model-years. It uses locations valid for every model.",
+  "fba_run_result_manifest_sha256": "5be8e9032614f7a2785bac0fd04785ad93750402b2ee2e90a757f22dc40cd118",
+  "field_order": [
+    "t850",
+    "t500",
+    "t200",
+    "u850",
+    "u200",
+    "cwv",
+    "precip",
+    "olr",
+    "osr"
+  ],
+  "fraction_model_years_worse_onr8": {
+    "v0.1.19 published 66742450": 0.2727272727272727,
+    "v0.1.20 all-on candidate 66632474": 0.03636363636363636,
+    "v0.1.20 reverted 66841309": 0.3242424242424242
+  },
+  "mask_caveat": "Locations with any missing data are dropped for every model, especially 850 hPa near high ground. This can make every model look slightly better.",
+  "onr8": {
+    "v0.1.19 published 66742450": 1.2004315106215133,
+    "v0.1.20 all-on candidate 66632474": 1.6044219522345895,
+    "v0.1.20 reverted 66841309": 1.1601720257327992
+  },
+  "onr9": {
+    "v0.1.19 published 66742450": 1.176854242762883,
+    "v0.1.20 all-on candidate 66632474": 1.5945800837030888,
+    "v0.1.20 reverted 66841309": 1.13349757937663
+  },
+  "pdf_sha256": "a111a5ea912bb58f76e98bfd172adcd7d177942993a7ee1e9b7089b5e06ed714",
+  "png_sha256": "2a83a28f20f7439bdd656c3e080984b15e2de41e42fb84c0925e29143a40bba9",
+  "region_order": [
+    "nh_mid",
+    "subtropics",
+    "tropics",
+    "sh_mid",
+    "nh_polar",
+    "sh_polar"
+  ],
+  "regional_error_ratio": {
+    "v0.1.19 published 66742450": {
+      "cwv": {
+        "nh_mid": 0.9734947076014242,
+        "nh_polar": 1.033970519196758,
+        "sh_mid": 0.5731019479459746,
+        "sh_polar": 1.3216645774064932,
+        "subtropics": 1.199999983140801,
+        "tropics": 1.0461834439056246
+      },
+      "olr": {
+        "nh_mid": 1.275026507693521,
+        "nh_polar": 0.8389816272720273,
+        "sh_mid": 1.0430882650409283,
+        "sh_polar": 0.9947841026756468,
+        "subtropics": 1.442297850803979,
+        "tropics": 1.2394251747274663
+      },
+      "osr": {
+        "nh_mid": 0.7714725585940693,
+        "nh_polar": 0.7855858969439751,
+        "sh_mid": 1.1071553757044534,
+        "sh_polar": 1.25559196068409,
+        "subtropics": 1.2886582519987977,
+        "tropics": 1.4722737582474157
+      },
+      "precip": {
+        "nh_mid": 0.9850184003765045,
+        "nh_polar": 0.8477632680707108,
+        "sh_mid": 0.9720010905559334,
+        "sh_polar": 1.2236568766889033,
+        "subtropics": 1.149302212221414,
+        "tropics": 0.9504184660788522
+      },
+      "t200": {
+        "nh_mid": 1.1972460122707245,
+        "nh_polar": 1.5713002428479494,
+        "sh_mid": 0.9617335547496505,
+        "sh_polar": 1.1355727741622605,
+        "subtropics": 1.904365468282498,
+        "tropics": 1.3291829168764564
+      },
+      "t500": {
+        "nh_mid": 1.1758832349148673,
+        "nh_polar": 1.1832199536275172,
+        "sh_mid": 1.8486634085684586,
+        "sh_polar": 1.6035442682666485,
+        "subtropics": 0.8108963696815755,
+        "tropics": 1.615274860279038
+      },
+      "t850": {
+        "nh_mid": 0.7250195411794058,
+        "nh_polar": 0.9819660983621789,
+        "sh_mid": 0.7671770199719535,
+        "sh_polar": 1.3251920585703614,
+        "subtropics": 1.2606440329413846,
+        "tropics": 1.3180189105282425
+      },
+      "u200": {
+        "nh_mid": 1.091693713022742,
+        "nh_polar": 1.076357082850966,
+        "sh_mid": 1.3917148820056504,
+        "sh_polar": 0.9371595961908444,
+        "subtropics": 1.0459811404741715,
+        "tropics": 1.0144417479021741
+      },
+      "u850": {
+        "nh_mid": 1.1925547104460188,
+        "nh_polar": 1.0963698285281165,
+        "sh_mid": 1.4708166429882032,
+        "sh_polar": 1.22818841476266,
+        "subtropics": 1.1766108986859687,
+        "tropics": 1.3230668873512006
+      }
+    },
+    "v0.1.20 reverted 66841309": {
+      "cwv": {
+        "nh_mid": 1.0085925858219125,
+        "nh_polar": 0.9567178653143339,
+        "sh_mid": 0.5436053641942674,
+        "sh_polar": 0.8421604630355299,
+        "subtropics": 1.1139067672979772,
+        "tropics": 0.992787249997818
+      },
+      "olr": {
+        "nh_mid": 1.0459330183691415,
+        "nh_polar": 0.7684265501385839,
+        "sh_mid": 1.2382415750376503,
+        "sh_polar": 1.0994416871996142,
+        "subtropics": 1.4041208364958062,
+        "tropics": 1.2332709169933107
+      },
+      "osr": {
+        "nh_mid": 0.6777639017890437,
+        "nh_polar": 0.754831303824949,
+        "sh_mid": 0.789693508607089,
+        "sh_polar": 1.1906912931144267,
+        "subtropics": 1.347513918982544,
+        "tropics": 1.5819880864939238
+      },
+      "precip": {
+        "nh_mid": 0.9662718979902767,
+        "nh_polar": 0.9456351500196396,
+        "sh_mid": 0.9056966149836475,
+        "sh_polar": 1.0802986090509359,
+        "subtropics": 1.1247621677391078,
+        "tropics": 0.9308855508209819
+      },
+      "t200": {
+        "nh_mid": 1.0991570047653945,
+        "nh_polar": 1.4754043679606517,
+        "sh_mid": 1.01361791320198,
+        "sh_polar": 1.1794792360236437,
+        "subtropics": 1.8029368375625432,
+        "tropics": 1.225782509475614
+      },
+      "t500": {
+        "nh_mid": 1.0429953071724154,
+        "nh_polar": 1.2568846418740625,
+        "sh_mid": 2.1001931535399643,
+        "sh_polar": 1.6610708416077553,
+        "subtropics": 0.6702352319493775,
+        "tropics": 1.5224062277833648
+      },
+      "t850": {
+        "nh_mid": 0.6522526557300801,
+        "nh_polar": 0.8853344636570228,
+        "sh_mid": 0.6509422701862329,
+        "sh_polar": 1.0331407928633654,
+        "subtropics": 1.1015084605292422,
+        "tropics": 1.3129877751522154
+      },
+      "u200": {
+        "nh_mid": 1.073096374025186,
+        "nh_polar": 1.0545991103714263,
+        "sh_mid": 1.4084153863562712,
+        "sh_polar": 1.0164885332533153,
+        "subtropics": 0.9565512870283054,
+        "tropics": 0.9017148035346904
+      },
+      "u850": {
+        "nh_mid": 1.132762439875598,
+        "nh_polar": 0.8190265194910341,
+        "sh_mid": 1.292131338376363,
+        "sh_polar": 1.3664314891105802,
+        "subtropics": 1.4024432639742723,
+        "tropics": 1.307714265481998
+      }
+    }
+  },
+  "schema": "readyesm_v020_reverted_partc_scorecard_v1",
+  "score_json_sha256": "2bfcdf0756a2a6359a0ede6ac333f80cb8f33330412412c2e5bf547476cbc856",
+  "score_result_manifest_sha256": "802ec3617e06ee7b0e6b60aaee26c7aea33c0bcfbc76c49f0fcffa1bcb414c53",
+  "score_schema": "readyesm_partc_amended_full_v3",
+  "source_commits": {
+    "v0.1.19 published 66742450": "816fc17d1fa1955002393abdbe80da57ceeae139",
+    "v0.1.20 all-on candidate 66632474": "f08496a9a68eebf82f76242e321ee9a69386c4b9",
+    "v0.1.20 reverted 66841309": "fba77cd3ffc42f0f9227f9cd2ca24840bb8ad396"
+  },
+  "source_run_jobs": [
+    66742450,
+    66841309,
+    66632474
+  ],
+  "typical_cmip6_onr8": 1.0427956410337753
+}

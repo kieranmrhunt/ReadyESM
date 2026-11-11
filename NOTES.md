@@ -31,7 +31,10 @@
   inherited moist-adiabat and condensation derivative approximations remain.
   A fully phase-consistent thermodynamic closure is future work.
 - RRTMGP all-sky radiation with 420 ppm prescribed CO2, diagnostic clouds and
-  zero sulfate AOD. Liquid/ice cloud paths are 75/25 g/m².
+  liquid/ice cloud paths of 75/25 g/m². v0.1.20 production uses prescribed
+  MACv2 background, MACv2-SP plume and UOEXETER stratospheric aerosols,
+  with the separate scalar sulfate AOD set to zero. Its solar constant is
+  1360.7 W m⁻² from the CMIP6 piControl input. Ozone is analytic.
 - Oceananigans on a 360 x 180 x 60 tripolar grid. v0.1.10 initializes
   ocean fields halfway between the December 1992 and January 1993 ECCO V4r4
   monthly means. Sea ice uses the January state.
@@ -39,6 +42,7 @@
   neighbouring reads. See the [ordering tests](docs/validation-ocean-grid-ordering.md).
 - ClimaSeaIce dynamics and thermodynamics. Ice and snow volume are advected
   directly and conservatively. Velocity and tracer halos are refreshed first.
+  Production uses a 0.5 m effective thickness when new ice closes leads.
 - Terrarium 0.1.6 `LandModel` with 16 soil layers and prescribed vegetation.
   Land state and water accounting use Float64. Atmosphere and ocean use Float32.
   Its new snow component is disabled for the current compatibility baseline,
@@ -53,6 +57,18 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
 
 ## Main known limitations
 
+- v0.1.20 has one scored January–June 1993 run from an observed starting
+  state. Its eight-field error ratio improves on v0.1.19, but Southern
+  midlatitude 500-hPa temperature and subtropical 850-hPa wind worsen.
+  The comparison uses only locations with valid data for every model, which
+  can make every model look slightly better. A paired January and July
+  month test asked for more pairs before a decision. They were not run for
+  this release. A one-step CPU-versus-GPU check found a larger difference
+  than allowed in one land field. Long-term climate behaviour is not yet
+  established. The clear-sky outgoing-longwave gap at the January start
+  remains open. The proposed upper-atmosphere correction is a separate
+  development experiment. The [v0.1.20 validation record](docs/validation-v0.1.20.md)
+  gives the score, provenance and restart limits.
 - v0.1.15 improves January/July climate scores and low-level
   winds, but increases monthly global ice-area bias by 0.19 and 0.33 million
   km². Two January members exceed the day-31 ice-area change allowance.

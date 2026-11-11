@@ -1,12 +1,49 @@
 # Version history
 
-Current version: v0.1.19, 1 November 2026.
-Previous tagged version: [v0.1.18](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.18),
-30 October 2026.
+Current version: v0.1.20, 11 November 2026.
+Previous tagged version: [v0.1.19](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.19),
+1 November 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.20 — 2026-11-11
+
+This release keeps the established atmosphere physics in the standard
+configuration. The newer boundary-layer heat and humidity mixing, large-scale
+snow-melt cooling and alternative convection options remain opt-in. The
+standard setup uses two-hour Betts–Miller convection, mixed-phase saturation,
+diagnostic clouds and prescribed 420 ppm CO₂. It now closes open-water leads
+with a 0.5 m ice thickness, uses prepared CMIP aerosol inputs and the
+1360.7 W m⁻² CMIP6 piControl solar input, and writes the scored climate
+fields. The aerosol inputs must be prepared separately. The repository gives
+their source hashes and commands.
+
+One continuous January–June 1993 run was compared with a v0.1.19 run from
+the same observed starting state. The eight-field overall error ratio fell
+from 1.20 to 1.16. The typical model among 55 CMIP6 models scored 1.04.
+Lower is better. An earlier candidate with several new atmosphere physics
+options scored 1.60 and was rejected. The released version improved the
+average error in all nine reported fields, although some regions worsened.
+Values at 850 hPa were scored only where that level is above ground. The
+comparison uses only locations with valid data for every model. This can
+make every model look slightly better. One run from an observed starting
+state does not establish long-term climate skill. See the
+[validation record](docs/validation-v0.1.20.md) and
+[six-month scorecard](scorecard.png).
+
+The full CPU test suite passed on the released model code. The GPU run used
+the same physical source and production settings. A paired January and July
+month test asked for more pairs before a decision. They were not run for
+this release. The fixed 420 ppm CO₂ and analytic ozone remain production
+inputs. The clear-sky radiation gap at the start of January remains open.
+The provisional upper-atmosphere correction is being tested for a later
+version. Production restart evidence remains limited to a smaller grid.
+Runs with scored output cannot restart. A one-step CPU-versus-GPU check
+found a larger difference than allowed in one land field. These limits and
+the earlier v0.1.19 paired release failures are recorded in the validation
+notes.
 
 ## 0.1.19 — 2026-11-01
 
