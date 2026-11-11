@@ -1,8 +1,8 @@
 # Optional CPU convection validation
 
-Accepted on main, 20 October 2026. Production remains v0.1.10 with GPU
-Betts–Miller convection. C08 and C07 are optional CPU schemes with Float32
-atmospheric storage and diagnostic clouds. See the
+Accepted on main, 20 October 2026. At that time, production was v0.1.10
+with GPU Betts–Miller convection. C08 and C07 were optional CPU schemes with
+Float32 atmospheric storage and diagnostic clouds. See the
 [configuration guide](finite-convection.md).
 
 ## Source and tests
@@ -37,7 +37,8 @@ energy residuals stay below 2.68e-7 and momentum residuals below 4.05e-7.
 January and July atmosphere-only comparisons favour C08 case 12 for moisture and
 lower-level temperature relative to the original C08 setting. C07 improves
 global wind errors relative to matched C08, with regional trade-offs.
-Production parameters stay unchanged. Longer coupled comparisons continue.
+Production parameters stayed unchanged in this assessment. Longer coupled
+comparisons were outside its scope.
 [Experiment notes](experiments.md) retain the numerical results.
 
 ## Eight-thread restarts
