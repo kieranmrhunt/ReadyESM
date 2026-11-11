@@ -30,8 +30,9 @@
   while transport, filtering and coupling remain in separate ledgers. The
   inherited moist-adiabat and condensation derivative approximations remain.
   A fully phase-consistent thermodynamic closure is future work.
-- RRTMGP all-sky radiation with diagnostic clouds and liquid/ice cloud paths
-  of 75/25 g/m². The current production profile holds the packaged CMIP6
+- RRTMGP all-sky radiation with diagnostic clouds. The production cloud
+  humidity threshold and liquid/ice paths are set in `config/production.yml`.
+  The current production profile holds the packaged CMIP6
   greenhouse-gas file at 1993 values, follows monthly historical ozone and
   applies a sampled monthly upper-atmosphere radiative cap. The constant
   420 ppm CO₂ value remains an inactive fallback while file forcing is set.
