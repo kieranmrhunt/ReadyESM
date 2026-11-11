@@ -70,8 +70,14 @@ forcing:
   radiation: rrtmgp_all_sky
   radiation_every_n_steps: 4
   solar_distance_correction: true
-  co2_ppm: 420.0
+  co2_ppm: 420.0 # inactive with the year-1993 gas schedule; retained to match the screened base
+  well_mixed_gas_path: data/forcing_1993/wmghg_cmip6_ssp245_1850-2100.nc
+  well_mixed_gas_fixed_year: 1993
+  ozone_path: data/forcing_1993/o3_cmip6_historical_199201-199512.nc
+  ozone_fixed_year: 0
+  upper_radiative_cap_path: data/upper_radiative_cap/era5_1993_sampled_monthly_upper_cap.csv
   cloud_scheme: diagnostic
+  cloud_relative_humidity_min: 0.3
   cloud_liquid_water_path_gm2: 75.0
   cloud_ice_water_path_gm2: 25.0
   aerosol_species: sulfate

@@ -160,10 +160,12 @@ end
 function _well_mixed_gas_provenance(radiation, config, rrtmgp_active)
     isempty(config.forcing.well_mixed_gas_path) && return (;)
     schedule = rrtmgp_active ? radiation.gas_schedule : nothing
-    isnothing(schedule) && return (well_mixed_gas_forcing = "requested_but_not_active",)
+    isnothing(schedule) && throw(ArgumentError("configured well-mixed gas schedule was not applied"))
     start_values = well_mixed_gas_values(schedule, config.start_date)
     return (
-        well_mixed_gas_forcing = WELL_MIXED_GAS_TIME_DEPENDENCE,
+        well_mixed_gas_forcing = schedule.fixed_year > 0 ?
+            "well_mixed_greenhouse_gases_fixed_at_year_$(schedule.fixed_year)" :
+            WELL_MIXED_GAS_TIME_DEPENDENCE,
         well_mixed_gas_path = schedule.path,
         well_mixed_gas_sha256 = schedule.sha256,
         well_mixed_gas_scenario = schedule.scenario,

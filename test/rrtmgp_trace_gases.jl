@@ -5,7 +5,21 @@
     @test isnothing(R.ForcingConfig().ch4_ppb) && isnothing(R.ForcingConfig().n2o_ppb)
     @test isnothing(production.forcing.ch4_ppb) && isnothing(production.forcing.n2o_ppb)
 
+    # This unit test constructs standalone radiation objects without the
+    # production gas schedule, ozone or upper cap. Keep the configured
+    # production profile intact and derive a matching synthetic config.
+    fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
+    with_forcing(config; kwargs...) = R.ExperimentConfig(; merge(fields(config),
+        (; forcing = R.ForcingConfig(; merge(fields(config.forcing), (; kwargs...))...)))...)
+    synthetic = with_forcing(production; well_mixed_gas_path = "", well_mixed_gas_fixed_year = 0,
+        ozone_path = "", ozone_fixed_year = 0, upper_radiative_cap_path = "")
+
     raw = R.YAML.load_file(production_path)
+    raw["forcing"]["well_mixed_gas_path"] = ""
+    raw["forcing"]["well_mixed_gas_fixed_year"] = 0
+    raw["forcing"]["ozone_path"] = ""
+    raw["forcing"]["ozone_fixed_year"] = 0
+    raw["forcing"]["upper_radiative_cap_path"] = ""
     raw["forcing"]["ch4_ppb"] = 1746.2545166015625
     raw["forcing"]["n2o_ppb"] = 310.522216796875
     path = tempname() * ".yml"
@@ -15,13 +29,10 @@
     @test pd.forcing.n2o_ppb == 310.522216796875
     @test R.validate(pd; check_input_files = false) === pd
 
-    fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
-    with_forcing(config; kwargs...) = R.ExperimentConfig(; merge(fields(config),
-        (; forcing = R.ForcingConfig(; merge(fields(config.forcing), (; kwargs...))...)))...)
     for bad in ((; ch4_ppb = 0.0), (; n2o_ppb = -1.0), (; ch4_ppb = NaN), (; n2o_ppb = Inf),
                 (; radiation = :speedy_simplified, ch4_ppb = 800.0),
                 (; radiation = :speedy_simplified, n2o_ppb = 270.0))
-        @test_throws ArgumentError R.validate(with_forcing(production; bad...); check_input_files = false)
+        @test_throws ArgumentError R.validate(with_forcing(synthetic; bad...); check_input_files = false)
     end
 
     grid = R.SpeedyWeather.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
@@ -51,7 +62,7 @@
     @test toa_up(over) > toa_up(base)
     @test toa_up(R.RRTMGPRadiation(grid; ch4_ppb = 1900.0, n2o_ppb = 340.0)) == toa_up(base)
 
-    default_provenance = R._forcing_provenance(base, production)
+    default_provenance = R._forcing_provenance(base, synthetic)
     @test !any(k -> occursin("ch4", String(k)) || occursin("n2o", String(k)), keys(default_provenance))
     override_provenance = R._forcing_provenance(over, pd)
     default_keys = collect(keys(default_provenance))

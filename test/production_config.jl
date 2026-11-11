@@ -52,6 +52,20 @@ using ReadyESM, Test, Dates, SHA
     @test config.forcing.solar_distance_correction
     @test !ExperimentConfig().forcing.solar_distance_correction
     @test config.forcing.co2_ppm == 420
+    @test config.forcing.well_mixed_gas_path == joinpath(ReadyESM.PROJECT_ROOT,
+        "data", "forcing_1993", "wmghg_cmip6_ssp245_1850-2100.nc")
+    @test config.forcing.well_mixed_gas_fixed_year == 1993
+    @test config.forcing.ozone_path == joinpath(ReadyESM.PROJECT_ROOT,
+        "data", "forcing_1993", "o3_cmip6_historical_199201-199512.nc")
+    @test config.forcing.ozone_fixed_year == 0
+    @test config.forcing.upper_radiative_cap_path == joinpath(ReadyESM.PROJECT_ROOT,
+        "data", "upper_radiative_cap", "era5_1993_sampled_monthly_upper_cap.csv")
+    @test bytes2hex(open(SHA.sha256, config.forcing.well_mixed_gas_path)) ==
+        "d399d2d530ba946f4a53ec01a25caba956a8e2ac21646f5e02c2f45ef7f1b1b9"
+    @test bytes2hex(open(SHA.sha256, config.forcing.ozone_path)) ==
+        "fc687e57baba2df2e83182453827f08e1543131b5296602c298c72998b021d15"
+    @test bytes2hex(open(SHA.sha256, config.forcing.upper_radiative_cap_path)) ==
+        "5f07536991bd4a6a59536f7e5d86b58af803813c043d154d7a7d0d9184f5ca28"
     @test config.forcing.cloud_liquid_water_path_gm2 == 75
     @test config.forcing.cloud_ice_water_path_gm2 == 25
     @test config.forcing.cloud_relative_humidity_min == 0.3

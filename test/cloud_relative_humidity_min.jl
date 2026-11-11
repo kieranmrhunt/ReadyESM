@@ -7,18 +7,17 @@
     with_forcing(c; kw...) = R.ExperimentConfig(;
         merge(fields(c), (; forcing = R.ForcingConfig(; merge(fields(c.forcing), (; kw...))...)))...)
 
-    # Production inherits the historical diagnostic-cloud threshold.
+    # The production file names the screened control threshold explicitly.
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
     @test production.forcing.cloud_relative_humidity_min == 0.3
 
     # A YAML value reaches the config.
     mktempdir() do dir
         text = read(joinpath(R.PROJECT_ROOT, "config", "production.yml"), String)
-        @test !occursin("cloud_relative_humidity_min:", text)
-        @test occursin("  cloud_scheme: diagnostic\n", text)
         path = joinpath(dir, "rh.yml")
-        write(path, replace(text, "  cloud_scheme: diagnostic\n" =>
-            "  cloud_scheme: diagnostic\n  cloud_relative_humidity_min: 0.7\n"))
+        @test occursin("  cloud_relative_humidity_min: 0.3\n", text)
+        write(path, replace(text, "  cloud_relative_humidity_min: 0.3\n" =>
+            "  cloud_relative_humidity_min: 0.7\n"))
         loaded = R.load_config(path; check_input_files = false)
         @test loaded.forcing.cloud_relative_humidity_min == 0.7
     end
@@ -46,15 +45,23 @@
     @test_throws ArgumentError R.RRTMGPRadiation(grid; cloud_scheme = :diagnostic,
         cloud_relative_humidity_min = 1.0 - 1e-9)
 
-    # Provenance records the requested and the applied threshold.
-    provenance = R._forcing_provenance(tuned, diag)
+    # These synthetic radiation objects have no production gas, ozone or upper cap.
+    # Keep only the cap request for its refusal test, then describe the actual object.
+    diag_cap_only = with_forcing(diag; well_mixed_gas_path = "",
+        well_mixed_gas_fixed_year = 0, ozone_path = "", ozone_fixed_year = 0)
+    @test_throws r"configured upper radiative cap was not applied" R._forcing_provenance(tuned, diag_cap_only)
+    diag_without_cap = with_forcing(diag_cap_only; upper_radiative_cap_path = "")
+    production_without_cap = with_forcing(production; upper_radiative_cap_path = "",
+        well_mixed_gas_path = "", well_mixed_gas_fixed_year = 0,
+        ozone_path = "", ozone_fixed_year = 0)
+    provenance = R._forcing_provenance(tuned, diag_without_cap)
     @test provenance.cloud_relative_humidity_min == 0.7
     @test provenance.applied_cloud_relative_humidity_min == Float64(0.7f0)
-    @test R._forcing_provenance(released, production).applied_cloud_relative_humidity_min == Float64(0.3f0)
+    @test R._forcing_provenance(released, production_without_cap).applied_cloud_relative_humidity_min == Float64(0.3f0)
     # A clear-sky radiation object (NoClouds) has no cloud law: the applied value is NaN, never an error,
     # even when the config names an all-sky scheme (as in rrtmgp_trace_gases.jl).
     clear_radiation = R.RRTMGPRadiation(grid)
     @test clear_radiation.clouds isa R.SpeedyWeather.NoClouds
-    @test isnan(R._forcing_provenance(clear_radiation, production).applied_cloud_relative_humidity_min)
+    @test isnan(R._forcing_provenance(clear_radiation, production_without_cap).applied_cloud_relative_humidity_min)
 end
 println("CLOUD_RELATIVE_HUMIDITY_MIN_UNIT_PASS")

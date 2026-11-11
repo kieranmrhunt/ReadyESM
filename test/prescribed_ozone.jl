@@ -65,6 +65,7 @@ slab_config(path; start = DateTime(2001, 3, 1), kwargs...) = R.ExperimentConfig(
         @test size(data.values) == (7, 7, 36) && data.family == "test"
         @test data.values[3, 2, 5] ≈ linear_field(2.0e4, -60.0, time[5]) rtol = 1e-6
         @test length(data.sha256) == 64
+        @test_throws r"configured prescribed ozone was not applied" R._prescribed_ozone_provenance((; ozone = nothing), slab_config(path), true)
         @test_throws ArgumentError R.PrescribedOzoneData(write_ozone(joinpath(dir, "s.nc"), linear_field; schema = "x")[1])
         @test_throws ArgumentError R.PrescribedOzoneData(write_ozone(joinpath(dir, "n.nc"), linear_field; mutate = :negative)[1])
         @test_throws ArgumentError R.PrescribedOzoneData(write_ozone(joinpath(dir, "t.nc"), linear_field; mutate = :time)[1])
@@ -186,9 +187,13 @@ slab_config(path; start = DateTime(2001, 3, 1), kwargs...) = R.ExperimentConfig(
             @test parsed.forcing.ozone_path == path && parsed.forcing.ozone_fixed_year == 2001
         end
         production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
-        @test production.forcing.ozone_path == "" && production.forcing.ozone_fixed_year == 0
-        fixed = with_forcing(production; ozone_path = path, ozone_fixed_year = 2001)
-        @test R._forcing_time_dependence(fixed) == R._forcing_time_dependence(production) * "_and_zonal_mean_ozone_fixed_at_year_2001" ||
+        @test production.forcing.ozone_path == joinpath(R.PROJECT_ROOT,
+            "data", "forcing_1993", "o3_cmip6_historical_199201-199512.nc")
+        @test production.forcing.ozone_fixed_year == 0
+        off = with_forcing(production; ozone_path = "", ozone_fixed_year = 0,
+            well_mixed_gas_path = "", well_mixed_gas_fixed_year = 0)
+        fixed = with_forcing(off; ozone_path = path, ozone_fixed_year = 2001)
+        @test R._forcing_time_dependence(fixed) == R._forcing_time_dependence(off) * "_and_zonal_mean_ozone_fixed_at_year_2001" ||
               R._forcing_time_dependence(fixed) == "zonal_mean_ozone_fixed_at_year_2001"
     end
 

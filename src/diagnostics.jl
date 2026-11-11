@@ -49,22 +49,27 @@ function _atmosphere_cloud_layer_diagnostics(model)
     solver_ice = Float64.(Array(
         RRTMGP.cloud_ice_water_path(radiation.solver),
     ))
-    expected_shape = (nlayers, npoints)
+    # The upper radiative cap adds two solver-only layers. Cloud diagnostics
+    # retain the atmospheric model's layer coordinate and omit those layers.
+    cap_layers = isnothing(radiation.upper_cap) ? 0 : 2
+    expected_shape = (nlayers + cap_layers, npoints)
     size(solver_fraction) == expected_shape || throw(DimensionMismatch(
         "RRTMGP cloud-fraction shape $(size(solver_fraction)) does not match " *
         "expected layer/point shape $expected_shape",
     ))
     size(solver_liquid) == expected_shape && size(solver_ice) == expected_shape ||
         throw(DimensionMismatch("RRTMGP cloud condensate shapes differ"))
+    cap_layers == 0 || all(iszero, @view solver_fraction[nlayers+1:end, :]) ||
+        throw(ArgumentError("upper radiative cap contains cloud fraction"))
 
     # RRTMGP stores bottom-to-top layer by column; durable atmospheric output
     # follows SpeedyWeather's point by top-to-bottom layer convention.
     to_speedy_order(values) = reverse(permutedims(values, (2, 1)); dims = 2)
-    fraction = to_speedy_order(solver_fraction)
+    fraction = to_speedy_order(@view solver_fraction[1:nlayers, :])
     return (
         fraction,
-        liquid_water_path = to_speedy_order(solver_liquid),
-        ice_water_path = to_speedy_order(solver_ice),
+        liquid_water_path = to_speedy_order(@view solver_liquid[1:nlayers, :]),
+        ice_water_path = to_speedy_order(@view solver_ice[1:nlayers, :]),
         column_fraction = vec(maximum(fraction; dims = 2)),
     )
 end
@@ -162,6 +167,7 @@ function _forcing_provenance(radiation, config::ExperimentConfig)
         _trace_gas_provenance(radiation, config, rrtmgp_active)...,
         _well_mixed_gas_provenance(radiation, config, rrtmgp_active)...,
         _prescribed_ozone_provenance(radiation, config, rrtmgp_active)...,
+        _upper_cap_provenance(radiation, config, rrtmgp_active)...,
         _solar_constant_entry_provenance(config)...,
         _cmip_aerosol_provenance(radiation, config, rrtmgp_active)...,
     )

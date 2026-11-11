@@ -1,0 +1,779 @@
+{
+  "archive": "/badc/ecmwf-era5/data/oper/an_ml",
+  "boundary_method": "Log-pressure interpolation between neighboring model-level midpoint pressures",
+  "cap_bottom_pressure_pa": 500.0,
+  "cap_split_pressure_pa": 100.0,
+  "cap_top_pressure_pa": 1.005183574463,
+  "coefficient_csv_sha256": "44d92619fd206f9258e1a2ee131285ac8542031ff2170964da656976cb573728",
+  "ecmwf_l137_page_sha256_at_preparation": "db6787b4339832df937f77b518eb1a2b73c2013b08b9548fce1e09d61f3ea34e",
+  "ecmwf_l137_table_url": "https://confluence.ecmwf.int/spaces/UDOC/pages/108117123/L137%2Bmodel%2Blevel%2Bdefinitions",
+  "latitude_degrees": [
+    -90,
+    -89,
+    -88,
+    -87,
+    -86,
+    -85,
+    -84,
+    -83,
+    -82,
+    -81,
+    -80,
+    -79,
+    -78,
+    -77,
+    -76,
+    -75,
+    -74,
+    -73,
+    -72,
+    -71,
+    -70,
+    -69,
+    -68,
+    -67,
+    -66,
+    -65,
+    -64,
+    -63,
+    -62,
+    -61,
+    -60,
+    -59,
+    -58,
+    -57,
+    -56,
+    -55,
+    -54,
+    -53,
+    -52,
+    -51,
+    -50,
+    -49,
+    -48,
+    -47,
+    -46,
+    -45,
+    -44,
+    -43,
+    -42,
+    -41,
+    -40,
+    -39,
+    -38,
+    -37,
+    -36,
+    -35,
+    -34,
+    -33,
+    -32,
+    -31,
+    -30,
+    -29,
+    -28,
+    -27,
+    -26,
+    -25,
+    -24,
+    -23,
+    -22,
+    -21,
+    -20,
+    -19,
+    -18,
+    -17,
+    -16,
+    -15,
+    -14,
+    -13,
+    -12,
+    -11,
+    -10,
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -4,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47,
+    48,
+    49,
+    50,
+    51,
+    52,
+    53,
+    54,
+    55,
+    56,
+    57,
+    58,
+    59,
+    60,
+    61,
+    62,
+    63,
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    86,
+    87,
+    88,
+    89,
+    90
+  ],
+  "layer_mean_method": "Pressure-overlap mass weighted mean of model-level temperatures",
+  "longitude_method": "Unweighted mean of all 1440 longitudes at each integer latitude",
+  "output_csv_sha256": "5f07536991bd4a6a59536f7e5d86b58af803813c043d154d7a7d0d9184f5ca28",
+  "pressure_method": "ECMWF L137 half-level a+b*surface_pressure, with b=0 for all used half-levels",
+  "sample_count": 96,
+  "schema": "readyesm_era5_1993_sampled_monthly_upper_cap_v1",
+  "source_files": [
+    {
+      "bytes": 221537882,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/01/ecmwf-era5_oper_an_ml_199301010000.t.nc",
+      "sha256": "e08d5836f66d0069c2fb59069c52e4d62518a7a1ef06446053b634d5c759c333",
+      "timestamp_utc": "1993-01-01T00:00:00"
+    },
+    {
+      "bytes": 220544735,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/01/ecmwf-era5_oper_an_ml_199301011200.t.nc",
+      "sha256": "b4f82eb7d187eaf642b1aa6ed8d9e5548d5879d3382e4f98e7c115261eef2c59",
+      "timestamp_utc": "1993-01-01T12:00:00"
+    },
+    {
+      "bytes": 221332924,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/08/ecmwf-era5_oper_an_ml_199301080000.t.nc",
+      "sha256": "0f541edab1286dc8ad167b53d145278e0f2c96698c50387814c24708ad0c7874",
+      "timestamp_utc": "1993-01-08T00:00:00"
+    },
+    {
+      "bytes": 221228040,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/08/ecmwf-era5_oper_an_ml_199301081200.t.nc",
+      "sha256": "0ccd82ed9a368bf1c445513fae31383458f97dedeffd0d819c75846b795b1d2b",
+      "timestamp_utc": "1993-01-08T12:00:00"
+    },
+    {
+      "bytes": 220793412,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/15/ecmwf-era5_oper_an_ml_199301150000.t.nc",
+      "sha256": "ec2ac708d06376a8c3d6b9307fff94d53619f03276db2f3f208e8c97a9f1f86a",
+      "timestamp_utc": "1993-01-15T00:00:00"
+    },
+    {
+      "bytes": 220754935,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/15/ecmwf-era5_oper_an_ml_199301151200.t.nc",
+      "sha256": "0b3b3ed36b95ceb92a7e86a7126087e9739de60a4b7741f997d657190edcae24",
+      "timestamp_utc": "1993-01-15T12:00:00"
+    },
+    {
+      "bytes": 222153092,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/22/ecmwf-era5_oper_an_ml_199301220000.t.nc",
+      "sha256": "53be0cdfc0d249d12d41fb42c2b2970449118acb1b1579403368d47e09a4cf0c",
+      "timestamp_utc": "1993-01-22T00:00:00"
+    },
+    {
+      "bytes": 222143661,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/01/22/ecmwf-era5_oper_an_ml_199301221200.t.nc",
+      "sha256": "d52fa5ddc958b1de25e1c9603651fef1a81d4d64e3ff2cba2bca10ddb19e1d0d",
+      "timestamp_utc": "1993-01-22T12:00:00"
+    },
+    {
+      "bytes": 224120990,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/01/ecmwf-era5_oper_an_ml_199302010000.t.nc",
+      "sha256": "adb4b760d98c095691e55aeedea300b5b11103b8d5ad2f7656bf00a7ded96ff0",
+      "timestamp_utc": "1993-02-01T00:00:00"
+    },
+    {
+      "bytes": 224099791,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/01/ecmwf-era5_oper_an_ml_199302011200.t.nc",
+      "sha256": "c5049dab15add94ebf2f813388bf8fa0a1456e36a7061d57a54980b33f42f5f9",
+      "timestamp_utc": "1993-02-01T12:00:00"
+    },
+    {
+      "bytes": 223343510,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/08/ecmwf-era5_oper_an_ml_199302080000.t.nc",
+      "sha256": "8c9f2ba1b78b17413ad6100dcca2cbb6d031b0da77a465219eb12e22d75d1a32",
+      "timestamp_utc": "1993-02-08T00:00:00"
+    },
+    {
+      "bytes": 223494482,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/08/ecmwf-era5_oper_an_ml_199302081200.t.nc",
+      "sha256": "3172eda2e38a042e4c59abda7018123c8cb776cd9f05b2a8a5b6f5c3cd4b739d",
+      "timestamp_utc": "1993-02-08T12:00:00"
+    },
+    {
+      "bytes": 222785808,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/15/ecmwf-era5_oper_an_ml_199302150000.t.nc",
+      "sha256": "033f41647eb2aac1f4be85388e1c0480eaf6dffd0a81e149fcbb8ec9b06c677c",
+      "timestamp_utc": "1993-02-15T00:00:00"
+    },
+    {
+      "bytes": 222060620,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/15/ecmwf-era5_oper_an_ml_199302151200.t.nc",
+      "sha256": "594befbaf449cf8aed2ccb3331a8a237c1d1f2f97a79ceafdabec6523f442868",
+      "timestamp_utc": "1993-02-15T12:00:00"
+    },
+    {
+      "bytes": 222549443,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/22/ecmwf-era5_oper_an_ml_199302220000.t.nc",
+      "sha256": "5918774f3ea8cce66e06fd741f5f340e24dbc5aae840c2135d1e44e5286adef1",
+      "timestamp_utc": "1993-02-22T00:00:00"
+    },
+    {
+      "bytes": 222598989,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/02/22/ecmwf-era5_oper_an_ml_199302221200.t.nc",
+      "sha256": "50013211bc9621ba9740ab85762d4b7104302dbbfa8f70b74ddde56d068d5e92",
+      "timestamp_utc": "1993-02-22T12:00:00"
+    },
+    {
+      "bytes": 223789911,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/01/ecmwf-era5_oper_an_ml_199303010000.t.nc",
+      "sha256": "49ef89666b0a41704de161d34b97e3f0974f328b6ea95b4683e3a2e36330386d",
+      "timestamp_utc": "1993-03-01T00:00:00"
+    },
+    {
+      "bytes": 223250688,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/01/ecmwf-era5_oper_an_ml_199303011200.t.nc",
+      "sha256": "0463712583141ee9d572d337f7d30472b8866a33351fea4227902deed468ef1c",
+      "timestamp_utc": "1993-03-01T12:00:00"
+    },
+    {
+      "bytes": 223587755,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/08/ecmwf-era5_oper_an_ml_199303080000.t.nc",
+      "sha256": "d77e763da0fb2a6acec5e193f581d8ba5f21a97520ffb0b0cd254fdb47ebcc7b",
+      "timestamp_utc": "1993-03-08T00:00:00"
+    },
+    {
+      "bytes": 223255180,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/08/ecmwf-era5_oper_an_ml_199303081200.t.nc",
+      "sha256": "096b8d43d46e38f520655744db76d88698b39e78e130cb23929e91539aa9ce01",
+      "timestamp_utc": "1993-03-08T12:00:00"
+    },
+    {
+      "bytes": 225397755,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/15/ecmwf-era5_oper_an_ml_199303150000.t.nc",
+      "sha256": "b9a45e15d8dea078627fdd1d98fa954dfb65547b3694bd062612a31028c0a58e",
+      "timestamp_utc": "1993-03-15T00:00:00"
+    },
+    {
+      "bytes": 223812766,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/15/ecmwf-era5_oper_an_ml_199303151200.t.nc",
+      "sha256": "275cd936a8e9962ad436f653d2362d3be693e5e3d3ecfef10d5dbd1bb9b5ce89",
+      "timestamp_utc": "1993-03-15T12:00:00"
+    },
+    {
+      "bytes": 225076754,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/22/ecmwf-era5_oper_an_ml_199303220000.t.nc",
+      "sha256": "a8e85d35f7eb46bde9791b5b994dcf2b94e68966711995033a94eaf369455b99",
+      "timestamp_utc": "1993-03-22T00:00:00"
+    },
+    {
+      "bytes": 224530418,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/03/22/ecmwf-era5_oper_an_ml_199303221200.t.nc",
+      "sha256": "42b97deee1f8f2d935564b43414ee5acce6e85f2e44e1033ad02e958308dbf22",
+      "timestamp_utc": "1993-03-22T12:00:00"
+    },
+    {
+      "bytes": 224607214,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/01/ecmwf-era5_oper_an_ml_199304010000.t.nc",
+      "sha256": "aea89cfc1e12ddd25e61a5667ec746d58389743e3f2c3f01a6db1bdf325c6dde",
+      "timestamp_utc": "1993-04-01T00:00:00"
+    },
+    {
+      "bytes": 224237424,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/01/ecmwf-era5_oper_an_ml_199304011200.t.nc",
+      "sha256": "87cc1f794423afa0035754f2883949ae06a0d196e179eec15fed93217d59ebc2",
+      "timestamp_utc": "1993-04-01T12:00:00"
+    },
+    {
+      "bytes": 223729145,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/08/ecmwf-era5_oper_an_ml_199304080000.t.nc",
+      "sha256": "f9a9d0d31f75d6cd369184fe7d407fa7f801615114e1a372c73a9fd523d699f2",
+      "timestamp_utc": "1993-04-08T00:00:00"
+    },
+    {
+      "bytes": 223294184,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/08/ecmwf-era5_oper_an_ml_199304081200.t.nc",
+      "sha256": "20bc0f2c1ef1d61679de53b63df7f4376a994f981c19320831be5661817cf587",
+      "timestamp_utc": "1993-04-08T12:00:00"
+    },
+    {
+      "bytes": 223066314,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/15/ecmwf-era5_oper_an_ml_199304150000.t.nc",
+      "sha256": "05e48c3c51507a03ee425a820db59024516503662d77184b319b0b3df1824559",
+      "timestamp_utc": "1993-04-15T00:00:00"
+    },
+    {
+      "bytes": 223662587,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/15/ecmwf-era5_oper_an_ml_199304151200.t.nc",
+      "sha256": "8122a108dfe6666cb1ba368d7131dd72419e0ec3f3c495c8ddfcca9b258655c6",
+      "timestamp_utc": "1993-04-15T12:00:00"
+    },
+    {
+      "bytes": 223408688,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/22/ecmwf-era5_oper_an_ml_199304220000.t.nc",
+      "sha256": "084c2d0b18eb4e895fc5ab88e185e4df531002d8a2a75f6b29fd79aaab34ba9b",
+      "timestamp_utc": "1993-04-22T00:00:00"
+    },
+    {
+      "bytes": 222316166,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/04/22/ecmwf-era5_oper_an_ml_199304221200.t.nc",
+      "sha256": "8fc427bbb286f79da717b8727c615823e65bb558454f91d64b8fa87efff4c1c6",
+      "timestamp_utc": "1993-04-22T12:00:00"
+    },
+    {
+      "bytes": 221719836,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/01/ecmwf-era5_oper_an_ml_199305010000.t.nc",
+      "sha256": "be11ceffab354b85638874d61c0adf70ddcc41f6c320e83d1b89b4908e8725de",
+      "timestamp_utc": "1993-05-01T00:00:00"
+    },
+    {
+      "bytes": 221207300,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/01/ecmwf-era5_oper_an_ml_199305011200.t.nc",
+      "sha256": "d4aa5633fd902b086cc5171d8377818a448fb2f4ba9c200d4b8f4fd3648150c5",
+      "timestamp_utc": "1993-05-01T12:00:00"
+    },
+    {
+      "bytes": 222190209,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/08/ecmwf-era5_oper_an_ml_199305080000.t.nc",
+      "sha256": "7368de8e9c20ceb4976879712ddac2320f94faa9498272a55fa870f1d692cc7a",
+      "timestamp_utc": "1993-05-08T00:00:00"
+    },
+    {
+      "bytes": 221659222,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/08/ecmwf-era5_oper_an_ml_199305081200.t.nc",
+      "sha256": "bb95785595516649a2bf0ef300c2ee3587f71e5c142ee61e74bc5b79d763ca23",
+      "timestamp_utc": "1993-05-08T12:00:00"
+    },
+    {
+      "bytes": 222142311,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/15/ecmwf-era5_oper_an_ml_199305150000.t.nc",
+      "sha256": "8b8cdeacba228f7065c44d96b7fac1ae6e9b18c7a6eea52011a426154454d902",
+      "timestamp_utc": "1993-05-15T00:00:00"
+    },
+    {
+      "bytes": 221241341,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/15/ecmwf-era5_oper_an_ml_199305151200.t.nc",
+      "sha256": "35242092d5d5232bd8806690e9932a0d214f3b7dac234d6811a3c5d760eec24b",
+      "timestamp_utc": "1993-05-15T12:00:00"
+    },
+    {
+      "bytes": 221198353,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/22/ecmwf-era5_oper_an_ml_199305220000.t.nc",
+      "sha256": "414c706b437ae226c354dd42d8c0fce3388de005ed79fbace14ea51264c51a84",
+      "timestamp_utc": "1993-05-22T00:00:00"
+    },
+    {
+      "bytes": 220183482,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/05/22/ecmwf-era5_oper_an_ml_199305221200.t.nc",
+      "sha256": "f9bf01bb3c9bb72168f63acea2cadd8b3f9e9f9b2545295ff695118fde14086d",
+      "timestamp_utc": "1993-05-22T12:00:00"
+    },
+    {
+      "bytes": 220145344,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/01/ecmwf-era5_oper_an_ml_199306010000.t.nc",
+      "sha256": "ee8eef36ed57e59fbe3504c8dd647a2c7b1fd15953c43d7a70489affda3ba941",
+      "timestamp_utc": "1993-06-01T00:00:00"
+    },
+    {
+      "bytes": 219792288,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/01/ecmwf-era5_oper_an_ml_199306011200.t.nc",
+      "sha256": "7714153697bb05729a3dc28846f4e7fed0a2cf58f3b62516e9a99313ddcbdf8f",
+      "timestamp_utc": "1993-06-01T12:00:00"
+    },
+    {
+      "bytes": 218252592,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/08/ecmwf-era5_oper_an_ml_199306080000.t.nc",
+      "sha256": "a8210a56933fa16f0385c18358d6020f3c57b6a71558bf8a3fa32adf2e346fe9",
+      "timestamp_utc": "1993-06-08T00:00:00"
+    },
+    {
+      "bytes": 217124062,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/08/ecmwf-era5_oper_an_ml_199306081200.t.nc",
+      "sha256": "96591d1aef21e3d7e0a4add6dedc7b8cd253f481613604e7b22e7f0ae645ca75",
+      "timestamp_utc": "1993-06-08T12:00:00"
+    },
+    {
+      "bytes": 218741921,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/15/ecmwf-era5_oper_an_ml_199306150000.t.nc",
+      "sha256": "c9ee86eb64fc6ef3de1e0d1ca7f45c2d0b8f5407de25a8622f7cacf6ecef213b",
+      "timestamp_utc": "1993-06-15T00:00:00"
+    },
+    {
+      "bytes": 218491701,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/15/ecmwf-era5_oper_an_ml_199306151200.t.nc",
+      "sha256": "7d2b52464c49b2b7177b4215c982feffe97acbfad04368e99f2a9c7eabdb860a",
+      "timestamp_utc": "1993-06-15T12:00:00"
+    },
+    {
+      "bytes": 218608780,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/22/ecmwf-era5_oper_an_ml_199306220000.t.nc",
+      "sha256": "d97f4ac1df06758c21fb59053eea9d16c57b16825c19b565cd5ed11772250b42",
+      "timestamp_utc": "1993-06-22T00:00:00"
+    },
+    {
+      "bytes": 217946271,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/06/22/ecmwf-era5_oper_an_ml_199306221200.t.nc",
+      "sha256": "eeba2fb9e5fe8e9299d9a9dc1db6b5303a322b46b9020fccff429635472664ec",
+      "timestamp_utc": "1993-06-22T12:00:00"
+    },
+    {
+      "bytes": 218477481,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/01/ecmwf-era5_oper_an_ml_199307010000.t.nc",
+      "sha256": "784ec6f39208bbf43a603e778ce90161960e47d426bce5e19a3faa1678f2fb51",
+      "timestamp_utc": "1993-07-01T00:00:00"
+    },
+    {
+      "bytes": 218361099,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/01/ecmwf-era5_oper_an_ml_199307011200.t.nc",
+      "sha256": "95c065e0162cbb7cecb063cf6a9e47a71f0b08f59345ddd018fbb877fb9375aa",
+      "timestamp_utc": "1993-07-01T12:00:00"
+    },
+    {
+      "bytes": 217156023,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/08/ecmwf-era5_oper_an_ml_199307080000.t.nc",
+      "sha256": "d5274b19016d7857c750d9cb40930a4f1cffeda03d82d92fb26679dea1d474a3",
+      "timestamp_utc": "1993-07-08T00:00:00"
+    },
+    {
+      "bytes": 217025299,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/08/ecmwf-era5_oper_an_ml_199307081200.t.nc",
+      "sha256": "67947d5fc955bcba81af64d317efe013aa484d681fdd31aacfa24ae81972ee4f",
+      "timestamp_utc": "1993-07-08T12:00:00"
+    },
+    {
+      "bytes": 219251536,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/15/ecmwf-era5_oper_an_ml_199307150000.t.nc",
+      "sha256": "426e676d783d212182167ea40a4751d67ed0787c779efc3b300a5f3e20d2687a",
+      "timestamp_utc": "1993-07-15T00:00:00"
+    },
+    {
+      "bytes": 219070472,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/15/ecmwf-era5_oper_an_ml_199307151200.t.nc",
+      "sha256": "b6967690ebb3836425b9f7385bf44d5e126f0924e0e50bd3ef939b6154224de4",
+      "timestamp_utc": "1993-07-15T12:00:00"
+    },
+    {
+      "bytes": 217379335,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/22/ecmwf-era5_oper_an_ml_199307220000.t.nc",
+      "sha256": "6a3816be1755f9e950e21de43a411313c1cd0f24eea2595e4abc910297258703",
+      "timestamp_utc": "1993-07-22T00:00:00"
+    },
+    {
+      "bytes": 216445432,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/07/22/ecmwf-era5_oper_an_ml_199307221200.t.nc",
+      "sha256": "d33dc60ff986c4a7e06274cc9ae8d9ffe40968e9e0d0208370509058c25a95f0",
+      "timestamp_utc": "1993-07-22T12:00:00"
+    },
+    {
+      "bytes": 219219042,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/01/ecmwf-era5_oper_an_ml_199308010000.t.nc",
+      "sha256": "e54f06c1461fc1bc21ee9682e3f3cce45c3396cdaf21c449d165830140fda753",
+      "timestamp_utc": "1993-08-01T00:00:00"
+    },
+    {
+      "bytes": 219006199,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/01/ecmwf-era5_oper_an_ml_199308011200.t.nc",
+      "sha256": "fdabde10d1608db4b9f3d27e830f3dbd986da1fc41c0417d7e60f0c922fe715b",
+      "timestamp_utc": "1993-08-01T12:00:00"
+    },
+    {
+      "bytes": 219415744,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/08/ecmwf-era5_oper_an_ml_199308080000.t.nc",
+      "sha256": "ac0150907b0ac9045c4c3e31e50f7632e4eb9d34fd4b446754813b4551abc7de",
+      "timestamp_utc": "1993-08-08T00:00:00"
+    },
+    {
+      "bytes": 218442729,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/08/ecmwf-era5_oper_an_ml_199308081200.t.nc",
+      "sha256": "dfcd3532ed2fae1da31f63737008e9ee4a9ac186b6bf7681de6d3086822a540d",
+      "timestamp_utc": "1993-08-08T12:00:00"
+    },
+    {
+      "bytes": 219271960,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/15/ecmwf-era5_oper_an_ml_199308150000.t.nc",
+      "sha256": "26403ad0025219c9e65b943cf3a84b6548b6a4323f109d8e9a2f40dc7619e1ad",
+      "timestamp_utc": "1993-08-15T00:00:00"
+    },
+    {
+      "bytes": 218815117,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/15/ecmwf-era5_oper_an_ml_199308151200.t.nc",
+      "sha256": "bd78a38f298c28aad2476e96e1cdfd61d1623b2d62f707bbe8d3179969223e27",
+      "timestamp_utc": "1993-08-15T12:00:00"
+    },
+    {
+      "bytes": 221711401,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/22/ecmwf-era5_oper_an_ml_199308220000.t.nc",
+      "sha256": "b248f23b9316056bc67264424a25d2908c5c04fe5d8dba1a8f4cf63d19e36a4e",
+      "timestamp_utc": "1993-08-22T00:00:00"
+    },
+    {
+      "bytes": 221432920,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/08/22/ecmwf-era5_oper_an_ml_199308221200.t.nc",
+      "sha256": "edd535ed4515926938600e5d043ecf144a617a53df05d2a2d64b94526a409992",
+      "timestamp_utc": "1993-08-22T12:00:00"
+    },
+    {
+      "bytes": 221918237,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/01/ecmwf-era5_oper_an_ml_199309010000.t.nc",
+      "sha256": "894d42da13cbcf4af3306159cdc3c50dd0251f311ee6a20eae4820de8aaad05b",
+      "timestamp_utc": "1993-09-01T00:00:00"
+    },
+    {
+      "bytes": 221104545,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/01/ecmwf-era5_oper_an_ml_199309011200.t.nc",
+      "sha256": "3f7e80bc54b6967386f5c9db88195929ccb721e2f0899c1b82455a6ed4a3b2a8",
+      "timestamp_utc": "1993-09-01T12:00:00"
+    },
+    {
+      "bytes": 221498867,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/08/ecmwf-era5_oper_an_ml_199309080000.t.nc",
+      "sha256": "f73b45cae39f7250fe59dd43f53445e293bb1d77d551f5ce5c05d33bd9ab43bc",
+      "timestamp_utc": "1993-09-08T00:00:00"
+    },
+    {
+      "bytes": 220852319,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/08/ecmwf-era5_oper_an_ml_199309081200.t.nc",
+      "sha256": "060f707e7314e52d8ec5a7fe9cca14749c456c0ce0356e2ac4c24205cad6cc94",
+      "timestamp_utc": "1993-09-08T12:00:00"
+    },
+    {
+      "bytes": 222473473,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/15/ecmwf-era5_oper_an_ml_199309150000.t.nc",
+      "sha256": "a107c2cbce587b144471802e1597e6b0083c4a03e227fcaa6880bc851e7f9da5",
+      "timestamp_utc": "1993-09-15T00:00:00"
+    },
+    {
+      "bytes": 221415322,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/15/ecmwf-era5_oper_an_ml_199309151200.t.nc",
+      "sha256": "7aeee3eda93e2f923d3a1a1f32fa7059ac199f9bf6b098e4f970bb497fc308e7",
+      "timestamp_utc": "1993-09-15T12:00:00"
+    },
+    {
+      "bytes": 221909235,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/22/ecmwf-era5_oper_an_ml_199309220000.t.nc",
+      "sha256": "bd115bbfcb21cc071edd7e03d16a5696e0adb36322c62ac1c3324783b0f21fcc",
+      "timestamp_utc": "1993-09-22T00:00:00"
+    },
+    {
+      "bytes": 221939535,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/09/22/ecmwf-era5_oper_an_ml_199309221200.t.nc",
+      "sha256": "79b547f7a17d09a4f704e8d716f630b7feabc6bf0c0560bfccf9800693193c6d",
+      "timestamp_utc": "1993-09-22T12:00:00"
+    },
+    {
+      "bytes": 224884565,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/01/ecmwf-era5_oper_an_ml_199310010000.t.nc",
+      "sha256": "5adfc9570ccfa96ff9ad047ceab0ace86984b60ab7b0a556a1b1fdfa8e2bbbb4",
+      "timestamp_utc": "1993-10-01T00:00:00"
+    },
+    {
+      "bytes": 224172971,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/01/ecmwf-era5_oper_an_ml_199310011200.t.nc",
+      "sha256": "2d718f7dcc9e3519ebc9720b61040567f3ba98b4b6ad018db893fe4ecf1fb438",
+      "timestamp_utc": "1993-10-01T12:00:00"
+    },
+    {
+      "bytes": 225278529,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/08/ecmwf-era5_oper_an_ml_199310080000.t.nc",
+      "sha256": "c4689d3a9acb9e95a2667448daa99a223d18f36a1bf86735ee28547726b50673",
+      "timestamp_utc": "1993-10-08T00:00:00"
+    },
+    {
+      "bytes": 224790222,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/08/ecmwf-era5_oper_an_ml_199310081200.t.nc",
+      "sha256": "da520f251772d8870ca25a76983434d8e587ba730546e785ec05abd0e8af6b31",
+      "timestamp_utc": "1993-10-08T12:00:00"
+    },
+    {
+      "bytes": 225564333,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/15/ecmwf-era5_oper_an_ml_199310150000.t.nc",
+      "sha256": "01435fa032b86ce28d0b8c3803fadca557012aa42231158a3bba383d72501b1b",
+      "timestamp_utc": "1993-10-15T00:00:00"
+    },
+    {
+      "bytes": 224931404,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/15/ecmwf-era5_oper_an_ml_199310151200.t.nc",
+      "sha256": "bd1fb814650b220047e6aba01a0ab4c964b40ae6d81964321f9bb5afb5901315",
+      "timestamp_utc": "1993-10-15T12:00:00"
+    },
+    {
+      "bytes": 227389655,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/22/ecmwf-era5_oper_an_ml_199310220000.t.nc",
+      "sha256": "f7908338469fab4d6da13f4a2d5c1e255efe385f7f18b7121bb003c550189f90",
+      "timestamp_utc": "1993-10-22T00:00:00"
+    },
+    {
+      "bytes": 225575860,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/10/22/ecmwf-era5_oper_an_ml_199310221200.t.nc",
+      "sha256": "f407600e8b60412dd2389cf298eade5853c7be68b5ec0ed984d87c2b48d553bb",
+      "timestamp_utc": "1993-10-22T12:00:00"
+    },
+    {
+      "bytes": 224617002,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/01/ecmwf-era5_oper_an_ml_199311010000.t.nc",
+      "sha256": "647c11115e6494f9b1c4a0778c26339354ddfeba11fff7f00b80ccde12d2e5b2",
+      "timestamp_utc": "1993-11-01T00:00:00"
+    },
+    {
+      "bytes": 224168863,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/01/ecmwf-era5_oper_an_ml_199311011200.t.nc",
+      "sha256": "74997a63b55bcd85828e4e8f62e289bc778c1201f6314df8c63ff2718dc6e6b6",
+      "timestamp_utc": "1993-11-01T12:00:00"
+    },
+    {
+      "bytes": 225274484,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/08/ecmwf-era5_oper_an_ml_199311080000.t.nc",
+      "sha256": "468e03b6599cc610573ed9f0db9ed62001eb9a543aa132e85c4c3ec6534799b8",
+      "timestamp_utc": "1993-11-08T00:00:00"
+    },
+    {
+      "bytes": 224386498,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/08/ecmwf-era5_oper_an_ml_199311081200.t.nc",
+      "sha256": "bd3db76bd3bbc8b7867ad0f13d4288037b0a6aabe265e0685b5e6b3b085164d1",
+      "timestamp_utc": "1993-11-08T12:00:00"
+    },
+    {
+      "bytes": 224390181,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/15/ecmwf-era5_oper_an_ml_199311150000.t.nc",
+      "sha256": "2973f456fc22ea9a11c56da051c6c6cdc0f57a98e150796049fc5634e1fe4242",
+      "timestamp_utc": "1993-11-15T00:00:00"
+    },
+    {
+      "bytes": 223486896,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/15/ecmwf-era5_oper_an_ml_199311151200.t.nc",
+      "sha256": "552d91df0ebc87031801dcd2aa5386151e33d6af893760275a44c7fdc2396700",
+      "timestamp_utc": "1993-11-15T12:00:00"
+    },
+    {
+      "bytes": 224995215,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/22/ecmwf-era5_oper_an_ml_199311220000.t.nc",
+      "sha256": "81eadf37c9469b1f068ef97bbb5561019da2f6569f75a0a9daa6ed8d52240f8d",
+      "timestamp_utc": "1993-11-22T00:00:00"
+    },
+    {
+      "bytes": 224547512,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/11/22/ecmwf-era5_oper_an_ml_199311221200.t.nc",
+      "sha256": "ffe680eccb9a7430e292c72f25d7c7e90fb433d0ee757067b18183171bdda5cd",
+      "timestamp_utc": "1993-11-22T12:00:00"
+    },
+    {
+      "bytes": 223231793,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/01/ecmwf-era5_oper_an_ml_199312010000.t.nc",
+      "sha256": "117e8d68dcde5744b0d8bc4ff8f4134c91e56db87bdfffef0e96b9a3db7884f7",
+      "timestamp_utc": "1993-12-01T00:00:00"
+    },
+    {
+      "bytes": 223124589,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/01/ecmwf-era5_oper_an_ml_199312011200.t.nc",
+      "sha256": "b1b302e7e15607bc9b8a23556dc0c45e14ed6a76ef04848d43e30a1b3ab93574",
+      "timestamp_utc": "1993-12-01T12:00:00"
+    },
+    {
+      "bytes": 222908001,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/08/ecmwf-era5_oper_an_ml_199312080000.t.nc",
+      "sha256": "81945f8b7aa179a65009a517c2680820e7cbb709ba8f5fff12b9f65e86206630",
+      "timestamp_utc": "1993-12-08T00:00:00"
+    },
+    {
+      "bytes": 222387942,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/08/ecmwf-era5_oper_an_ml_199312081200.t.nc",
+      "sha256": "78a526c27c03b9e408e03ebad3ebfe320a85a64c5ed61497d96c2d3faee37b65",
+      "timestamp_utc": "1993-12-08T12:00:00"
+    },
+    {
+      "bytes": 222830516,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/15/ecmwf-era5_oper_an_ml_199312150000.t.nc",
+      "sha256": "d1ef1410c7943d2639e7979811e228cecd34e2f205be63f8dbdae7b311096dc3",
+      "timestamp_utc": "1993-12-15T00:00:00"
+    },
+    {
+      "bytes": 221794673,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/15/ecmwf-era5_oper_an_ml_199312151200.t.nc",
+      "sha256": "9add633cd8f969dae597c0bf24eef40ac5a48d6277777c4b25510fe68565c3d8",
+      "timestamp_utc": "1993-12-15T12:00:00"
+    },
+    {
+      "bytes": 223356221,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/22/ecmwf-era5_oper_an_ml_199312220000.t.nc",
+      "sha256": "d84a906b2a53fc6a2b2745f75a430c3dba3a83a818770bedfa720d5826db6ae9",
+      "timestamp_utc": "1993-12-22T00:00:00"
+    },
+    {
+      "bytes": 222573670,
+      "path": "/badc/ecmwf-era5/data/oper/an_ml/1993/12/22/ecmwf-era5_oper_an_ml_199312221200.t.nc",
+      "sha256": "341e9a1f9fef14bf44f872dbaba9343f54734d231e31feb027b08ec8b6cf9c15",
+      "timestamp_utc": "1993-12-22T12:00:00"
+    }
+  ],
+  "temperature_field": "ERA5 an_ml t, model levels 1\u201324, 0.25-degree grid",
+  "temporal_method": "Eight snapshots per month: days 1,8,15,22 at 00 and 12 UTC; sampled monthly estimate, not full monthly mean"
+}

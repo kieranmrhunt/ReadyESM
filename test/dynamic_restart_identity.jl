@@ -1,4 +1,13 @@
 @testset "dynamic restart identity" begin
+    @test ReadyESM._require_rrtmgp_surface_albedo_restart((;
+        direct_surface_albedo = [0.1], diffuse_surface_albedo = [0.2])) === nothing
+    @test_throws r"predates RRTMGP surface-albedo restart state" begin
+        ReadyESM._require_rrtmgp_surface_albedo_restart((;
+            direct_surface_albedo = [0.1]))
+    end
+    @test_throws r"predates RRTMGP surface-albedo restart state" begin
+        ReadyESM._require_rrtmgp_surface_albedo_restart((;))
+    end
     config = ReadyESM.ExperimentConfig()
     changed_config = ReadyESM.ExperimentConfig(name = "identity-test")
     @test ReadyESM._dynamic_config_identity_hash(config) ==

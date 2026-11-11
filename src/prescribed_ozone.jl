@@ -262,7 +262,7 @@ end
 function _prescribed_ozone_provenance(radiation, config, rrtmgp_active)
     isempty(config.forcing.ozone_path) && return (;)
     ozone = rrtmgp_active ? radiation.ozone : nothing
-    isnothing(ozone) && return (prescribed_ozone = "requested_but_not_active",)
+    isnothing(ozone) && throw(ArgumentError("configured prescribed ozone was not applied"))
     solver = radiation.solver
     column = _model_column_ozone_du(RRTMGP.volume_mixing_ratio(solver, "o3"), RRTMGP.level_pressure(solver),
                                     9.80665, 0.0289644)

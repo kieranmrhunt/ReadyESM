@@ -1,6 +1,6 @@
 module ScoredOutputsTests
 # Opt-in scored output files (src/scored_outputs.jl): configuration, the monthly and wind accumulators, a short coupled
-# run that writes all four files, the restart refusal and the unchanged option-off build.
+# run that writes all four files, checkpoint state, and the unchanged option-off build.
 using ReadyESM, Test, Dates, NCDatasets
 const R = ReadyESM
 const O = R.Oceananigans
@@ -20,7 +20,10 @@ include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
            cloud_liquid_water_path_gm2 = inert_cloud.cloud_liquid_water_path_gm2,
            cloud_ice_water_path_gm2 = inert_cloud.cloud_ice_water_path_gm2,
            aerosol_scheme = :none, aerosol_cmip_background_path = "",
-           aerosol_cmip_plumes_path = "", aerosol_cmip_stratospheric_path = ""))...)
+           aerosol_cmip_plumes_path = "", aerosol_cmip_stratospheric_path = "",
+           well_mixed_gas_path = "", well_mixed_gas_fixed_year = 0,
+           ozone_path = "", ozone_fixed_year = 0,
+           upper_radiative_cap_path = ""))...)
     err = try
         R.validate(with(production; scored_outputs = true, forcing = simplified); check_input_files = false)
         nothing
@@ -74,14 +77,10 @@ end
     R.validate(config; check_input_files = false)
     simulation = R.build_dynamic_esm(config)
     @test haskey(simulation.callbacks, R.SCORED_OUTPUTS_CALLBACK)
-    restore_error = try
-        R.restore_dynamic_restart_state!(simulation, joinpath(output, "missing.jld2"))
-        nothing
-    catch e
-        e
-    end
-    @test restore_error isa ArgumentError && occursin("scored_outputs cannot continue a restarted run", restore_error.msg)
     O.run!(simulation)
+    checkpoint = O.prognostic_state(simulation.callbacks[R.SCORED_OUTPUTS_CALLBACK])
+    @test checkpoint.func.schema == R.SCORED_RESTART_SCHEMA
+    @test checkpoint.func.iteration == 24
     summary = R.save_scored_outputs(simulation, config)
     @test summary["monthly"]["state_samples"] == 6
     @test summary["monthly"]["flux_samples"] == 24
@@ -101,6 +100,21 @@ end
     off = R.build_dynamic_esm(with(config; scored_outputs = false, output_dir = mktempdir()))
     @test !haskey(off.callbacks, R.SCORED_OUTPUTS_CALLBACK)
     # A run that resumes at a later iteration, by any route, is refused at the writer's first call.
+    resumed = R.build_dynamic_esm(with(config; output_dir = mktempdir()))
+    scored_callback = resumed.callbacks[R.SCORED_OUTPUTS_CALLBACK]
+    @test O.restore_prognostic_state!(scored_callback, checkpoint) === scored_callback
+    @test scored_callback.func.started
+    @test scored_callback.func.skill.callbacks == 24
+    @test scored_callback.func.skill.passivity_checks == 25
+    @test scored_callback.func.toa.count == 6
+    @test length(scored_callback.func.sixhour.samples) == 1
+    @test scored_callback.func.skill.monthly.accumulator.water_sum ==
+        simulation.callbacks[R.SCORED_OUTPUTS_CALLBACK].func.skill.monthly.accumulator.water_sum
+    bad = merge(checkpoint.func, (iteration = 23,))
+    before = O.prognostic_state(scored_callback)
+    @test_throws ArgumentError O.restore_prognostic_state!(scored_callback,
+        merge(checkpoint, (func = bad,)))
+    @test isequal(O.prognostic_state(scored_callback), before)
     resumed = R.build_dynamic_esm(with(config; output_dir = mktempdir()))
     resumed.model.clock.iteration = 5
     first_call_error = try

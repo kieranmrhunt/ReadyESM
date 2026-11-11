@@ -499,19 +499,32 @@ function _set_band_optics!(a::CMIPAerosol, solver, optics)
 end
 
 """Compute and write the prescribed optics before a flux solve. A no-op without the CMIP aerosol scheme."""
-_apply_cmip_aerosol!(::Nothing, solver, vars, model) = nothing
+_apply_cmip_aerosol!(::Nothing, solver, vars, model; upper_cap = nothing) = nothing
 
-function _apply_cmip_aerosol!(a::CMIPAerosol, solver, vars, model)
+function _apply_cmip_aerosol!(a::CMIPAerosol, solver, vars, model; upper_cap = nothing)
     nlay = solver.grid_params.nlay
     geopotential = Array(vars.grid.geopotential.data)
     orography = Float64.(vec(Array(model.orography.orography.data)))
-    zc, zb = _layer_heights(Float64.(geopotential), orography, model.planet.gravity, nlay)
+    zc, zb = _upper_cap_layer_heights(
+        upper_cap, Float64.(geopotential), orography, model.planet.gravity,
+        solver, model.geometry.nlayers,
+    )
     t_lay = Float64.(Array(RRTMGP.layer_temperature(solver)))
     p_lay = Float64.(Array(RRTMGP.layer_pressure(solver)))
     size(t_lay, 1) == nlay || (t_lay = vcat(t_lay, repeat(t_lay[end:end, :], nlay - size(t_lay, 1))))
     size(p_lay, 1) == nlay || (p_lay = vcat(p_lay, repeat(p_lay[end:end, :], nlay - size(p_lay, 1))))
     optics = _cmip_aerosol_optics(a, vars.prognostic.clock.time, zc, zb, orography, t_lay, p_lay,
                                   solver.lookups.nbnd_sw, solver.lookups.nbnd_lw)
+    if !isnothing(upper_cap)
+        # First cap contract: no aerosol optics above the 5 hPa split. Preserve
+        # the hydrostatic geometry for the dynamic top layer, but do not let
+        # extrapolated stratospheric optics populate the two provisional caps.
+        first_cap = model.geometry.nlayers + 1
+        for name in keys(optics)
+            values = getproperty(optics, name)
+            fill!(@view(values[:, first_cap:end, :]), startswith(String(name), "ssa") ? 1.0 : 0.0)
+        end
+    end
     _set_band_optics!(a, solver, optics)
     return nothing
 end

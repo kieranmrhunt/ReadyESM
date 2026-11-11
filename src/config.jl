@@ -13,6 +13,9 @@ Base.@kwdef struct ForcingConfig
     # production profile. A fixed year > 0 repeats that year's twelve months.
     ozone_path::String = ""
     ozone_fixed_year::Int = 0
+    # Opt-in January 1993 diagnostic only: ERA5 same-date zonal 5/1 hPa
+    # temperatures for two radiation-only cap layers. Not a climatology.
+    upper_radiative_cap_path::String = ""
     aerosol_optical_depth_550nm::Float64 = 0.0
     # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2): :none (default) or :cmip_prescribed,
     # the MACv2 pre-industrial background file plus the MACv2-SP-1-0 parameter file; a year > 0 holds that MACv2-SP
@@ -301,10 +304,13 @@ function load_config(path::AbstractString; check_input_files::Bool = true)
         co2_ppm = Float64(_mapping_value(forcing_raw, "co2_ppm", 420.0)),
         ch4_ppb = _optional_float(_mapping_value(forcing_raw, "ch4_ppb", nothing)),
         n2o_ppb = _optional_float(_mapping_value(forcing_raw, "n2o_ppb", nothing)),
-        well_mixed_gas_path = String(_mapping_value(forcing_raw, "well_mixed_gas_path", "")),
+        well_mixed_gas_path = _resolve_optional_path(
+            _mapping_value(forcing_raw, "well_mixed_gas_path", "")),
         well_mixed_gas_fixed_year = Int(_mapping_value(forcing_raw, "well_mixed_gas_fixed_year", 0)),
-        ozone_path = String(_mapping_value(forcing_raw, "ozone_path", "")),
+        ozone_path = _resolve_optional_path(_mapping_value(forcing_raw, "ozone_path", "")),
         ozone_fixed_year = Int(_mapping_value(forcing_raw, "ozone_fixed_year", 0)),
+        upper_radiative_cap_path = _resolve_optional_path(
+            _mapping_value(forcing_raw, "upper_radiative_cap_path", "")),
         aerosol_optical_depth_550nm = Float64(
             _mapping_value(forcing_raw, "aerosol_optical_depth_550nm", 0.0),
         ),
@@ -1411,6 +1417,7 @@ function validate(config::ExperimentConfig; check_input_files::Bool = true)
     end
     _validate_well_mixed_gas_options(config, rrtmgp_active, check_input_files)
     _validate_prescribed_ozone_options(config, rrtmgp_active, check_input_files)
+    _validate_upper_radiative_cap_options(config, rrtmgp_active, check_input_files)
     _validate_cmip_aerosol_options(config, rrtmgp_active, check_input_files)
     if !rrtmgp_active && config.forcing.aerosol_optical_depth_550nm > 0
         throw(ArgumentError(

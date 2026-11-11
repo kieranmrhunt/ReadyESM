@@ -112,7 +112,7 @@ RRTMGP uses `(bottom-to-top layer, column)` arrays while SpeedyWeather uses
 `(column, top-to-bottom layer)`. The adapter owns a persistent solver and a
 cached heating-rate field, avoiding lookup-table reloads during integration.
 """
-mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
+mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate, Cap} <:
                SpeedyWeather.AbstractLongwave
     solver::Solver
     heating_rate::Heating
@@ -142,6 +142,8 @@ mutable struct RRTMGPRadiation{NF, Solver, Heating, Clouds, Condensate} <:
     ozone::Union{Nothing, PrescribedOzone}
     # Optional prescribed CMIP aerosol optics (prescribed_aerosol_cmip.jl, PA2). `nothing` keeps the released path.
     cmip_aerosol::Union{Nothing, CMIPAerosol}
+    # January 1993 diagnostic: two radiation-only layers above the dynamic top.
+    upper_cap::Cap
 end
 
 const DIAGNOSTIC_CLOUD_HUMIDITY_SEARCH_LEGACY_SCHEME =
@@ -1235,6 +1237,7 @@ function RRTMGPRadiation(
     well_mixed_gas_start::Union{Nothing, DateTime} = nothing,
     prescribed_ozone::Union{Nothing, PrescribedOzone} = nothing,
     cmip_aerosol::Union{Nothing, CMIPAerosol} = nothing,
+    upper_radiative_cap_path::AbstractString = "",
 )
     NF = spectral_grid.NF
     0 <= cloud_relative_humidity_min < 1 &&
@@ -1247,7 +1250,7 @@ function RRTMGPRadiation(
             "a well-mixed gas schedule replaces ch4_ppb and n2o_ppb; leave them unset"))
         isnothing(well_mixed_gas_start) && throw(ArgumentError("a well-mixed gas schedule needs its start time"))
     end
-    nlay = spectral_grid.nlayers
+    nlay = spectral_grid.nlayers + (isempty(upper_radiative_cap_path) ? 0 : 2)
     ncol = spectral_grid.npoints
     _, latitude = RG.get_londlatds(spectral_grid.grid)
     profile = RRTMGP.standard_atmosphere(NF; nlay, ncol)
@@ -1319,7 +1322,11 @@ function RRTMGPRadiation(
     end
     _reset_solver_cloud_sampler!(solver, 0)
     RRTMGP.update_fluxes!(solver)
-    heating_rate = copy(RRTMGP.heating_rate(solver))
+    upper_cap = isempty(upper_radiative_cap_path) ? nothing :
+        _construct_upper_radiative_cap(upper_radiative_cap_path, solver)
+    initial_heating = RRTMGP.heating_rate(solver)
+    heating_rate = isnothing(upper_cap) ? copy(initial_heating) :
+        copy(initial_heating[1:spectral_grid.nlayers, :])
     applied_heating_rate = copy(heating_rate)
     cloud_diagnostic = all_sky ?
         SpeedyWeather.DiagnosticClouds(
@@ -1348,6 +1355,7 @@ function RRTMGPRadiation(
         solar_distance_correction,
         prescribed_ozone,
         cmip_aerosol,
+        upper_cap,
     )
 end
 
@@ -1910,6 +1918,11 @@ function _update_rrtmgp_state!(radiation::RRTMGPRadiation, vars, model)
         KernelAbstractions.synchronize(backend)
     end
 
+    _fill_upper_radiative_cap!(
+        radiation.upper_cap, solver, surface_pressure, ozone_columns, nlay,
+        vars.prognostic.clock.time,
+    )
+
     # Solar geometry is a global SpeedyWeather parameterization and has already run.
     RRTMGP.cos_zenith(solver) .= clamp.(vars.parameterizations.cos_zenith.data, 0, 1)
     RRTMGP.toa_flux(solver) .= _solar_irradiance(
@@ -2170,10 +2183,16 @@ function _solve_rrtmgp!(radiation::RRTMGPRadiation, vars, model)
     # Pack the opt-in seasonal direct/diffuse bands after that refresh so they
     # are the values used by this flux solve.
     _prepare_seasonal_albedo!(radiation, vars, model)
-    _apply_cmip_aerosol!(radiation.cmip_aerosol, radiation.solver, vars, model)
+    _apply_cmip_aerosol!(
+        radiation.cmip_aerosol, radiation.solver, vars, model;
+        upper_cap = radiation.upper_cap,
+    )
     _update_fluxes!(radiation)
     _recalibrate_aod!(radiation)
-    radiation.heating_rate .= RRTMGP.heating_rate(radiation.solver)
+    _assign_radiative_heating!(
+        radiation.heating_rate, radiation.solver, radiation.upper_cap,
+        model.geometry.nlayers,
+    )
     _finish_seasonal_albedo_solve!(radiation, vars, model)
     if _synchronize_rrtmgp_postphysics()
         backend = KernelAbstractions.get_backend(radiation.heating_rate)

@@ -35,20 +35,26 @@ solar_suffix(config) = config.forcing.solar_distance_correction ? "_and_seasonal
     path = write_schedule(joinpath(dir, "schedule.nc"), years, values)
     production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
 
-    @testset "off: production gases and objects unchanged" begin
-        @test production.forcing.well_mixed_gas_path == "" && production.forcing.well_mixed_gas_fixed_year == 0
-        @test isnothing(R._well_mixed_gas_schedule(production))
+    @testset "off: opt-out gases and objects unchanged" begin
+        @test production.forcing.well_mixed_gas_path == joinpath(R.PROJECT_ROOT,
+            "data", "forcing_1993", "wmghg_cmip6_ssp245_1850-2100.nc")
+        @test production.forcing.well_mixed_gas_fixed_year == 1993
+        off = with_forcing(production; well_mixed_gas_path = "",
+            well_mixed_gas_fixed_year = 0, ozone_path = "", ozone_fixed_year = 0)
+        @test isnothing(R._well_mixed_gas_schedule(off))
         grid = R.SpeedyWeather.SpectralGrid(; NF = Float32, trunc = 7, nlayers = 8)
         base = R.RRTMGPRadiation(grid)
         @test isnothing(base.gas_schedule) && isnothing(base.cfc12_vmr) && isnothing(base.cfc11_vmr)
         @test G.volume_mixing_ratio(base.solver, "cfc11") == 0 && G.volume_mixing_ratio(base.solver, "cfc12") == 0
-        @test R._forcing_time_dependence(production) == (production.forcing.solar_distance_correction ?
+        @test R._forcing_time_dependence(off) == (off.forcing.solar_distance_correction ?
             "seasonal_solar_distance_from_model_clock" : "constant_for_entire_integration")
-        @test isempty(R._well_mixed_gas_provenance(base, production, true))
+        @test isempty(R._well_mixed_gas_provenance(base, off, true))
+        @test_throws r"configured well-mixed gas schedule was not applied" R._well_mixed_gas_provenance(base, production, true)
         base_state = R._rrtmgp_radiation_state(base)
         @test keys(base_state) == (:call_counter, :ch4_vmr, :n2o_vmr, :solar_distance_correction,
             :heating_rate, :applied_heating_rate, :lw_up, :lw_down, :lw_net, :sw_up, :sw_down,
-            :sw_net, :sw_direct_down, :net, :clear, :sulfate_mass, :cloud_sampler,
+            :sw_net, :sw_direct_down, :net, :direct_surface_albedo,
+            :diffuse_surface_albedo, :clear, :sulfate_mass, :cloud_sampler,
             :prognostic_cloud_condensate)
         @test !hasproperty(base_state, :well_mixed_gas_schedule)
         @test !hasproperty(base_state, :well_mixed_gas_values)
@@ -91,13 +97,15 @@ solar_suffix(config) = config.forcing.solar_distance_correction ? "_and_seasonal
     end
 
     @testset "validation" begin
-        on = with_forcing(production; well_mixed_gas_path = path)
+        off = with_forcing(production; well_mixed_gas_path = "",
+            well_mixed_gas_fixed_year = 0, ozone_path = "", ozone_fixed_year = 0)
+        on = with_forcing(off; well_mixed_gas_path = path)
         # Production initializes from January 1993 ERA5/ECCO, so keep that start month.
         on = with(on; start_date = DateTime(1993), duration_days = 365.0, analysis_start_day = 0.0)
         @test R.validate(on; check_input_files = false) === on
         @test_throws ArgumentError R.validate(with_forcing(on; ch4_ppb = 1800.0); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; radiation = :speedy_simplified); check_input_files = false)
-        @test_throws ArgumentError R.validate(with_forcing(production; well_mixed_gas_fixed_year = 1850);
+        @test_throws ArgumentError R.validate(with_forcing(off; well_mixed_gas_fixed_year = 1850);
                                               check_input_files = false)
         @test_throws ArgumentError R._validate_well_mixed_gas_options(with(on; carbon = R.CarbonConfig(; mode = :prescribed)),
                                                                       true, false)
@@ -167,6 +175,7 @@ solar_suffix(config) = config.forcing.solar_distance_correction ? "_and_seasonal
         @test G.volume_mixing_ratio(radiation.solver, "n2o") == radiation.n2o_vmr
         @test radiation.co2_ppm != Float32(R.well_mixed_gas_values(radiation.gas_schedule, config.start_date).co2 * 1e6)
         provenance = R._forcing_provenance(radiation, config)
+        @test provenance.well_mixed_gas_forcing == R.WELL_MIXED_GAS_TIME_DEPENDENCE
         @test provenance.well_mixed_gas_sha256 == radiation.gas_schedule.sha256
         @test provenance.well_mixed_gas_final_co2_ppm == Float64(radiation.co2_ppm)
         @test provenance.requested_co2_ppm_ignored
@@ -182,6 +191,9 @@ solar_suffix(config) = config.forcing.solar_distance_correction ? "_and_seasonal
                                   well_mixed_gas_start = DateTime(2000))
         fixed = R.RRTMGPRadiation(grid; well_mixed_gas_schedule = R.WellMixedGasSchedule(path; fixed_year = 2000),
                                   well_mixed_gas_start = DateTime(2000))
+        fixed_config = with_forcing(production; well_mixed_gas_path = path, well_mixed_gas_fixed_year = 2000)
+        @test R._well_mixed_gas_provenance(fixed, fixed_config, true).well_mixed_gas_forcing ==
+            "well_mixed_greenhouse_gases_fixed_at_year_2000"
         base = R.RRTMGPRadiation(grid)
         saved = R._rrtmgp_radiation_state(rad)
         @test saved.well_mixed_gas_schedule == (sha256 = s.sha256, fixed_year = 0)

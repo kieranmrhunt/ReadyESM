@@ -450,6 +450,10 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
         sw_net = _restart_host_array(RRTMGP.sw_flux_net(solver)),
         sw_direct_down = _restart_host_array(RRTMGP.sw_direct_flux_dn(solver)),
         net = _restart_host_array(RRTMGP.net_flux(solver)),
+        direct_surface_albedo = _restart_host_array(
+            RRTMGP.direct_sw_surface_albedo(solver)),
+        diffuse_surface_albedo = _restart_host_array(
+            RRTMGP.diffuse_sw_surface_albedo(solver)),
         clear = _rrtmgp_clear_flux_state(solver),
         sulfate_mass,
         cloud_sampler = _rrtmgp_cloud_sampler_state(solver),
@@ -464,15 +468,29 @@ function _rrtmgp_radiation_state(radiation::RRTMGPRadiation)
     isnothing(radiation.ozone) || (state = merge(state, (
         prescribed_ozone = _prescribed_ozone_identity(radiation.ozone),
     )))
+    isnothing(radiation.upper_cap) || (state = merge(state, (
+        upper_radiative_cap = _upper_cap_identity(radiation.upper_cap),
+    )))
     isnothing(radiation.cmip_aerosol) || (state = merge(state, (
         cmip_aerosol = _cmip_aerosol_identity(radiation.cmip_aerosol),
     )))
     return state
 end
 
+function _require_rrtmgp_surface_albedo_restart(state)
+    hasproperty(state, :direct_surface_albedo) &&
+        hasproperty(state, :diffuse_surface_albedo) || throw(ArgumentError(
+            "checkpoint predates RRTMGP surface-albedo restart state; " *
+            "this record cannot be restored even with identity override",
+        ))
+    return nothing
+end
+
 function _restore_rrtmgp_radiation_state!(radiation::RRTMGPRadiation, state)
+    _require_rrtmgp_surface_albedo_restart(state)
     _validate_trace_gas_restart(radiation, state)
     _validate_solar_restart(radiation, state)
+    _validate_upper_cap_restart(radiation, state)
     isnothing(radiation.gas_schedule) || hasproperty(state, :well_mixed_gas_values) || throw(ArgumentError(
         "checkpoint uses a well-mixed gas schedule but has no saved gas values"))
     solver = radiation.solver
@@ -497,6 +515,16 @@ function _restore_rrtmgp_radiation_state!(radiation::RRTMGPRadiation, state)
         "direct SW down",
     )
     _restart_copy_array!(RRTMGP.net_flux(solver), state.net, "net flux")
+    _restart_copy_array!(
+        RRTMGP.direct_sw_surface_albedo(solver),
+        state.direct_surface_albedo,
+        "direct SW surface albedo",
+    )
+    _restart_copy_array!(
+        RRTMGP.diffuse_sw_surface_albedo(solver),
+        state.diffuse_surface_albedo,
+        "diffuse SW surface albedo",
+    )
     _restore_rrtmgp_clear_flux_state!(solver, state.clear)
     if !isnothing(state.sulfate_mass)
         radiation.target_aod_550nm > 0 || error(
@@ -1125,10 +1153,6 @@ function restore_dynamic_restart_state!(
     path::AbstractString;
     allow_identity_mismatch::Bool = false,
 )
-    # Scored captures average from the run's start and are not checkpointed.
-    haskey(simulation.callbacks, :readyesm_scored_outputs) && throw(ArgumentError(
-        "scored_outputs cannot continue a restarted run. Run the full window from its start, or switch scored_outputs off.",
-    ))
     state = Oceananigans.OutputWriters.load_checkpoint_state(
         abspath(path);
         base_path = "simulation",
@@ -1644,6 +1668,7 @@ function _validate_atmosphere_radiation_restart(simulation, state)
     if radiation isa RRTMGPRadiation && hasproperty(state, :radiation)
         _validate_trace_gas_restart(radiation, state.radiation)
         _validate_solar_restart(radiation, state.radiation)
+        _validate_upper_cap_restart(radiation, state.radiation)
     end
     return nothing
 end
