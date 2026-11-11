@@ -60,6 +60,10 @@ forcing:
   ozone_fixed_year: 0
 ```
 
-The input preparation scripts and their source records are maintained in the
-development archive. The model reads the prepared files. It does not fetch
-forcing data from the internet.
+The bundled 1993 gas and ozone files, source identifiers, content hashes,
+and portable ozone preparation and interpolation checks are recorded in the
+[1993 forcing inventory](../data/forcing_1993/README.md). The complete ozone
+preparation source is larger and remains outside Git. Source licences and
+citations are listed in the [third-party inventory](../THIRD_PARTY.md).
+The model reads prepared files; it does not fetch forcing data from the
+internet.
