@@ -30,11 +30,14 @@
   while transport, filtering and coupling remain in separate ledgers. The
   inherited moist-adiabat and condensation derivative approximations remain.
   A fully phase-consistent thermodynamic closure is future work.
-- RRTMGP all-sky radiation with 420 ppm prescribed CO2, diagnostic clouds and
-  liquid/ice cloud paths of 75/25 g/m². v0.1.20 production uses prescribed
-  MACv2 background, MACv2-SP plume and UOEXETER stratospheric aerosols,
-  with the separate scalar sulfate AOD set to zero. Its solar constant is
-  1360.7 W m⁻² from the CMIP6 piControl input. Ozone is analytic.
+- RRTMGP all-sky radiation with diagnostic clouds and liquid/ice cloud paths
+  of 75/25 g/m². The current production profile holds the packaged CMIP6
+  greenhouse-gas file at 1993 values, follows monthly historical ozone and
+  applies a sampled monthly upper-atmosphere radiative cap. The constant
+  420 ppm CO₂ value remains an inactive fallback while file forcing is set.
+  Production also uses prescribed MACv2 background, MACv2-SP plume and
+  UOEXETER stratospheric aerosols, with separate scalar sulfate AOD zero.
+  Its solar constant is 1360.7 W m⁻² from the CMIP6 piControl input.
 - Oceananigans on a 360 x 180 x 60 tripolar grid. v0.1.10 initializes
   ocean fields halfway between the December 1992 and January 1993 ECCO V4r4
   monthly means. Sea ice uses the January state.
