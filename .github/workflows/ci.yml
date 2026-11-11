@@ -28,6 +28,8 @@ jobs:
         with:
           version: '1.12.5'
       - uses: julia-actions/cache@v2
+      - name: Check committed package dependency lock
+        run: julia --project=. --startup-file=no scripts/check_manifest_self_entry.jl
       - name: Instantiate pinned dependencies
         run: julia --project=. --startup-file=no -e 'using Pkg; Pkg.instantiate()'
       - name: Run CPU tests without private forcing files
