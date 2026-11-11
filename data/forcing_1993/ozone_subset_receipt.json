@@ -1,0 +1,23 @@
+{
+  "first_month": "1992-01",
+  "last_month": "1995-12",
+  "months": 48,
+  "note": "Portable copy of the development receipt; absolute workspace paths replaced, content hashes and validated coverage unchanged.",
+  "purpose": "historical runs with unchanged adjacent-month ozone interpolation",
+  "schema": "readyesm_1993_ozone_subset_v1",
+  "source_path": "external prepared o3_cmip6_ssp245_185001-209912.nc",
+  "source_sha256": "873d52845442e8e5b833d9fbd29281f3f81337b54e8adc811c8c21fabcd66945",
+  "subset_path": "o3_cmip6_historical_199201-199512.nc",
+  "subset_sha256": "fc687e57baba2df2e83182453827f08e1543131b5296602c298c72998b021d15",
+  "verified_variables": [
+    "lat",
+    "lat_bnds",
+    "month",
+    "plev",
+    "plev_bnds",
+    "time",
+    "time_bnds",
+    "vmro3",
+    "year"
+  ]
+}

@@ -1,0 +1,278 @@
+{
+  "job": 66924459,
+  "job_manifest_sha256": "3f0f659304a6538800e0c4425ddbebfb91745095b38f38057d7283644b19f09f",
+  "monthly_ranges": {
+    "1993-01": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 257.184281828,
+        "minimum": 234.541624468
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 288.326750389,
+        "minimum": 243.693792874
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 278.663950147,
+        "minimum": 236.117463853
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 262.793963415,
+        "minimum": 224.182902898
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 205.497290634,
+        "minimum": 168.072826717
+      }
+    },
+    "1993-02": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 255.137260382,
+        "minimum": 235.387046582
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 280.161082126,
+        "minimum": 250.375724682
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 266.529996492,
+        "minimum": 247.432436942
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 252.573336906,
+        "minimum": 235.856044827
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 199.065074737,
+        "minimum": 168.395429146
+      }
+    },
+    "1993-03": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 249.9132444,
+        "minimum": 243.072874397
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 268.132558712,
+        "minimum": 253.410647352
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 257.12808716,
+        "minimum": 241.321558569
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 246.583147226,
+        "minimum": 231.156939197
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 196.746134982,
+        "minimum": 182.49131906
+      }
+    },
+    "1993-04": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 252.645244971,
+        "minimum": 238.43185746
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 266.085336609,
+        "minimum": 239.304194174
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 259.943046485,
+        "minimum": 222.437539816
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 246.719438478,
+        "minimum": 214.888566919
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 202.049413331,
+        "minimum": 187.008366117
+      }
+    },
+    "1993-05": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 257.33579172,
+        "minimum": 236.924199784
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 279.142483808,
+        "minimum": 239.165803922
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 261.048215252,
+        "minimum": 223.679693732
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 247.003438776,
+        "minimum": 210.664659363
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 213.567776793,
+        "minimum": 177.746270921
+      }
+    },
+    "1993-06": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 255.862856158,
+        "minimum": 236.152700989
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 283.742074231,
+        "minimum": 232.199629537
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 272.855151341,
+        "minimum": 218.660548712
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 254.727566063,
+        "minimum": 205.771952055
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 216.543865956,
+        "minimum": 165.699525489
+      }
+    },
+    "1993-07": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 253.979613571,
+        "minimum": 232.912355403
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 285.070877783,
+        "minimum": 234.288247904
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 273.978048633,
+        "minimum": 224.798613713
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 256.92502113,
+        "minimum": 210.606234656
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 218.659306415,
+        "minimum": 157.278607662
+      }
+    },
+    "1993-08": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 259.885227403,
+        "minimum": 236.509375647
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 279.542732702,
+        "minimum": 249.870704144
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 264.666431889,
+        "minimum": 238.173149959
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 250.151591125,
+        "minimum": 220.729262001
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 211.701387398,
+        "minimum": 163.316634494
+      }
+    },
+    "1993-09": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 265.564336566,
+        "minimum": 239.668637938
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 271.934280803,
+        "minimum": 250.524584659
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 256.797635083,
+        "minimum": 241.070234461
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 245.034775412,
+        "minimum": 228.941626258
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 207.590733702,
+        "minimum": 180.442447133
+      }
+    },
+    "1993-10": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 264.660878265,
+        "minimum": 240.226341706
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 280.95372695,
+        "minimum": 243.275370408
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 272.994034302,
+        "minimum": 225.817466041
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 260.095553527,
+        "minimum": 218.885418206
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 200.464763433,
+        "minimum": 187.676227946
+      }
+    },
+    "1993-11": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 262.199618708,
+        "minimum": 240.651135597
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 284.070270954,
+        "minimum": 238.149353293
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 277.77130956,
+        "minimum": 222.569762478
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 270.231344028,
+        "minimum": 213.493430294
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 210.950932953,
+        "minimum": 172.372638077
+      }
+    },
+    "1993-12": {
+      "temperature_1hpa_1pa_k": {
+        "maximum": 259.30243528,
+        "minimum": 238.264139057
+      },
+      "temperature_1hpa_boundary_k": {
+        "maximum": 287.491731106,
+        "minimum": 238.752754912
+      },
+      "temperature_5_1hpa_k": {
+        "maximum": 278.41689343,
+        "minimum": 221.718422016
+      },
+      "temperature_5hpa_boundary_k": {
+        "maximum": 264.778397552,
+        "minimum": 211.73424016
+      },
+      "temperature_top_1pa_k": {
+        "maximum": 210.480717712,
+        "minimum": 166.251996435
+      }
+    }
+  },
+  "output_manifest_sha256": "0c091054faa70e46576f52b4fe486e8bc9fd6e4af791c9b86cadeb9dd21330cd",
+  "packet_inputs_sha256": "46614981c7d742c53fb177dc2de083b803a74f132edd3e53e089973b1ed80023",
+  "provenance_sha256": "d50d79422415c50e90af8d396c3fe73b507333b13fef3c8fa656235b8c33ff3e",
+  "schema": "readyesm_era5_1993_sampled_monthly_cap_audit_v1",
+  "scope": "96 archived ERA5 snapshots, eight per month. This audit checks source hashes and output seals; it does not qualify a model adapter or a full-hourly climatology.",
+  "source_file_count_rehashed": 96,
+  "table_sha256": "5f07536991bd4a6a59536f7e5d86b58af803813c043d154d7a7d0d9184f5ca28",
+  "verdict": "PASS"
+}

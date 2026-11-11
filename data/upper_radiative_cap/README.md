@@ -27,10 +27,10 @@ The source-file list and 96 file hashes are in
 `era5_1993_sampled_monthly_provenance.json`. The exact preparation code and
 ECMWF hybrid coefficients are included here as
 `prepare_era5_1993_sampled_monthly.py` and
-`ecmwf_l137_half_levels_0_24.csv`. The independent audit is preserved in
-`artifacts/development_wave_20261111/v021_era5_monthly_cap_codex_v1/`
-and `artifacts/development_wave_20261111/v021_era5_monthly_cap_audit_codex_v1/`
-in the development workspace.
+`ecmwf_l137_half_levels_0_24.csv`. The [independent audit receipt](audit_66924940.json) is tracked here. It
+records a rehash of all 96 ERA5 source files, the table and provenance
+hashes, and monthly value ranges. The raw ERA5 files and full job logs remain
+outside Git.
 
 The experimental adapter repeats this 1993 sampled annual cycle in any model
 year and interpolates continuously between Gregorian monthly centres,

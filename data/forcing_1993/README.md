@@ -18,9 +18,16 @@ Its attributes retain the UReading CCMI historical source identifiers, source
 checksums, zonal reduction method and calendar details. Every selected NetCDF
 variable was compared with its source. The model's 15-minute interpolation
 brackets, source fields and Float64 weights match at all 70,081 instants from
-1993-01-01 through 1995-01-01, inclusive. The preparation and verification
-scripts, source hashes and receipt are in
-`artifacts/development_wave_20261111/v021_forcing_asset_portability_codex_v1`.
+1993-01-01 through 1995-01-01, inclusive. The portable [subset builder](prepare_1993_ozone.py),
+[interpolation checker](verify_interpolation.py) and
+[receipt](ozone_subset_receipt.json) are tracked here. The receipt preserves
+the source and subset content hashes while replacing private workspace paths
+with portable names. With the prepared full ozone source, regenerate the
+1992–1995 subset using `--first-year 1992 --last-year 1995`, then compare
+its SHA-256 with the packaged file. The checker accepts the full source,
+packaged subset and this receipt; use `--first-model-year 1993
+--last-model-year 1994` to check all 70,081 production timesteps. The full
+source file remains outside Git.
 
 This compact ozone file covers the released 1993–1994 configuration. Runs for
 other years require an ozone file with appropriate monthly coverage. The gas
