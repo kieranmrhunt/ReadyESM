@@ -1,0 +1,19 @@
+{
+  "cmip6_model_count": 55,
+  "cmip6_model_year_count": 1650,
+  "historical_v019_image_sha256": "b31036fe64be758d0a401a91a76dc1e8400211ca2cf041800805ba745b8205db",
+  "historical_v019_record_sha256": "f7a3c4f2f1a6e4385315c0462ef402ba57d9c9f1ac4fab7a8207ae2eb35f98d1",
+  "method_note": "The new January-June 1993 panel uses one continuous run per ReadyESM version and locations valid for every model. The older January/July history remains an unchanged, separate 31-day comparison. Neither establishes long-term climate skill.",
+  "pdf_sha256": "3ab6ffbd033135c72df572168ece1aed29934c55fdad79ee266f0ed95de85018",
+  "png_sha256": "828270f2f5ed5dc396bd53ed1a883f2fa049becbb8ae1fc40c76d315e58a0aa7",
+  "schema": "readyesm_v020_version_history_separate_methods_v1",
+  "six_month_onr8": {
+    "Earlier candidate, not released": 1.6044219522345895,
+    "Typical CMIP6 model": 1.0427956410337753,
+    "v0.1.19, six months": 1.2004315106215133,
+    "v0.1.20, six months": 1.1601720257327992
+  },
+  "v020_run_source_commit": "fba77cd3ffc42f0f9227f9cd2ca24840bb8ad396",
+  "v020_score_result_manifest_sha256": "802ec3617e06ee7b0e6b60aaee26c7aea33c0bcfbc76c49f0fcffa1bcb414c53",
+  "v020_scorecard_record_sha256": "39b69f54c0e5df015e4aec60460fcff80e18cf410bc5ff6bf0eb3932e52875cc"
+}

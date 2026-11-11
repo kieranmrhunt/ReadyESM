@@ -34,6 +34,10 @@ following one observed initial state. It does not establish repeatability,
 equilibrium, or long-term climate skill. The [scorecard](../scorecard.png),
 [machine-readable figure record](scorecard-v0.1.20-partc.json), and
 [plot recipe](plot-v0.1.20-scorecard.py) show the compared values.
+The [version-history figure](../readyesm_scorecard_versions.png) places this
+six-month result above the unchanged January/July history. Its
+[figure record](readyesm_scorecard_versions_v020.json) keeps the two methods
+separate.
 
 ## Exact run and score receipts
 

@@ -3,18 +3,26 @@
   "files": {
     "docs/plot-v0.1.20-january-monthly.py": "50540fdbeac4fe5d077370d7a8f3d0125b9c06d5cab1282f61d22154fda5e290",
     "docs/plot-v0.1.20-scorecard.py": "71cbdeaf12c1baa9e9c45d66cf07f19575d5fe9feddcd02bbf5dd7363812c281",
+    "docs/plot-v0.1.20-versions.py": "c07196156a0162ee9f594bfa23a08e6730fd07564c76f13c18083c4c86d28b0e",
     "docs/readiesm-v0.1.20-january-monthly.json": "28ee378233ca2d78950b299ba2e851fcfe7dfe0be079ffd36b492099a8cc4b20",
     "docs/readiesm-v0.1.20-january-monthly.png": "467917446dd9c01ede49fd73589a55c2d398f8759fca3eec51e2f082b08fa746",
+    "docs/readyesm_scorecard_versions_v019.json": "f7a3c4f2f1a6e4385315c0462ef402ba57d9c9f1ac4fab7a8207ae2eb35f98d1",
+    "docs/readyesm_scorecard_versions_v019.png": "b31036fe64be758d0a401a91a76dc1e8400211ca2cf041800805ba745b8205db",
+    "docs/readyesm_scorecard_versions_v020.json": "5d35f13d1b2f01d5679ee847b6e5ab6e38c5c7c4522e8e845009560763e06eaa",
+    "docs/readyesm_scorecard_versions_v020.pdf": "3ab6ffbd033135c72df572168ece1aed29934c55fdad79ee266f0ed95de85018",
     "docs/scorecard-v0.1.19.png": "f09049ea50af6593577515bf93afefa4e1eef8ea30b35d43c0474f8a22b27f7c",
     "docs/scorecard-v0.1.20-partc.json": "39b69f54c0e5df015e4aec60460fcff80e18cf410bc5ff6bf0eb3932e52875cc",
+    "readyesm_scorecard_versions.png": "828270f2f5ed5dc396bd53ed1a883f2fa049becbb8ae1fc40c76d315e58a0aa7",
     "scorecard.pdf": "a111a5ea912bb58f76e98bfd172adcd7d177942993a7ee1e9b7089b5e06ed714",
     "scorecard.png": "2a83a28f20f7439bdd656c3e080984b15e2de41e42fb84c0925e29143a40bba9"
   },
   "historical_v019_manifest_sha256": "eacc3cb1922abd07500be4a3453a323fc46c0d51004904ec9edec8aaa642e044",
   "historical_v019_scorecard_archive": "docs/scorecard-v0.1.19.png",
+  "historical_v019_versions_archive": "docs/readyesm_scorecard_versions_v019.png",
   "production_run_result_manifest_sha256": "5be8e9032614f7a2785bac0fd04785ad93750402b2ee2e90a757f22dc40cd118",
   "production_source_commit": "fba77cd3ffc42f0f9227f9cd2ca24840bb8ad396",
   "release": "v0.1.20",
   "schema": "readiesm_v020_release_figure_manifest_v1",
-  "score_result_manifest_sha256": "802ec3617e06ee7b0e6b60aaee26c7aea33c0bcfbc76c49f0fcffa1bcb414c53"
+  "score_result_manifest_sha256": "802ec3617e06ee7b0e6b60aaee26c7aea33c0bcfbc76c49f0fcffa1bcb414c53",
+  "version_history_method_note": "The new upper panel shows one January-June 1993 run per version. The unchanged lower history uses January and July 31-day scores. The two methods are not one continuous version series."
 }
