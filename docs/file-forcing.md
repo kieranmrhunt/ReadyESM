@@ -1,10 +1,12 @@
 # File-based gas and ozone forcing
 
-File forcing is optional and applies only with RRTMGP radiation. Leave both
-paths empty to use the standard constant gases and analytic ozone profile.
-Each input file is checked when the configuration is loaded. Its content hash
-and selected year are part of restart identity. Use the same file contents and
-settings when resuming a run.
+File forcing applies only with RRTMGP radiation. The supplied production
+configuration uses packaged gas values held at 1993 and monthly historical
+ozone for 1993–1994. In a separate configuration, leave both paths empty to
+use constant gases and the analytic ozone profile. Each input file is checked
+when the configuration is loaded. Its content hash and selected year are among
+the values a restart checks. Use the same file contents and settings when
+resuming a run.
 
 ## Well-mixed greenhouse gases
 

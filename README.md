@@ -230,15 +230,16 @@ Edit the existing entries in the YAML file. Forcing options sit under
 | `terrarium_unsat_conductivity` | `van_genuchten_released` | Keep the established soil-water conductivity law, or opt in to the standard van Genuchten–Mualem law with `van_genuchten_mualem`. |
 | `terrarium_surface_albedo` | `era5_spectral` | Use the packaged monthly land brightness from ERA5 for coupled runs. The generic experiment default is `constant`. See [seasonal albedo](docs/seasonal-albedo.md). |
 | `terrarium_vegetation_cycle` | `cover_lai` | Prescribe monthly ERA5 vegetation cover and leaf area index. Requires ERA5 Terrarium initialization and `era5_prescribed_vegetation`. The generic experiment default is `off`. See [seasonal vegetation](docs/seasonal-vegetation.md). |
-| `scored_outputs` | `true` | Write the four files that the release scores read. See [Run and output](docs/running.md#run-and-output). Requires RRTMGP. A run with this switch on cannot be restarted. |
-| `forcing.co2_ppm` | `420.0` | Prescribed CO2 concentration for radiation. |
-| `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Prescribed CH4 and N2O for RRTMGP. Omitted values use 1900 and 340 ppb. Keep these settings unchanged on restart. |
+| `scored_outputs` | `true` | Write the four files that the release scores read. Compatible checkpoints include the scored accumulators. The [monthly runner](docs/running.md#run-and-output) seals calendar months with checkpoint pairs. Requires RRTMGP. |
+| `forcing.co2_ppm` | `420.0` | Constant CO₂ fallback when no gas file is set. The production gas file overrides this value. |
+| `forcing.ch4_ppb`, `forcing.n2o_ppb` | not set | Constant CH₄ and N₂O fallbacks when no gas file is set. The production gas file supplies both. Keep forcing inputs unchanged on restart. |
 | `forcing.solar_distance_correction` | `true` | Vary incoming sunlight with seasonal Earth–Sun distance. Requires RRTMGP. See the [solar guide](docs/solar-forcing.md). |
 | `forcing.solar_constant_w_m2` | `1360.7470703125` | CMIP6 piControl solar constant in W m⁻². Seasonal Earth–Sun distance still varies it. |
-| `forcing.well_mixed_gas_path` | empty | Optional annual file for CO2, CH4, N2O and halocarbons. Requires RRTMGP. Replaces the constant CO2, CH4 and N2O values. Cannot be used with the active carbon mode. See [file forcing](docs/file-forcing.md). |
-| `forcing.well_mixed_gas_fixed_year` | `0` | With `0`, use the model date. Otherwise hold the annual gas values for this year. Requires `well_mixed_gas_path`. |
-| `forcing.ozone_path` | empty | Optional monthly file of zonal-mean ozone. Requires RRTMGP. Replaces the analytic ozone profile. See [file forcing](docs/file-forcing.md). |
-| `forcing.ozone_fixed_year` | `0` | With `0`, use the model date. Otherwise repeat the twelve months of the selected year. Requires `ozone_path`. |
+| `forcing.well_mixed_gas_path` | `data/forcing_1993/wmghg_cmip6_ssp245_1850-2100.nc` | Annual CO₂, CH₄, N₂O and halocarbon file packaged for this production run. It overrides constant gas settings and cannot be combined with active carbon mode. See [file forcing](docs/file-forcing.md). |
+| `forcing.well_mixed_gas_fixed_year` | `1993` | Hold the packaged gas file at its 1993 values. Set `0` in a transient run to follow the model date. Requires `well_mixed_gas_path`. |
+| `forcing.ozone_path` | `data/forcing_1993/o3_cmip6_historical_199201-199512.nc` | Packaged monthly zonal ozone for the 1993–1994 production run. It replaces the analytic ozone profile. See [file forcing](docs/file-forcing.md). |
+| `forcing.ozone_fixed_year` | `0` | Follow the model date through the packaged historical ozone months. A nonzero value repeats the twelve months of that year. Requires `ozone_path`. |
+| `forcing.upper_radiative_cap_path` | `data/upper_radiative_cap/era5_1993_sampled_monthly_upper_cap.csv` | Apply the sampled monthly upper-atmosphere temperature cap for radiation. See the [cap input record](data/upper_radiative_cap/README.md). |
 | `forcing.aerosol_scheme` | `cmip_prescribed` | Use the prepared MACv2 background, MACv2-SP plume and UOEXETER stratospheric inputs. See [input-data setup](docs/running.md#prescribed-aerosols). |
 | `forcing.aerosol_optical_depth_550nm` | `0.0` | Leave at zero with `cmip_prescribed`. The separate scalar sulfate setting is incompatible with that scheme. |
 | `forcing.radiation_every_n_steps` | `4` | Number of atmosphere steps between radiation calculations. |
@@ -250,13 +251,15 @@ combined test is complete on a development copy of the code. Its effects on
 the energy balance and on the upper air still need work. See the
 [seasonal albedo guide](docs/seasonal-albedo.md).
 
-The standard setup uses prescribed CO2 and aerosol forcing. Optional
-[carbon exchange and emissions](docs/carbon.md) can update CO2.
-For CH4/N2O restart settings, see the [trace-gas notes](docs/validation-runoff-trace-gases.md#scope).
-The gas and ozone files are optional. With both paths empty, the standard
-setup uses fixed 420 ppm CO2 and analytic ozone. Their prepared formats,
-time coverage and restart
-identity are described in [file forcing](docs/file-forcing.md).
+The standard setup uses the packaged gas file held at 1993 values, monthly
+historical ozone, the sampled monthly upper-radiative cap and prescribed
+aerosols. The [file forcing guide](docs/file-forcing.md) describes the gas
+and ozone formats, their time coverage and what a restart checks. The cap input is
+[documented separately](data/upper_radiative_cap/README.md). To use constant
+gases and analytic ozone, clear both file paths in a separate configuration.
+Optional [carbon exchange and emissions](docs/carbon.md) requires a configuration
+without the gas file. For constant CH₄/N₂O restart settings, see the
+[trace-gas notes](docs/validation-runoff-trace-gases.md#scope).
 Land vegetation is prescribed. Optional [CPU multi-plume convection](docs/finite-convection.md)
 has separate configuration instructions.
 

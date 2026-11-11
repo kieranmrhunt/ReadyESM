@@ -78,9 +78,12 @@ The source repository contains the preparation scripts under
 `scripts/aerosol/`. It does not distribute the raw or prepared input files.
 The 730-day production config and the [six-month configuration](../config/production_six_month.yml) both use the December 1992–January
 1995 UOEXETER v7 file. The six-month file starts on 1 January 1993 and
-runs for 181 days. Both files use the retuned cloud settings tested in
-v0.1.20: a humidity threshold of 0.8, with 60 g m⁻² each of cloud liquid
-water and ice. Prepare the v7 aerosol file before running either setup.
+runs for 181 days. It retains the v0.1.20 settings, so a v0.1.21 skill run
+needs a new six-month configuration derived from the final production settings.
+Prepare the v7 aerosol file before running either setup. The v0.1.21
+production profile uses the packaged 1993 CMIP6 gas values, monthly
+historical ozone and the sampled monthly upper-radiative cap. Its cloud
+settings are recorded in `config/production.yml`.
 
 ## Run and output
 
@@ -105,12 +108,48 @@ column water, surface pressure and precipitation), `wind.nc` (wind at the
 same levels), `toa_monthly.nc` (top-of-atmosphere radiation) and
 `eddy_6hourly.nc` (six-hourly wind, temperature and sea-level pressure for
 storm statistics). Each file holds means or samples over the whole run, from
-`start_date` for `duration_days`. This makes the switch suitable for runs
-of about one month. The run length must be a whole number of six-hour
-periods, and the atmosphere timestep must divide one hour. The release
-scores check the number of samples for the production timestep of 900 s.
-Keep that timestep for any run that you will score. A run with this switch
-on cannot be restarted, because the means are not saved in checkpoints.
+`start_date` for `duration_days`. The run length must be a whole number of
+six-hour periods, and the atmosphere timestep must divide one hour. The
+release scores check the number of samples for the production timestep of
+900 s; keep that timestep for any run that you will score. Scored callback
+state is included in compatible checkpoints, but the ordinary runner does
+not write a checkpoint during the run.
+
+The experimental [monthly runner](../scripts/run_dynamic_esm_monthly.jl)
+also seals each complete calendar month, including cloud profiles, and pairs
+it with a checkpoint. Keep the source checkout clean by putting a copy of the
+production config and the output on scratch. The output directory must not
+already exist:
+
+```bash
+RUN_ROOT="/work/scratch-nopw2/$USER/readiesm_runs"
+mkdir -p "$RUN_ROOT"
+sed "s|^output_dir: .*|output_dir: $RUN_ROOT/v021_monthly_fresh|" \
+  config/production.yml > "$RUN_ROOT/production_monthly_fresh.yml"
+READYESM_EXPECTED_MODEL_SOURCE="$(git rev-parse HEAD)" \
+  julia --project=. scripts/run_dynamic_esm_monthly.jl \
+  "$RUN_ROOT/production_monthly_fresh.yml" fresh
+```
+
+To resume, keep the same source, start date, run length, timestep and
+calendar-month window list, and choose another fresh output directory. The
+month observer requires an exact match for its full window list, including
+months after the checkpoint. Pass a committed month checkpoint directory from
+the old run. The runner verifies the checkpoint and copies only the
+completed months that its receipt lists. Later output remains untouched:
+
+```bash
+RUN_ROOT="/work/scratch-nopw2/$USER/readiesm_runs"
+sed "s|^output_dir: .*|output_dir: $RUN_ROOT/v021_monthly_resume|" \
+  config/production.yml > "$RUN_ROOT/production_monthly_resume.yml"
+READYESM_EXPECTED_MODEL_SOURCE="$(git rev-parse HEAD)" \
+  julia --project=. scripts/run_dynamic_esm_monthly.jl \
+  "$RUN_ROOT/production_monthly_resume.yml" resume \
+  "$RUN_ROOT/v021_monthly_fresh/checkpoints/1993-01"
+```
+
+The source-bound monthly runner passed a T7/L8 analytic CPU checkpoint-split
+gate.
 
 ## Restart identity
 
