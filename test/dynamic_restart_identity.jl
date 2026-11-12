@@ -28,6 +28,43 @@
               atmosphere_divergence_hyperdiffusion_hours = 4.0,
           ))
 
+    # Absolute and relative names of an input inside this checkout have the
+    # same logical identity; an external path remains distinct.
+    project = ReadyESM.PROJECT_ROOT
+    absolute = ReadyESM.ExperimentConfig(
+        ecco_initial_conditions_directory = joinpath(project, "data", "ecco_fixture"),
+        forcing = ReadyESM.ForcingConfig(
+            ozone_path = joinpath(project, "data", "ozone_fixture.nc"),
+        ),
+    )
+    relative = ReadyESM.ExperimentConfig(
+        ecco_initial_conditions_directory = "data/ecco_fixture",
+        forcing = ReadyESM.ForcingConfig(ozone_path = "data/ozone_fixture.nc"),
+    )
+    external = ReadyESM.ExperimentConfig(
+        ecco_initial_conditions_directory = joinpath(dirname(project), "outside", "ecco_fixture"),
+        forcing = absolute.forcing,
+    )
+    @test ReadyESM._dynamic_restart_portable_path(absolute.ecco_initial_conditions_directory) ==
+          "project:data/ecco_fixture"
+    @test ReadyESM._dynamic_config_identity_hash(absolute) ==
+          ReadyESM._dynamic_config_identity_hash(relative)
+    @test ReadyESM._dynamic_config_identity_hash(absolute) !=
+          ReadyESM._dynamic_config_identity_hash(external)
+    @test ReadyESM._dynamic_config_identity_hash(absolute) !=
+          ReadyESM._dynamic_config_identity_hash(ReadyESM.ExperimentConfig(
+              ecco_initial_conditions_directory = absolute.ecco_initial_conditions_directory,
+              forcing = ReadyESM.ForcingConfig(ozone_path = "data/other_ozone.nc"),
+          ))
+
+    # `repr(DateTime)` changes with the caller's Dates import. The identity
+    # must be stable across fresh Julia processes with both import contexts.
+    julia = Base.julia_cmd()
+    project_arg = ReadyESM.PROJECT_ROOT
+    bare = readchomp(`$julia --startup-file=no --project=$project_arg -e "using ReadyESM; print(ReadyESM._dynamic_config_identity_hash(ReadyESM.ExperimentConfig()))"`)
+    with_dates = readchomp(`$julia --startup-file=no --project=$project_arg -e "using ReadyESM, Dates; print(ReadyESM._dynamic_config_identity_hash(ReadyESM.ExperimentConfig()))"`)
+    @test bare == with_dates == ReadyESM._dynamic_config_identity_hash(config)
+
     model = Ref{Nothing}(nothing)
     fixture_commit = repeat("a", 40)
     withenv("READYESM_SOURCE_COMMIT" => fixture_commit) do

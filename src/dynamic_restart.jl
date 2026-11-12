@@ -16,22 +16,100 @@ const _DYNAMIC_RESTART_RUN_CONTROL_FIELDS = (
     :name, :output_dir, :duration_days, :analysis_start_day, :scored_outputs,
     :sea_ice_branch_observer,
 )
-# Opt-in fields added after release that are left out of the identity while unset, so the identity of every existing
-# configuration (and so every existing checkpoint) is unchanged. Once set they are bound like any physical field.
+# Optional fields left out of the identity while unset. Once set they are bound
+# like any physical field. The v2 config hash has a distinct schema prefix.
 const _DYNAMIC_RESTART_UNSET_OMITTED_FIELDS = (:sea_ice_lead_closing_thickness_south_m,)
+
+# Path values loaded from a config are rooted at PROJECT_ROOT. Bind their logical
+# source-relative name rather than the absolute checkout location, so a restart
+# survives a fresh process in a different clone of the same source commit.
+# This names the asset; it does not verify its bytes. Checkpoint workflows must
+# independently seal external/untracked inputs in both source and pickup runs.
+const _DYNAMIC_RESTART_EXPERIMENT_PATH_FIELDS = (
+    :ecco_initial_conditions_directory, :era5_pressure_levels_path,
+    :era5_single_levels_path, :era5_land_state_path,
+    :terrarium_albedo_cycle_path, :terrarium_vegetation_cycle_path,
+)
+const _DYNAMIC_RESTART_FORCING_PATH_FIELDS = (
+    :well_mixed_gas_path, :ozone_path, :upper_radiative_cap_path,
+    :aerosol_cmip_background_path, :aerosol_cmip_plumes_path,
+    :aerosol_cmip_stratospheric_path,
+)
+
+function _dynamic_restart_portable_path(path::AbstractString)
+    isempty(path) && return ""
+    root = normpath(PROJECT_ROOT)
+    absolute = normpath(isabspath(path) ? path : joinpath(root, path))
+    if absolute == root
+        return "project:."
+    elseif startswith(absolute, root * "/")
+        return "project:" * relpath(absolute, root)
+    end
+    return "external:" * absolute
+end
+
+function _dynamic_restart_write_string!(io::IO, value::AbstractString)
+    bytes = codeunits(value)
+    print(io, ncodeunits(value), ':')
+    write(io, bytes)
+    return nothing
+end
+
+function _dynamic_restart_write_value!(io::IO, value, scope::Symbol, name::Symbol)
+    if value === nothing
+        print(io, "none")
+    elseif value isa Bool
+        print(io, "bool:", value)
+    elseif value isa Symbol
+        print(io, "symbol:")
+        _dynamic_restart_write_string!(io, String(value))
+    elseif value isa Integer
+        print(io, "integer:", typeof(value), ':', value)
+    elseif value isa AbstractFloat
+        print(io, "float:", typeof(value), ':', bitstring(value))
+    elseif value isa Dates.DateTime
+        # `repr(DateTime)` changes when Main imports Dates.DateTime. The integer
+        # millisecond value is independent of caller imports and display context.
+        print(io, "datetime_ms:", Dates.value(value))
+    elseif value isa AbstractString
+        is_path = scope === :experiment ? name in _DYNAMIC_RESTART_EXPERIMENT_PATH_FIELDS :
+                  scope === :forcing ? name in _DYNAMIC_RESTART_FORCING_PATH_FIELDS : false
+        print(io, is_path ? "path:" : "string:")
+        _dynamic_restart_write_string!(io,
+            is_path ? _dynamic_restart_portable_path(value) : value)
+    elseif value isa ForcingConfig || value isa CarbonConfig
+        child_scope = value isa ForcingConfig ? :forcing : :carbon
+        print(io, child_scope, '{')
+        for child_name in fieldnames(typeof(value))
+            _dynamic_restart_write_field!(io, child_name, getfield(value, child_name), child_scope)
+        end
+        print(io, '}')
+    else
+        throw(ArgumentError("unsupported restart identity field $scope.$name of type $(typeof(value))"))
+    end
+    return nothing
+end
+
+function _dynamic_restart_write_field!(io::IO, name::Symbol, value, scope::Symbol)
+    print(io, '|')
+    _dynamic_restart_write_string!(io, String(name))
+    print(io, '=')
+    _dynamic_restart_write_value!(io, value, scope, name)
+    return nothing
+end
 
 function _dynamic_config_identity_hash(config::ExperimentConfig)
     # These fields control run naming, output, scoring and read-only observation,
-    # not state evolution.
-    # All physical, initial-state and execution-backend settings remain bound.
-    canonical = join((
-        string(name, "=", repr(getfield(config, name)))
-        for name in fieldnames(typeof(config))
-        if name ∉ _DYNAMIC_RESTART_RUN_CONTROL_FIELDS &&
-           !(name in _DYNAMIC_RESTART_UNSET_OMITTED_FIELDS && isnothing(getfield(config, name)))
-    ), "\n")
-    bytes = codeunits("readiesm-experiment-config-v1\n" * canonical)
-    return bytes2hex(SHA.sha256(bytes))
+    # not state evolution. Every other field is encoded with an explicit type.
+    io = IOBuffer()
+    print(io, "readiesm-experiment-config-v2")
+    for name in fieldnames(typeof(config))
+        name in _DYNAMIC_RESTART_RUN_CONTROL_FIELDS && continue
+        value = getfield(config, name)
+        name in _DYNAMIC_RESTART_UNSET_OMITTED_FIELDS && isnothing(value) && continue
+        _dynamic_restart_write_field!(io, name, value, :experiment)
+    end
+    return bytes2hex(SHA.sha256(take!(io)))
 end
 
 function _dynamic_source_commit()
