@@ -145,6 +145,22 @@ function install_checkpoint_callback!(simulation, observer, config, source, pref
     return nothing
 end
 
+"""Continue an already restored simulation without reinitializing its coupled state."""
+function run_restored!(simulation)
+    simulation.initialized || error("restart must be reconciled before continuation")
+    simulation.model.clock.iteration > 0 || error("restart must have a positive iteration")
+    simulation.running = true
+    simulation.run_wall_time = 0.0
+    O.Diagnostics.reset_nan_checker!(simulation)
+    while simulation.running
+        O.time_step!(simulation)
+    end
+    for callback in values(simulation.callbacks)
+        O.Simulations.finalize!(callback, simulation)
+    end
+    return nothing
+end
+
 function main(args=ARGS)
     length(args) in (2, 3) || error("usage: run_dynamic_esm_monthly.jl CONFIG.yml fresh|resume [OLD_CHECKPOINT_DIR]")
     config_path, mode = args[1:2]
@@ -185,7 +201,11 @@ function main(args=ARGS)
         Int(simulation.model.clock.iteration) == pair.iteration ||
             error("restored model iteration differs from checkpoint receipt")
     end
-    O.run!(simulation)
+    if mode == "resume"
+        run_restored!(simulation)
+    else
+        O.run!(simulation)
+    end
     inventory = M.save_windows!(observer, simulation, output)
     M.detach_completed!(observer, simulation)
     scored = R.save_scored_outputs(simulation, config)
