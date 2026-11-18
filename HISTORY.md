@@ -10,6 +10,10 @@ for test results and earlier work.
 
 ## 0.1.21 — 2026-11-18
 
+After publication, the production cloud-humidity test assertion was updated
+to match the released 0.4 setting. This test-only correction does not change
+the model.
+
 The standard radiation setup now uses the packaged 1993 greenhouse-gas
 amounts and monthly historical ozone. It applies a sampled monthly upper
 radiative cap and uses a 0.4 minimum relative humidity for diagnostic clouds.
