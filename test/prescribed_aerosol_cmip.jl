@@ -4,10 +4,14 @@ const R = ReadyESM
 const G = R.RRTMGP
 const S = R.SpeedyWeather
 
-# The prepared MACv2 background is development-only data (not redistributed), so the test reads the pinned files from
-# the paths the CPU packet sets; a missing path is a failure, not a skip.
-const BACKGROUND = get(ENV, "READYESM_PA2_BACKGROUND", "")
-const PLUMES = get(ENV, "READYESM_PA2_PLUMES", "")
+# The data-backed gate supplies these paths explicitly. Public CI has no
+# prepared aerosol files, but still exercises the asset-independent contracts.
+const PA2_PRODUCTION = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml");
+    check_input_files = false)
+const BACKGROUND = get(ENV, "READYESM_PA2_BACKGROUND", PA2_PRODUCTION.forcing.aerosol_cmip_background_path)
+const PLUMES = get(ENV, "READYESM_PA2_PLUMES", PA2_PRODUCTION.forcing.aerosol_cmip_plumes_path)
+const PRIVATE_INPUTS_REQUESTED = haskey(ENV, "READYESM_PA2_BACKGROUND") || haskey(ENV, "READYESM_PA2_PLUMES")
+const HAVE_PRIVATE_INPUTS = isfile(BACKGROUND) && isfile(PLUMES)
 
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with_forcing(config; kwargs...) = R.ExperimentConfig(; merge(fields(config),
@@ -17,7 +21,9 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
     forcing = R.ForcingConfig(; radiation = :rrtmgp_clear_sky, kwargs...))
 
 @testset "Prescribed CMIP aerosol (PA2: MACv2 background + MACv2-SP)" begin
-    @test isfile(BACKGROUND) && isfile(PLUMES)
+    if PRIVATE_INPUTS_REQUESTED
+        @test HAVE_PRIVATE_INPUTS
+    end
 
     @testset "helpers" begin
         # Monthly midpoints at (m - 0.5)/12, cyclic.
@@ -98,17 +104,25 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         on = slab(; aerosol_scheme = :cmip_prescribed, aerosol_cmip_background_path = BACKGROUND,
                   aerosol_cmip_plumes_path = PLUMES)
         @test R.validate(on; check_input_files = false) === on
-        @test R._validate_cmip_aerosol_options(on, true, true) === nothing
+        if HAVE_PRIVATE_INPUTS
+            @test R._validate_cmip_aerosol_options(on, true, true) === nothing
+        else
+            @test_skip HAVE_PRIVATE_INPUTS
+        end
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_optical_depth_550nm = 0.1); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; radiation = :speedy_simplified); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_plumes_path = ""); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_year = 1700); check_input_files = false)
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_year = 2050); check_input_files = false)
         # MACv2-SP-1-0 is the CMIP6 historical file: year weights 1850-2016, fill afterwards.
-        sp = R.MACv2SPParameters(PLUMES)
-        @test sp.last_year == 2016
-        @test_throws ArgumentError R._macv2sp_time_weights(sp, 2017.5)
-        @test R._macv2sp_time_weights(sp, 2016.5) isa Tuple
+        if HAVE_PRIVATE_INPUTS
+            sp = R.MACv2SPParameters(PLUMES)
+            @test sp.last_year == 2016
+            @test_throws ArgumentError R._macv2sp_time_weights(sp, 2017.5)
+            @test R._macv2sp_time_weights(sp, 2016.5) isa Tuple
+        else
+            @test_skip HAVE_PRIVATE_INPUTS
+        end
         @test_throws ArgumentError R.validate(slab(; aerosol_cmip_year = 1993); check_input_files = false)
         @test_throws ArgumentError R.validate(slab(; aerosol_scheme = :macv2); check_input_files = false)
         # Model-date mode must stay inside the MACv2-SP years; a held year lifts that.
@@ -125,6 +139,7 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         off = R.build_rrtmgp(slab())
         S.run!(off; steps = 2)
         @test isnothing(off.model.longwave_radiation.cmip_aerosol)
+        if HAVE_PRIVATE_INPUTS
         on = slab(; aerosol_scheme = :cmip_prescribed, aerosol_cmip_background_path = BACKGROUND,
                   aerosol_cmip_plumes_path = PLUMES)
         simulation = R.build_rrtmgp(on)
@@ -171,6 +186,9 @@ slab(; kwargs...) = R.ExperimentConfig(; name = "pa2", device = :cpu, truncation
         plain = off.model.longwave_radiation
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(plain, state)
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(radiation, R._rrtmgp_radiation_state(plain))
+        else
+            @test_skip HAVE_PRIVATE_INPUTS
+        end
     end
 end
 end

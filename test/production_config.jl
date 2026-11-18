@@ -68,7 +68,7 @@ using ReadyESM, Test, Dates, SHA
         "5f07536991bd4a6a59536f7e5d86b58af803813c043d154d7a7d0d9184f5ca28"
     @test config.forcing.cloud_liquid_water_path_gm2 == 75
     @test config.forcing.cloud_ice_water_path_gm2 == 25
-    @test config.forcing.cloud_relative_humidity_min == 0.3
+    @test config.forcing.cloud_relative_humidity_min == 0.4
     @test config.forcing.aerosol_optical_depth_550nm == 0
     @test config.forcing.aerosol_scheme == :cmip_prescribed
     @test config.forcing.solar_constant_entry == "picontrol"
@@ -86,11 +86,25 @@ using ReadyESM, Test, Dates, SHA
     for (path, expected) in (
         (config.terrarium_albedo_cycle_path, config.terrarium_albedo_cycle_sha256),
         (config.terrarium_vegetation_cycle_path, config.terrarium_vegetation_cycle_sha256),
-        (config.forcing.aerosol_cmip_stratospheric_path,
-            "30e4e7383d6511c85c9aecdf84505bdb9f56d1aba717055aa0097c160daf607a"),
     )
         @test isfile(path)
         @test bytes2hex(open(sha256, path)) == expected
+    end
+    # The prepared aerosol input is intentionally absent from public checkouts.
+    # Verify its declared path and published hash there; verify bytes when a
+    # local input has been prepared for a data-backed run.
+    aerosol_relative_path = joinpath("data", "uoexeter_cmip_2_2_1_prepared_v7",
+        "uoexeter_strat_bands_199212_199501_v7.nc")
+    aerosol_sha256 = "30e4e7383d6511c85c9aecdf84505bdb9f56d1aba717055aa0097c160daf607a"
+    aerosol_path = config.forcing.aerosol_cmip_stratospheric_path
+    @test aerosol_path == joinpath(ReadyESM.PROJECT_ROOT, aerosol_relative_path)
+    aerosol_guide = read(joinpath(ReadyESM.PROJECT_ROOT, "data", "README_aerosol.md"), String)
+    @test occursin(aerosol_relative_path, aerosol_guide)
+    @test occursin(aerosol_sha256, aerosol_guide)
+    if isfile(aerosol_path)
+        @test bytes2hex(open(sha256, aerosol_path)) == aerosol_sha256
+    else
+        @test_skip isfile(aerosol_path)
     end
 end
 println("PRODUCTION_CONFIG_TEST_PASS")

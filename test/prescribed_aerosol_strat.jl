@@ -4,12 +4,17 @@ const R = ReadyESM
 const S = R.SpeedyWeather
 const NC = R.NCDatasets
 
-# Component C of PA2: the prepared CMIP7 stratospheric optics (UOEXETER-CMIP-2-2-1). The prepared files are
-# development-only data (not redistributed), so the test reads the pinned files from the paths the CPU packet sets; a
-# missing path is a failure, not a skip. Synthetic files written here give the exact answers.
-const BACKGROUND = get(ENV, "READYESM_PA2_BACKGROUND", "")
-const PLUMES = get(ENV, "READYESM_PA2_PLUMES", "")
-const STRAT = get(ENV, "READYESM_PA2_STRAT", "")
+# Component C of PA2: synthetic tests run in public CI. The data-backed gate
+# supplies prepared inputs explicitly and fails if one of them is missing.
+const PA2_PRODUCTION = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml");
+    check_input_files = false)
+const BACKGROUND = get(ENV, "READYESM_PA2_BACKGROUND", PA2_PRODUCTION.forcing.aerosol_cmip_background_path)
+const PLUMES = get(ENV, "READYESM_PA2_PLUMES", PA2_PRODUCTION.forcing.aerosol_cmip_plumes_path)
+const STRAT = get(ENV, "READYESM_PA2_STRAT", PA2_PRODUCTION.forcing.aerosol_cmip_stratospheric_path)
+const PRIVATE_INPUTS_REQUESTED = any(haskey(ENV, key) for key in
+    ("READYESM_PA2_BACKGROUND", "READYESM_PA2_PLUMES", "READYESM_PA2_STRAT"))
+const HAVE_BASE_INPUTS = isfile(BACKGROUND) && isfile(PLUMES)
+const HAVE_PRIVATE_INPUTS = HAVE_BASE_INPUTS && isfile(STRAT)
 
 fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with_forcing(config; kwargs...) = R.ExperimentConfig(; merge(fields(config),
@@ -63,7 +68,9 @@ function write_strat(path; order = (1, 2, 3, 4), schema = R.CMIP_AEROSOL_STRAT_S
 end
 
 @testset "Prescribed CMIP aerosol component C (stratospheric, UOEXETER-CMIP-2-2-1)" begin
-    @test isfile(BACKGROUND) && isfile(PLUMES) && isfile(STRAT)
+    if PRIVATE_INPUTS_REQUESTED
+        @test HAVE_PRIVATE_INPUTS
+    end
     dir = mktempdir()
     syn = write_strat(joinpath(dir, "strat.nc"))
 
@@ -109,6 +116,7 @@ end
         @test all(M[2, :, 2:4] .≈ 0.9 .* M[1, :, 2:4]) && all(M[3, :, 2:4] .≈ 0.6 .* M[2, :, 2:4])
     end
 
+    if HAVE_BASE_INPUTS
     @testset "optics: tropospheric below the tropopause, stratospheric above, ETH mean in its layer" begin
         on = slab(; aerosol_scheme = :cmip_prescribed, aerosol_cmip_background_path = BACKGROUND,
                   aerosol_cmip_plumes_path = PLUMES)
@@ -165,24 +173,36 @@ end
         @test_throws ArgumentError R.CMIPAerosol(BACKGROUND, PLUMES, model.spectral_grid; fixed_year = 1993,
                                                  stratospheric_path = syn)
     end
+    else
+        @test_skip HAVE_BASE_INPUTS
+    end
 
     @testset "config validation" begin
         on = slab(; aerosol_scheme = :cmip_prescribed, aerosol_cmip_background_path = BACKGROUND,
                   aerosol_cmip_plumes_path = PLUMES, aerosol_cmip_stratospheric_path = STRAT)
         @test R.validate(on; check_input_files = false) === on
-        @test R._validate_cmip_aerosol_options(on, true, true) === nothing
+        if HAVE_PRIVATE_INPUTS
+            @test R._validate_cmip_aerosol_options(on, true, true) === nothing
+        else
+            @test_skip HAVE_PRIVATE_INPUTS
+        end
         @test_throws ArgumentError R.validate(with_forcing(on; aerosol_cmip_year = 1993); check_input_files = false)
         @test_throws ArgumentError R.validate(slab(; aerosol_cmip_stratospheric_path = STRAT);
                                               check_input_files = false)
         late = R.ExperimentConfig(; merge(fields(on), (; start_date = DateTime(1995, 1, 1)))...)
         @test R.validate(late; check_input_files = false) === late
-        @test_throws ArgumentError R._validate_cmip_aerosol_options(late, true, true)
+        if HAVE_PRIVATE_INPUTS
+            @test_throws ArgumentError R._validate_cmip_aerosol_options(late, true, true)
+        else
+            @test_skip HAVE_PRIVATE_INPUTS
+        end
         production = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml"); check_input_files = false)
         @test endswith(production.forcing.aerosol_cmip_stratospheric_path,
             "uoexeter_strat_bands_199212_199501_v7.nc")
         @test R.ExperimentConfig().forcing.aerosol_cmip_stratospheric_path == ""
     end
 
+    if HAVE_PRIVATE_INPUTS
     @testset "real prepared file: Pinatubo-era column AOD and a model run" begin
         st = R.StratosphericAerosol(STRAT)
         @test size(st.E_sw, 1) == 14 && size(st.E_lw, 1) == 16
@@ -231,6 +251,9 @@ end
         # A checkpoint with the stratospheric file does not restore into radiation without it.
         trop = R.build_rrtmgp(with_forcing(on; aerosol_cmip_stratospheric_path = ""))
         @test_throws ArgumentError R._restore_rrtmgp_radiation_state!(trop.model.longwave_radiation, state)
+    end
+    else
+        @test_skip HAVE_PRIVATE_INPUTS
     end
 end
 end

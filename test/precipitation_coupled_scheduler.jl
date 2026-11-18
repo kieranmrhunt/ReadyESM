@@ -39,7 +39,17 @@ mass_flux(rate) = Float64(R._FRESHWATER_DENSITY_KG_M3) .* Float64.(rate)
     mktempdir() do dir
         released = R.load_config(joinpath(R.PROJECT_ROOT, "config", "production.yml");
                                  check_input_files = false)
+        # This analytic two-step fixture does not use the production aerosol
+        # files, which are prepared separately from a clean checkout.
+        forcing = R.ForcingConfig(; merge(fields(released.forcing), (;
+            aerosol_scheme = :none,
+            aerosol_cmip_background_path = "",
+            aerosol_cmip_plumes_path = "",
+            aerosol_cmip_stratospheric_path = "",
+            aerosol_cmip_year = 0,
+        ))...)
         config = with(released;
+            forcing,
             device = :cpu, truncation = 7, nlayers = 8,
             ocean_grid = :idealized, ocean_nlongitude = 32,
             ocean_nlatitude = 16, ocean_nlayers = 4,

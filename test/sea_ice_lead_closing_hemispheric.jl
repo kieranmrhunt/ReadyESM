@@ -13,11 +13,17 @@ fields(x) = (; (n => getfield(x, n) for n in fieldnames(typeof(x)))...)
 with(config; kwargs...) = R.ExperimentConfig(; merge(fields(config), (; kwargs...))...)
 include(joinpath(@__DIR__, "analytic_coupled_fixture.jl"))
 
-# The identity hash as it was before the key existed (2c8eff8): every field except the run-control ones.
+# Independently construct the v0.1.21 typed identity with the optional south
+# key omitted. An unset key must not change the identity of an old checkpoint.
 function hash_without_key(config)
-    canonical = join((string(name, "=", repr(getfield(config, name))) for name in fieldnames(typeof(config))
-        if name ∉ R._DYNAMIC_RESTART_RUN_CONTROL_FIELDS && name != :sea_ice_lead_closing_thickness_south_m), "\n")
-    return bytes2hex(R.SHA.sha256(codeunits("readiesm-experiment-config-v1\n" * canonical)))
+    io = IOBuffer()
+    print(io, "readiesm-experiment-config-v2")
+    for name in fieldnames(typeof(config))
+        name in R._DYNAMIC_RESTART_RUN_CONTROL_FIELDS && continue
+        name == :sea_ice_lead_closing_thickness_south_m && continue
+        R._dynamic_restart_write_field!(io, name, getfield(config, name), :experiment)
+    end
+    return bytes2hex(R.SHA.sha256(take!(io)))
 end
 
 @testset "Hemispheric lead closing: settings and identity" begin
@@ -48,6 +54,12 @@ end
     for config in (released, production, global_on)
         @test R._dynamic_config_identity_hash(config) == hash_without_key(config)
     end
+    # The released v0.1.21 serializer and production config have these exact
+    # portable identities; output paths and checkout directories are excluded.
+    @test R._dynamic_config_identity_hash(released) ==
+        "42f78154105e1810160d5a97886ae3e788adf488e9df40463ebf6b42759da899"
+    @test R._dynamic_config_identity_hash(production) ==
+        "fe4f0d8c32835a40530a1294a3465adc733a48127ab57369b9d5abb017a5d3b4"
     hashes = R._dynamic_config_identity_hash.((released, global_on, north, south, split))
     @test allunique(hashes)
 

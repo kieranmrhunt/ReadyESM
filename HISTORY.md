@@ -10,9 +10,11 @@ for test results and earlier work.
 
 ## 0.1.21 — 2026-11-18
 
-After publication, the production cloud-humidity test assertion was updated
-to match the released 0.4 setting. This test-only correction does not change
-the model.
+After publication, six test files were corrected for the released settings,
+clean checkouts and restart identity. The full CPU suite passed on source
+commit `30761b2` in both the asset-free checkout (job **2962482**) and the
+prepared-input environment (job **2962777**). These test corrections change
+no model code, production configuration or scripts.
 
 The standard radiation setup now uses the packaged 1993 greenhouse-gas
 amounts and monthly historical ozone. It applies a sampled monthly upper
