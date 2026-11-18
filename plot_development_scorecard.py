@@ -83,15 +83,15 @@ FLAG_COLOURS={'P':'#285c8d','F':'#a83b55','~':'#b07b13','.':'#a4adb8','-':'#8a92
 
 def load_data(path):
     data=tomllib.loads(path.read_text())
-    if [r['version'] for r in data['release']]!=[f'v0.1.{i}' for i in range(21)]:
-        raise ValueError('Expected every version v0.1.0–v0.1.20 in order')
+    if [r['version'] for r in data['release']]!=[f'v0.1.{i}' for i in range(22)]:
+        raise ValueError('Expected every version v0.1.0–v0.1.21 in order')
     meta=data['meta']
-    if meta['candidate_version']!='v0.1.20' or meta['release_status']!='evidence_verified_for_v020':
-        raise ValueError('Expected the evidence-verified v0.1.20 inventory')
+    if meta['candidate_version']!='v0.1.21' or meta['release_status']!='evidence_verified_for_v021':
+        raise ValueError('Expected the evidence-verified v0.1.21 inventory')
     if meta['programme_as_of']!='1 November 2026':
         raise ValueError('The unchanged programme rows must retain their 1 November review date')
-    if data['release'][-2]['status']!='qualified' or data['release'][-1]['status']!='qualified':
-        raise ValueError('Published v0.1.19 and v0.1.20 rows must remain qualified for their stated checks')
+    if any(row['status']!='qualified' for row in data['release'][-3:]):
+        raise ValueError('v0.1.19 through v0.1.21 must remain qualified for their stated checks')
     if [r['id'] for r in data['experiment']]!=[f'{p}{i:02d}' for p in ('BS','C') for i in range(1,11)]:
         raise ValueError('Expected all twenty named programme tracks')
     for row in data['release']:
@@ -200,7 +200,7 @@ def render(data,png,pdf):
     fig.legend(handles=handles,loc='lower left',bbox_to_anchor=(.03,.087),ncol=4,frameon=False,fontsize=9)
     gates=[Line2D([],[],marker=m,ls='',mfc='white' if f=='.' else FLAG_COLOURS[f],mec=FLAG_COLOURS[f],label=l) for f,m,l in [('P','o','pass'),('F','s','fail'),('~','D','partial / limited'),('.','o','not established'),('-','_','not applicable')]]
     fig.legend(handles=gates,loc='lower left',bbox_to_anchor=(.03,.065),ncol=5,frameon=False,fontsize=9)
-    fig.text(.035,.052,'Release rows include v0.1.20. Programme tracks retain the 1 November 2026 reviewed inventory. Items marked in use include optional tools.',fontsize=9,color='#526174')
+    fig.text(.035,.052,'Release rows include v0.1.21. Programme tracks retain the 1 November 2026 reviewed inventory. Items marked in use include optional tools.',fontsize=9,color='#526174')
     fig.text(.035,.038,'Off: works when switched off · Resume: continues from a saved state · Balance: energy and water accounted for · Limits: values stay physical · Repeat: matched runs agree · Climate: meets target',fontsize=8.6,color='#526174')
     fig.text(.035,.024,'v0.1.12 tested an optional feature for 31 days but left it off in standard runs. v0.1.13 checked a short restart. v0.1.14 and v0.1.15 allowed documented exceptional values.',fontsize=8.8,color='#526174')
     fig.text(.035,.010,data['meta']['publication_note'],fontsize=8.6,color='#526174')

@@ -9,43 +9,47 @@ In the standard setup, the atmosphere has a grid spacing of about 400 km
 about 1 degree and 60 levels. The land has 16 soil layers. ERA5 supplies the
 initial atmosphere and land state. ECCO supplies the ocean and sea ice.
 
-![Six January 1993 monthly-mean maps of v0.1.20 atmospheric temperature, wind, water, precipitation and radiation](docs/readiesm-v0.1.20-january-monthly.png)
+![Six January 1993 monthly-mean maps of v0.1.21 atmospheric temperature, wind, water, precipitation and radiation](docs/readiesm-v0.1.21-january-monthly.png)
 
 These are January means from one 181-day run starting from observations on
-1 January 1993, using the v0.1.20 production physics at source `fba77cd3`.
+1 January 1993, using the v0.1.21 production physics at source `39647467`.
 The maps show atmospheric and top-of-atmosphere radiation fields. They do not
 show the ocean, sea ice or land. Grey marks locations where 850 hPa is below
 ground or lacks complete hourly coverage. White in the precipitation map
 means no rain. The 31-day mean is not a long-term climate mean. The
-[figure record](docs/readiesm-v0.1.20-january-monthly.json) gives input and
-image hashes. The [plot recipe](docs/plot-v0.1.20-january-monthly.py)
+[figure record](docs/readiesm-v0.1.21-january-monthly.json) gives input and
+image hashes. The [plot recipe](docs/plot-v0.1.21-january-monthly.py)
 recreates it from the sealed six-month run.
 
-## v0.1.20 six-month comparison
+## v0.1.21 climate comparison
 
-![Six-month v0.1.20 climate score compared with v0.1.19 and 55 CMIP6 models](scorecard.png)
+![v0.1.21 climate score compared with v0.1.20, v0.1.19 and 55 CMIP6 models](scorecard.png)
 
 One continuous January–June 1993 run per version starts from the same
-observations. The eight-field overall error ratio is 1.16 for v0.1.20,
-against 1.20 for v0.1.19 and 1.04 for the typical model among 55 CMIP6
-models. Lower is better. An earlier v0.1.20 candidate with several new
-atmosphere physics options scored 1.60 and was not released. The comparison
-uses only locations with valid data for every model. This can make every
-model look slightly better. Values at 850 hPa are used only where that level
-is above ground. One run from an observed starting state does not show
-long-term climate skill. See the [validation record](docs/validation-v0.1.20.md),
-[scorecard values and hashes](docs/scorecard-v0.1.20-partc.json), and
-[plot recipe](docs/plot-v0.1.20-scorecard.py). The
-[release figure manifest](docs/release_figure_manifest.json) lists the
-published image hashes and retains the v0.1.19 figure record.
+observations. The frozen score uses March–June monthly fields on one
+common-valid mask. The eight-field overall error ratio is **1.18** for
+v0.1.21, against **1.16** for v0.1.20 and **1.20** for v0.1.19; the typical
+model among 55 CMIP6 models scores **1.04**. Lower is better. The v0.1.21
+increase of 0.0185 is a recorded limit within the single-start month-choice
+spread. The northern midlatitude 500-hPa temperature is colder and less
+accurate than in v0.1.20. Missing locations are excluded for all models;
+the 850-hPa rule uses ERA5 surface pressure above 875 hPa and shared finite
+data; some model values below their own surface may remain. The mask can
+change scores or ranks. One observed start does not show long-term climate
+skill. See the
+[validation record](docs/validation-v0.1.21.md),
+[scorecard values and hashes](docs/scorecard-v0.1.21-partc.json), and
+[plot recipe](docs/plot-v0.1.21-scorecard.py). The
+[release figure manifest](docs/release_figure_manifest.json) records the
+published image hashes and keeps the historical cards.
 
-The standard setup keeps the v0.1.19 atmosphere physics. It adds prescribed
-CMIP aerosols, the 1360.7 W m⁻² CMIP6 piControl solar input and 0.5 m
-sea-ice lead closing. New atmosphere physics options remain opt-in. CO₂ is
-fixed at 420 ppm, and ozone remains analytic. A paired January and July month
-test asked for more pairs before a decision. They were not run for this
-release. The clear-sky radiation gap and multi-year climate behaviour remain
-open questions.
+The standard setup now uses 1993 greenhouse-gas values and historical
+monthly ozone, with a monthly upper radiative cap and a 0.4 minimum relative
+humidity for diagnostic clouds. Its January–June global net top-of-atmosphere
+bias improves from +2.30 to +0.55 W m⁻² against ERA5; clear-sky outgoing
+longwave bias improves from −7.07 to −3.17 W m⁻². A qualified calendar
+restart resumes without a second state update. The winter model top remains
+too cold, and multi-year climate behaviour remains unqualified.
 
 ## v0.1.19 historical figures
 
@@ -99,16 +103,16 @@ agreement with the observed month, not the skill of the model's own long-term
 climate. The [current six-month scorecard](scorecard.png),
 [development scorecard](development_scorecard.png) and
 [version history](readyesm_scorecard_versions.png) have different scopes.
-The current card above shows the v0.1.20 six-month comparison. The development
-card adds the v0.1.20 release row from one continuous 181-day run; its programme
+The current card above shows the v0.1.21 climate comparison. The development
+card adds the v0.1.21 release row from one continuous 181-day run; its programme
 panels retain the reviewed 1 November inventory. The version
-history shows that six-month result in a separate top panel. Its lower panels
+history shows the v0.1.21 result in a separate top panel. Its lower panels
 preserve the older January and July series, which use one start per season
 and a different 31-day method. The paired v0.1.19 evidence and its failed
-checks remain historical. The [version-history figure record](docs/readyesm_scorecard_versions_v020.json)
+checks remain historical. The [version-history figure record](docs/readyesm_scorecard_versions_v021.json)
 gives the new figure hashes, and the [archived v0.1.19 figure](docs/readyesm_scorecard_versions_v019.png)
 preserves its original pixels. The [historical paired score values](scorecard_v4_data.json)
-preserve the older comparison. The [development figure provenance](docs/development_scorecard_v020_provenance.json)
+preserve the older comparison. The [development figure provenance](docs/development_scorecard_v021_provenance.json)
 gives the new card's source hashes and remaining limits.
 
 ## Speed
@@ -183,7 +187,7 @@ to the configured output directory. To plot the final day and timelines:
 
 ```bash
 python scripts/plot_readme.py artifacts/my_run/diagnostics.nc \
-    artifacts/my_run/summary --version v0.1.20 --expected-days 31
+    artifacts/my_run/summary --version v0.1.21 --expected-days 31
 ```
 
 For files of monthly and yearly climate fields, see the
@@ -196,7 +200,7 @@ input files and recorded hashes are in
 `data/era5_seasonal_land_cycle_1993/` and
 `data/era5_realistic_albedo_1993/`. The current setup also requires the
 prepared prescribed aerosol files described above. See the
-[v0.1.20 validation record](docs/validation-v0.1.20.md)
+[v0.1.21 validation record](docs/validation-v0.1.21.md)
 and [known limitations](NOTES.md).
 
 ## Configuration

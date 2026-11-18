@@ -1,0 +1,257 @@
+{
+  "area_fraction_of_era5_mask": {
+    "cwv": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "olr": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "osr": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "precip": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "t200": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "t500": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "t850": {
+      "nh_mid": 0.9003331255267956,
+      "nh_polar": 0.9131077256524474,
+      "sh_mid": 0.9965519487094625,
+      "sh_polar": 0.766983871036192,
+      "subtropics": 0.9444235574122057,
+      "tropics": 0.9678112412608595
+    },
+    "u200": {
+      "nh_mid": 1.0,
+      "nh_polar": 1.0,
+      "sh_mid": 1.0,
+      "sh_polar": 1.0,
+      "subtropics": 1.0,
+      "tropics": 1.0
+    },
+    "u850": {
+      "nh_mid": 0.9003331255267956,
+      "nh_polar": 0.9131077256524474,
+      "sh_mid": 0.9965519487094625,
+      "sh_polar": 0.766983871036192,
+      "subtropics": 0.9444235574122057,
+      "tropics": 0.9678112412608595
+    }
+  },
+  "cohort_model_count": 55,
+  "cohort_model_year_count": 1650,
+  "common_masks_sha256": "7e7db85dca45262765e245f3cde60de0c32f0742849ce51e34f9ebf38ecc3012",
+  "method_note": "One continuous January\u2013June 1993 run per version from the same observed start. March\u2013June monthly means are scored equally on a common-valid mask across four ReadyESM arms and 55 complete-case CMIP6 models. The 850-hPa rule uses ERA5 ps > 87500 Pa and shared finite data; some model values below their own surface may remain. The mask may change scores or rankings.",
+  "onr8": {
+    "v0.1.19 published 66742450": 1.2005329938989227,
+    "v0.1.20 reverted 66841309": 1.160312966633957,
+    "v0.1.21 53279": 1.1788174284367607
+  },
+  "onr9": {
+    "v0.1.19 published 66742450": 1.1769444501205801,
+    "v0.1.20 reverted 66841309": 1.1336228601776592,
+    "v0.1.21 53279": 1.1640162729974217
+  },
+  "pdf_sha256": "a7145fbbe75470991d54344fbd0a78679be5dce2f78dee54e716e7bcef857d8a",
+  "png_sha256": "5ce59b8d963e7a0808560660b79ed4844ee504a2a1efd92ea4f587353c0adcd0",
+  "regional_error_ratio": {
+    "v0.1.20 reverted 66841309": {
+      "cwv": {
+        "nh_mid": 1.0085925858219125,
+        "nh_polar": 0.9567178653143339,
+        "sh_mid": 0.5436053641942674,
+        "sh_polar": 0.8421604630355299,
+        "subtropics": 1.1139067672979772,
+        "tropics": 0.992787249997818
+      },
+      "olr": {
+        "nh_mid": 1.0459330183691415,
+        "nh_polar": 0.7684265501385839,
+        "sh_mid": 1.2382415750376503,
+        "sh_polar": 1.0994416871996142,
+        "subtropics": 1.4041208364958062,
+        "tropics": 1.2332709169933107
+      },
+      "osr": {
+        "nh_mid": 0.6777639017890437,
+        "nh_polar": 0.754831303824949,
+        "sh_mid": 0.789693508607089,
+        "sh_polar": 1.1906912931144267,
+        "subtropics": 1.347513918982544,
+        "tropics": 1.5819880864939238
+      },
+      "precip": {
+        "nh_mid": 0.9662718979902767,
+        "nh_polar": 0.9456351500196396,
+        "sh_mid": 0.9056966149836475,
+        "sh_polar": 1.0802986090509359,
+        "subtropics": 1.1247621677391078,
+        "tropics": 0.9308855508209819
+      },
+      "t200": {
+        "nh_mid": 1.0991570047653945,
+        "nh_polar": 1.4754043679606517,
+        "sh_mid": 1.01361791320198,
+        "sh_polar": 1.1794792360236437,
+        "subtropics": 1.8029368375625432,
+        "tropics": 1.225782509475614
+      },
+      "t500": {
+        "nh_mid": 1.0429953071724154,
+        "nh_polar": 1.2568846418740625,
+        "sh_mid": 2.1001931535399643,
+        "sh_polar": 1.6610708416077553,
+        "subtropics": 0.6702352319493775,
+        "tropics": 1.5224062277833648
+      },
+      "t850": {
+        "nh_mid": 0.6528653424212906,
+        "nh_polar": 0.8890930526682791,
+        "sh_mid": 0.6509422701862329,
+        "sh_polar": 1.0338920593727114,
+        "subtropics": 1.100415410839347,
+        "tropics": 1.3127344197640776
+      },
+      "u200": {
+        "nh_mid": 1.073096374025186,
+        "nh_polar": 1.0545991103714263,
+        "sh_mid": 1.4084153863562712,
+        "sh_polar": 1.0164885332533153,
+        "subtropics": 0.9565512870283054,
+        "tropics": 0.9017148035346904
+      },
+      "u850": {
+        "nh_mid": 1.1342432324523082,
+        "nh_polar": 0.816415676574414,
+        "sh_mid": 1.292131338376363,
+        "sh_polar": 1.3659775483428527,
+        "subtropics": 1.4041579549404384,
+        "tropics": 1.3095739170640759
+      }
+    },
+    "v0.1.21 53279": {
+      "cwv": {
+        "nh_mid": 1.2462082030637824,
+        "nh_polar": 1.2997211576713747,
+        "sh_mid": 0.5879017713366158,
+        "sh_polar": 0.7248578293847892,
+        "subtropics": 1.2996680694393055,
+        "tropics": 1.078881356019901
+      },
+      "olr": {
+        "nh_mid": 1.1731533382286194,
+        "nh_polar": 0.9683918475674514,
+        "sh_mid": 0.888321671916509,
+        "sh_polar": 1.2131638828518192,
+        "subtropics": 1.3281689578508518,
+        "tropics": 1.1342556401239254
+      },
+      "osr": {
+        "nh_mid": 0.699821695931635,
+        "nh_polar": 0.7481249228661521,
+        "sh_mid": 0.8680587236303062,
+        "sh_polar": 1.0727000948177838,
+        "subtropics": 1.28992214535381,
+        "tropics": 1.4584760205583414
+      },
+      "precip": {
+        "nh_mid": 0.9761068164343402,
+        "nh_polar": 0.9534026158812184,
+        "sh_mid": 0.8613154268158018,
+        "sh_polar": 1.0497218530797892,
+        "subtropics": 1.259651320743333,
+        "tropics": 0.9495978591413452
+      },
+      "t200": {
+        "nh_mid": 0.9139742199187014,
+        "nh_polar": 1.6503473911534217,
+        "sh_mid": 0.9619529761303545,
+        "sh_polar": 1.3721550214180482,
+        "subtropics": 0.9251884265732572,
+        "tropics": 0.9460901082876333
+      },
+      "t500": {
+        "nh_mid": 1.5605618082079422,
+        "nh_polar": 1.1560699992194527,
+        "sh_mid": 2.3542344266898136,
+        "sh_polar": 1.4581996165406892,
+        "subtropics": 1.0347985008943699,
+        "tropics": 0.6219035274975886
+      },
+      "t850": {
+        "nh_mid": 1.1422237867235934,
+        "nh_polar": 1.0844119933367982,
+        "sh_mid": 0.7442163554174315,
+        "sh_polar": 0.942615821737465,
+        "subtropics": 1.3759951158552972,
+        "tropics": 1.6917392656661128
+      },
+      "u200": {
+        "nh_mid": 1.2025818794571905,
+        "nh_polar": 1.0368296979286162,
+        "sh_mid": 1.4311821435599688,
+        "sh_polar": 1.2989664589137104,
+        "subtropics": 1.221944927791264,
+        "tropics": 1.1545963848424425
+      },
+      "u850": {
+        "nh_mid": 1.3141054562061711,
+        "nh_polar": 1.2378626437011129,
+        "sh_mid": 1.6484893687842277,
+        "sh_polar": 1.8437181017627644,
+        "subtropics": 1.1919402979693379,
+        "tropics": 1.4032952244609904
+      }
+    }
+  },
+  "schema": "readyesm_v021_partc_scorecard_v1",
+  "score_json_sha256": "69449672e24f2ae4fb4f23ce75d5baf0be6b147a2c28b08111f2ec5b32ba370a",
+  "score_result_manifest_sha256": "42ad50448892d02bde93352d5dce80550a97701495a34475b35df57742734bb4",
+  "score_schema": "readyesm_partc_amended_full_v3",
+  "source_commits": {
+    "v0.1.19 published 66742450": "816fc17d1fa1955002393abdbe80da57ceeae139",
+    "v0.1.20 reverted 66841309": "fba77cd3ffc42f0f9227f9cd2ca24840bb8ad396",
+    "v0.1.21 53279": "396474675f78358401fcea445c4b805e1432a4d0"
+  },
+  "source_run_jobs": [
+    66742450,
+    66841309,
+    53279
+  ],
+  "typical_cmip6_onr8": 1.0428618134617578
+}

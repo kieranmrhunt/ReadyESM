@@ -1,0 +1,23 @@
+{
+  "data_sha256": "7e112ecdf7ced17b0aff58b545952ba156eeb8d65fc522900a80bb1d466ff4cd",
+  "joint_score_job": 2584091,
+  "joint_score_result_manifest_sha256": "42ad50448892d02bde93352d5dce80550a97701495a34475b35df57742734bb4",
+  "model_source_commit": "a6cbb2648c8e5c908d058e8358a4a2e95ae7a272",
+  "pdf_sha256": "292d56d504db9954923b060da88808c41fdb01767440d33743c3eeb9fa6936ae",
+  "png_sha256": "664e7b2836826d84cf08ed18fe75a007b15dd5b697edce7a3dd49ef1bcf18793",
+  "prior_release_rows_preserved": 21,
+  "production_run_job": 53279,
+  "production_run_result_manifest_sha256": "f0ba2b6a6257bfff746488371df2933162a0351ae43cb666e2c32d56fdcccfe0",
+  "programme_inventory_as_of": "1 November 2026",
+  "programme_rows_preserved": 20,
+  "release": "v0.1.21",
+  "release_evidence": "docs/validation-v0.1.21.md",
+  "release_row_as_of": "18 November 2026",
+  "renderer_sha256": "135fa2227ae1c16db3ca243dedccae23c309bbec2b27dfbd62ea24c95c514711",
+  "restart_audit_job": 2937501,
+  "restart_audit_sha256": "f2e6500c51ed44915f16a152dfd7657404b5b7908d1e80edc2d0cb5b9a7ae36a",
+  "schema": "readiesm_v021_development_scorecard_provenance_v1",
+  "scope": "One 181-day January-June 1993 run from an observed start; March-June fields are scored. The radiation target passes, Part C ONR8 worsens by 0.0185, the qualified January-February restart passes, and long climate drift remains unqualified.",
+  "scored_physics_source_commit": "396474675f78358401fcea445c4b805e1432a4d0",
+  "v020_provenance_archive_sha256": "c1c4ae042f2028632938769b6c9e866dd07643eea7bc7b259658388e17ede6e3"
+}

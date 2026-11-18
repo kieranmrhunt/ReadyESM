@@ -1,12 +1,41 @@
 # Version history
 
-Current version: v0.1.20, 11 November 2026.
-Previous tagged version: [v0.1.19](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.19),
-1 November 2026.
+Current version: v0.1.21, 18 November 2026.
+Previous tagged version: [v0.1.20](https://github.com/kieranmrhunt/ReadyESM/tree/v0.1.20),
+11 November 2026.
 
 See [known limitations](NOTES.md), [current experiments](docs/experiments.md)
 and the [detailed development record](https://github.com/kieranmrhunt/ReadyESM/blob/9c6b388a18d0480d5e0145768fb7f9b72385811b/HISTORY.md)
 for test results and earlier work.
+
+## 0.1.21 — 2026-11-18
+
+The standard radiation setup now uses the packaged 1993 greenhouse-gas
+amounts and monthly historical ozone. It applies a sampled monthly upper
+radiative cap and uses a 0.4 minimum relative humidity for diagnostic clouds.
+The earlier 420 ppm CO₂ setting remains an inactive fallback when the file
+forcing is selected. A January–June 1993 A100 run met the declared radiation
+target: global net top-of-atmosphere bias improved from +2.30 to +0.55 W m⁻²
+against ERA5, and clear-sky outgoing longwave bias improved from −7.07 to
+−3.17 W m⁻².
+
+The same continuous run scored 1.1788 on the eight-field Part C comparison,
+against 1.1603 for v0.1.20 on the joint mask. Lower is better. The increase
+of 0.0185 is within the observed single-start month-choice spread but remains
+a recorded regression. Northern midlatitude air at 500 hPa is colder and less
+accurate than in v0.1.20; the winter model top also remains too cold. Factor
+tests showed that the warmer v0.1.20 free troposphere partly relied on
+1993-incorrect fixed CO₂ and analytic ozone. Those inputs were not restored.
+
+The monthly runner now resumes a saved simulation without a second state
+update, and the restart identity is stable across checked-out copies. The
+January–February scored calendar restart passed an exact physical comparison.
+Its original terminal audit failed on a process-local aerosol-write counter;
+a corrected audit required the exact uninterrupted and resumed counts while
+matching all other tested state and output. See the
+[validation record](docs/validation-v0.1.21.md) and
+[scorecard](scorecard.png) for source pins, receipts and limits. These
+observed-start runs do not prove long-term climate skill or equilibrium.
 
 ## 0.1.20 — 2026-11-11
 

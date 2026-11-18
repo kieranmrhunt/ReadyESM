@@ -1,0 +1,59 @@
+{
+  "duration_days": 31,
+  "figure_sha256": "f0fb8cc4e23999e8af2f5749cd0a41126a429d39cf49b2d0cb0dd171dbd2e591",
+  "input_sha256": {
+    "monthly.nc": "6b44fefec21adccdf27ef93f93ef28f055deed8e69e533798d1376e9ab66267f",
+    "toa_monthly.nc": "e02136817469adbae118b0e6a75d06c1ff34a45bbf6bae1025cf43ba0d56d1c0",
+    "wind.nc": "e30b67171be3c2bc7e03d53c6532019b53f40a0ae06c6571cfb7c2e13e60262c"
+  },
+  "observed_start_count": 1,
+  "panels": {
+    "850-hPa air temperature": {
+      "native_max": 24.257324103120993,
+      "native_min": -28.252743210935307,
+      "native_valid_points": 4061,
+      "units": "\u00b0C"
+    },
+    "850-hPa wind speed": {
+      "native_max": 20.447278410256356,
+      "native_min": 0.13497063637606704,
+      "native_valid_points": 4061,
+      "units": "m s\u207b\u00b9"
+    },
+    "Column water vapour": {
+      "native_max": 51.55904904874767,
+      "native_min": 0.21164344490234593,
+      "native_valid_points": 4608,
+      "units": "kg m\u207b\u00b2"
+    },
+    "Longwave cloud effect": {
+      "native_max": 63.79879596669187,
+      "native_min": -1.9872593623335604,
+      "native_valid_points": 4608,
+      "units": "W m\u207b\u00b2; clear \u2212 all"
+    },
+    "Outgoing longwave radiation": {
+      "native_max": 326.2549996529856,
+      "native_min": 155.0720322721748,
+      "native_valid_points": 4608,
+      "units": "W m\u207b\u00b2"
+    },
+    "Precipitation": {
+      "native_max": 16.588624611620848,
+      "native_min": 2.676141528757242e-06,
+      "native_valid_points": 4608,
+      "units": "mm day\u207b\u00b9"
+    }
+  },
+  "pressure_rule": "850 hPa shown only with complete valid hourly coverage; no below-ground extrapolation",
+  "receipt_sha256": "5639335758c5e0786d5002ad53617f9ac3a184a48c61ef8fe67949c652b7d193",
+  "regrid": "nearest native atmosphere point on 0.5-degree equirectangular display",
+  "run_result_manifest_sha256": "f0ba2b6a6257bfff746488371df2933162a0351ae43cb666e2c32d56fdcccfe0",
+  "schema": "v021_readme_monthly_figure_v1",
+  "source_commit": "396474675f78358401fcea445c4b805e1432a4d0",
+  "source_tree": "689ba1602964aafb10aeff773cc47f90443c3966",
+  "status_sha256": "48fbea27bdce5e264ee58f7a434845833d16062939335ebdc595cedaf125a523",
+  "verdict_sha256": "654b0c9facd63eb782c9c3b954e670eb82d72aec6ea02a30bcc2449ac9d96465",
+  "window_end": "1993-02-01T00:00:00",
+  "window_start": "1993-01-01T00:00:00"
+}

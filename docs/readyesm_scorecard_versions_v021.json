@@ -1,0 +1,19 @@
+{
+  "cmip6_model_count": 55,
+  "cmip6_model_year_count": 1650,
+  "historical_v019_image_sha256": "b31036fe64be758d0a401a91a76dc1e8400211ca2cf041800805ba745b8205db",
+  "historical_v019_record_sha256": "f7a3c4f2f1a6e4385315c0462ef402ba57d9c9f1ac4fab7a8207ae2eb35f98d1",
+  "method_note": "The January-June 1993 panel uses one continuous run per ReadyESM version, scoring March-June monthly means on a four-run common-valid mask. The 850-hPa rule uses ERA5 ps > 87500 Pa plus shared finite data, so some model below-surface values may remain. The older January/July history is a separate 31-day comparison. Neither establishes long-term climate skill.",
+  "pdf_sha256": "567a702e0d2d1ab412b27701ccf2060199764f11b19b6dbcad41520ff992e982",
+  "png_sha256": "7bfc7f2c13850fa7040fa2574d39cde7284a2b4bec29e700b45b0e8e96544a80",
+  "schema": "readyesm_v021_version_history_separate_methods_v1",
+  "six_month_onr8": {
+    "Typical CMIP6 model": 1.0428618134617578,
+    "v0.1.19, six months": 1.2005329938989227,
+    "v0.1.20, six months": 1.160312966633957,
+    "v0.1.21, six months": 1.1788174284367607
+  },
+  "v021_run_source_commit": "396474675f78358401fcea445c4b805e1432a4d0",
+  "v021_score_result_manifest_sha256": "42ad50448892d02bde93352d5dce80550a97701495a34475b35df57742734bb4",
+  "v021_scorecard_record_sha256": "299294dd862f591f449be832cd8df915d3f5d9bf0cbf85f8c9453cffc306d78c"
+}

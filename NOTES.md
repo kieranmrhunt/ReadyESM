@@ -61,6 +61,15 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
 
 ## Main known limitations
 
+- v0.1.21 meets its declared six-month radiation target but its eight-field
+  Part C error ratio is 1.1788, 0.0185 worse than v0.1.20 on a common mask.
+  Northern midlatitude 500-hPa air is too cold; the winter model top is
+  roughly 20–35 K too cold. The January–February calendar restart is
+  qualified with a process-local aerosol-write counter exception, not for
+  arbitrary dates or multi-year runs. One observed start and four scored
+  months do not establish repeatability, equilibrium or long-term climate
+  skill. The [v0.1.21 validation record](docs/validation-v0.1.21.md) gives
+  the source pins, score, radiation readout and restart audit.
 - v0.1.20 has one scored January–June 1993 run from an observed starting
   state. Its eight-field error ratio improves on v0.1.19, but Southern
   midlatitude 500-hPa temperature and subtropical 850-hPa wind worsen.
@@ -138,7 +147,9 @@ The Oceananigans grid-ordering override is in `src/ordered_ocean_grid.jl`.
   the coupled water source is recorded but not yet applied to the energy
   equations. The option stays off by default pending longer coupled tests.
 - Forcing is concentration/AOD driven. The current scope excludes carbon-cycle,
-  SO2 and aerosol-emissions modules. RRTMGP receives the configured 420 ppm CO2.
+  SO2 and aerosol-emissions modules. RRTMGP receives the packaged 1993
+  greenhouse-gas amounts in the standard setup; fixed 420 ppm CO₂ is an
+  inactive fallback while the gas file is selected.
   Terrarium carries a default 380 ppm ambient input, but it is physically
   dormant in production: no photosynthesis model is constructed and the
   prescribed evapotranspiration has no CO2 term. A shared driver and assertion
